@@ -11,6 +11,7 @@ export type SessionPayload = {
   id: string;
   email: string;
   gamerTag: string;
+  role?: string;
 };
 
 export async function signToken(payload: SessionPayload): Promise<string> {
