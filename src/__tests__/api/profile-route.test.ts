@@ -3,6 +3,10 @@ jest.mock('@/lib/reviewStore', () => ({
   getGamesByReviewer:  jest.fn().mockResolvedValue([]),
 }));
 
+jest.mock('@/lib/userStore', () => ({
+  findUserByTag: jest.fn().mockResolvedValue(null),
+}));
+
 jest.mock('@/lib/followStore', () => ({
   getFollowerCount:  jest.fn().mockResolvedValue(0),
   getFollowingCount: jest.fn().mockResolvedValue(0),

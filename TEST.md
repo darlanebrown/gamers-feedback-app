@@ -71,7 +71,8 @@ npx jest --no-coverage # skip coverage report (faster)
 | `api/game-reviews-route` | `api/game-reviews-route.test.ts` | 4 |
 | `lib/searchCount` | `lib/searchCount.test.ts` | 4 |
 | `api/leaderboard-period-route` | `api/leaderboard-period-route.test.ts` | 4 |
-| **Total** | **49 suites** | **302** |
+| `api/profile-user-info` | `api/profile-user-info.test.ts` | 4 |
+| **Total** | **50 suites** | **306** |
 
 ## Test File Structure
 
@@ -723,6 +724,17 @@ Mocks `@/lib/reviewStore` and `@/lib/auth`. Tests `PATCH` + `DELETE /api/reviews
 - 401 when not authenticated
 - 403 when the authenticated user doesn't own the review and is not admin
 - 200 with `{ ok: true }` when owner deletes their review
+
+---
+
+### `api/profile-user-info.test.ts` — 4 tests
+Mocks `@/lib/reviewStore`, `@/lib/followStore`, `@/lib/auth`, `@/lib/userStore`.
+Tests user bio + display name fields returned by `GET /api/profile/[tag]`.
+
+- `user.displayName` and `user.bio` are included in the response when the user record exists
+- `user.displayName` and `user.bio` are `null` when not set on the record
+- `user.passwordHash` is never exposed (stripped before serialization)
+- `user` is `null` in the response when no user record is found for the given tag
 
 ---
 

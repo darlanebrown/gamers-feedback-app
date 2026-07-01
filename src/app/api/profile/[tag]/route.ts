@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getReviewsByTag, getGamesByReviewer } from '@/lib/reviewStore';
 import { getFollowerCount, getFollowingCount, isFollowing } from '@/lib/followStore';
 import { getSession } from '@/lib/auth';
+import { findUserByTag } from '@/lib/userStore';
 
 function computeReputation(reviews: { classification: string }[]) {
   const total = reviews.length;
@@ -16,12 +17,17 @@ export async function GET(
   req: NextRequest,
   { params }: { params: { tag: string } },
 ) {
-  const [reviews, followers, following, games] = await Promise.all([
+  const [reviews, followers, following, games, rawUser] = await Promise.all([
     getReviewsByTag(params.tag),
     getFollowerCount(params.tag),
     getFollowingCount(params.tag),
     getGamesByReviewer(params.tag),
+    findUserByTag(params.tag),
   ]);
+
+  const user = rawUser
+    ? { displayName: rawUser.displayName, bio: rawUser.bio, gamerTag: rawUser.gamerTag }
+    : null;
 
   const helpful = reviews.filter((r) => r.classification === 'helpful');
   const spam    = reviews.filter((r) => r.classification === 'spam');
@@ -49,5 +55,6 @@ export async function GET(
     },
     social: { followers, following, viewerFollows },
     games,
+    user,
   });
 }

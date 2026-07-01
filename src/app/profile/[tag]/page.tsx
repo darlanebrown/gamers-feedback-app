@@ -8,6 +8,7 @@ import mainStyles from '@/app/page.module.css';
 type Reputation = { score: number; badge: 'Gold' | 'Silver' | 'Bronze' | null };
 type Stats = { total: number; helpful: number; spam: number; toxic: number; avgRating: number };
 type Social = { followers: number; following: number; viewerFollows: boolean };
+type UserInfo = { displayName: string | null; bio: string | null; gamerTag: string } | null;
 
 const BADGE_COLORS: Record<string, string> = {
   Gold:   '#ffd700',
@@ -22,6 +23,7 @@ export default function ProfilePage({ params }: { params: { tag: string } }) {
   const [reputation, setReputation] = useState<Reputation>({ score: 0, badge: null });
   const [stats, setStats]           = useState<Stats>({ total: 0, helpful: 0, spam: 0, toxic: 0, avgRating: 0 });
   const [social, setSocial]         = useState<Social>({ followers: 0, following: 0, viewerFollows: false });
+  const [userInfo, setUserInfo]     = useState<UserInfo>(null);
   const [loading, setLoading]       = useState(true);
   const [followLoading, setFollowLoading] = useState(false);
   const [filter, setFilter]         = useState<'all' | 'helpful' | 'spam' | 'toxic'>('all');
@@ -43,6 +45,7 @@ export default function ProfilePage({ params }: { params: { tag: string } }) {
         setReputation(data.reputation ?? { score: 0, badge: null });
         setStats(data.stats ?? { total: 0, helpful: 0, spam: 0, toxic: 0, avgRating: 0 });
         setSocial(data.social ?? { followers: 0, following: 0, viewerFollows: false });
+        setUserInfo(data.user ?? null);
       })
       .finally(() => setLoading(false));
   };
@@ -78,7 +81,19 @@ export default function ProfilePage({ params }: { params: { tag: string } }) {
             </div>
             <div className={styles.headerInfo}>
               <div className={styles.headerTop}>
-                <h1 className={styles.tag}>{tag}</h1>
+                <div>
+                  {userInfo?.displayName ? (
+                    <>
+                      <h1 className={styles.displayName}>{userInfo.displayName}</h1>
+                      <p className={styles.tagSub}>{tag}</p>
+                    </>
+                  ) : (
+                    <h1 className={styles.tag}>{tag}</h1>
+                  )}
+                  {userInfo?.bio && (
+                    <p className={styles.bio}>{userInfo.bio}</p>
+                  )}
+                </div>
                 {currentUserTag && currentUserTag !== tag && (
                   <button
                     className={`${styles.followBtn} ${social.viewerFollows ? styles.followBtnActive : ''}`}
