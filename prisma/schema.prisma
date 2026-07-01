@@ -91,3 +91,17 @@ model Notification {
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
 }
+
+model Draft {
+  id          String   @id @default(cuid())
+  reviewerTag String   @unique
+  gameTitle   String?
+  platform    String?
+  rating      Int?
+  headline    String?
+  body        String?
+  pros        String?
+  cons        String?
+  playtime    String?
+  updatedAt   DateTime @updatedAt
+}
