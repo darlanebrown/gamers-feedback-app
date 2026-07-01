@@ -35,7 +35,7 @@ export default async function GamePage({ params }: Props) {
       <nav className={styles.breadcrumb}>
         <a href="/" className={styles.navLink}>← Reviews</a>
         <span className={styles.sep}>/</span>
-        <a href="/leaderboard" className={styles.navLink}>Leaderboard</a>
+        <a href="/games" className={styles.navLink}>Games</a>
         <span className={styles.sep}>/</span>
         <span style={{ color: 'var(--text-muted)' }}>{title}</span>
       </nav>

@@ -61,7 +61,9 @@ npx jest --no-coverage # skip coverage report (faster)
 | `api/trending-route` | `api/trending-route.test.ts` | 4 |
 | `lib/recommendationsService` | `lib/recommendationsService.test.ts` | 6 |
 | `api/recommendations-route` | `api/recommendations-route.test.ts` | 4 |
-| **Total** | **39 suites** | **261** |
+| `lib/reviewedGames` | `lib/reviewedGames.test.ts` | 5 |
+| `api/games-index-route` | `api/games-index-route.test.ts` | 4 |
+| **Total** | **41 suites** | **270** |
 
 ## Test File Structure
 
@@ -84,7 +86,8 @@ src/__tests__/
 │   ├── askService.test.ts        — askQuestion RAG flow (5 tests)
 │   ├── gameAnalytics.test.ts     — getGameAnalytics + ratingTrend sparkline data (11 tests)
 │   ├── trendingService.test.ts   — getTrendingGames rolling-window groupBy (5 tests)
-│   └── recommendationsService.test.ts — collaborative-filtering recommendations (6 tests)
+│   ├── recommendationsService.test.ts — collaborative-filtering recommendations (6 tests)
+│   └── reviewedGames.test.ts         — getReviewedGames groupBy + sort + pagination (5 tests)
 └── api/
     ├── reviews.test.ts           — GET + POST /api/reviews (16 tests)
     ├── classify.test.ts          — POST /api/classify (7 tests)
@@ -107,7 +110,8 @@ src/__tests__/
     ├── ask-route.test.ts         — GET /api/ask?q= (5 tests)
     ├── game-analytics-route.test.ts — GET /api/games/[title]/analytics (4 tests)
     ├── trending-route.test.ts    — GET /api/trending (4 tests)
-    └── recommendations-route.test.ts — GET /api/recommendations (4 tests)
+    ├── recommendations-route.test.ts — GET /api/recommendations (4 tests)
+    └── games-index-route.test.ts    — GET /api/games index (4 tests)
 ```
 
 ---
@@ -637,6 +641,27 @@ Mocks `@/lib/recommendationsService`. Tests `GET /api/recommendations`.
 - Returns 200 with `{ recommendations }` array
 - Calls `getRecommendations` with decoded tag and `limit: 6`
 - Returns 500 when `getRecommendations` throws
+
+---
+
+### `lib/reviewedGames.test.ts` — 5 tests
+Mocks `@/lib/prisma`. Tests `getReviewedGames` in `src/lib/gameAnalytics.ts`.
+
+- Returns empty array when no helpful reviews exist
+- Passes `take` (limit) and `skip` (offset) to `groupBy`
+- Maps rows to `ReviewedGame` shape (`gameTitle`, `reviewCount`, `avgRating`)
+- Rounds `avgRating` to 1 decimal place
+- Orders by `_avg.rating` descending when `sort` is `"rating"`
+
+---
+
+### `api/games-index-route.test.ts` — 4 tests
+Mocks `@/lib/gameAnalytics`. Tests `GET /api/games` (index route).
+
+- Returns 200 with `{ games }` array
+- Passes `sort`, `limit`, and `offset` from query params
+- Defaults to `sort: 'reviews'`, `limit: 24`, `offset: 0`
+- Returns 500 when `getReviewedGames` throws
 
 ---
 
