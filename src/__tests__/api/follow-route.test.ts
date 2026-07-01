@@ -17,19 +17,25 @@ jest.mock('@/lib/userStore', () => ({
   findUserByTag: jest.fn(),
 }));
 
+jest.mock('@/lib/emailService', () => ({
+  sendFollowEmail: jest.fn().mockResolvedValue(undefined),
+}));
+
 import { NextRequest } from 'next/server';
 import { POST, DELETE } from '@/app/api/profile/[tag]/follow/route';
 import { getSession } from '@/lib/auth';
 import { followUser, unfollowUser, isFollowing } from '@/lib/followStore';
 import { findUserByTag } from '@/lib/userStore';
 import { createNotification } from '@/lib/notificationStore';
+import { sendFollowEmail } from '@/lib/emailService';
 
-const mockSession    = getSession       as jest.Mock;
-const mockFollow     = followUser       as jest.Mock;
-const mockUnfollow   = unfollowUser     as jest.Mock;
-const mockIsFollowing = isFollowing     as jest.Mock;
-const mockFindTag    = findUserByTag    as jest.Mock;
-const mockNotify     = createNotification as jest.Mock;
+const mockSession     = getSession         as jest.Mock;
+const mockFollow      = followUser         as jest.Mock;
+const mockUnfollow    = unfollowUser       as jest.Mock;
+const mockIsFollowing = isFollowing        as jest.Mock;
+const mockFindTag     = findUserByTag      as jest.Mock;
+const mockNotify      = createNotification as jest.Mock;
+const mockFollowEmail = sendFollowEmail    as jest.Mock;
 
 const SESSION = { id: 'u1', email: 'darla@test.com', gamerTag: 'Darla#1' };
 const TARGET  = { id: 'u2', email: 'player@test.com', gamerTag: 'Player#99' };
@@ -37,6 +43,8 @@ const TARGET  = { id: 'u2', email: 'player@test.com', gamerTag: 'Player#99' };
 beforeEach(() => {
   jest.resetAllMocks();
   mockNotify.mockResolvedValue(undefined);
+  (jest.requireMock('@/lib/emailService') as { sendFollowEmail: jest.Mock })
+    .sendFollowEmail.mockResolvedValue(undefined);
 });
 
 function makeReq(method: string) {
@@ -75,6 +83,17 @@ describe('POST /api/profile/[tag]/follow', () => {
     expect(res.status).toBe(200);
     expect(mockFollow).toHaveBeenCalledWith('Darla#1', 'Player#99');
     expect(body.following).toBe(true);
+  });
+
+  it('sends a follow email to the target user', async () => {
+    mockSession.mockResolvedValue(SESSION);
+    mockFindTag.mockResolvedValue(TARGET);
+    mockFollow.mockResolvedValue({});
+    mockIsFollowing.mockResolvedValue(true);
+
+    await POST(makeReq('POST'), { params: { tag: 'Player#99' } });
+
+    expect(mockFollowEmail).toHaveBeenCalledWith('player@test.com', 'Darla#1');
   });
 });
 

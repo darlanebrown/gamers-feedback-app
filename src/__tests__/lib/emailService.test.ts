@@ -6,7 +6,7 @@ jest.mock('resend', () => ({
   })),
 }));
 
-import { sendBombingEmail, sendClassificationEmail } from '@/lib/emailService';
+import { sendBombingEmail, sendClassificationEmail, sendFollowEmail, sendVoteEmail, sendReclassifyEmail } from '@/lib/emailService';
 
 beforeEach(() => {
   jest.resetAllMocks();
@@ -87,6 +87,91 @@ describe('sendClassificationEmail', () => {
     delete process.env.RESEND_API_KEY;
 
     await sendClassificationEmail('rev-3', 'Game', 'User#1', 'spam');
+
+    expect(mockSend).not.toHaveBeenCalled();
+  });
+});
+
+describe('sendFollowEmail', () => {
+  it('sends a follow notification to the followed user', async () => {
+    mockSend.mockResolvedValue({ id: 'email-4' });
+
+    await sendFollowEmail('player@test.com', 'Darla#1');
+
+    expect(mockSend).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to:      'player@test.com',
+        subject: expect.stringMatching(/follow/i),
+        html:    expect.stringContaining('Darla#1'),
+      }),
+    );
+  });
+
+  it('does nothing when RESEND_API_KEY is not set', async () => {
+    delete process.env.RESEND_API_KEY;
+
+    await sendFollowEmail('player@test.com', 'Darla#1');
+
+    expect(mockSend).not.toHaveBeenCalled();
+  });
+});
+
+describe('sendVoteEmail', () => {
+  it('sends an upvote notification to the review author', async () => {
+    mockSend.mockResolvedValue({ id: 'email-5' });
+
+    await sendVoteEmail('author@test.com', 'Darla#1', 'Elden Ring', 'up');
+
+    expect(mockSend).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to:      'author@test.com',
+        subject: expect.stringMatching(/upvote|vote/i),
+        html:    expect.stringContaining('Elden Ring'),
+      }),
+    );
+  });
+
+  it('sends a downvote notification', async () => {
+    mockSend.mockResolvedValue({ id: 'email-6' });
+
+    await sendVoteEmail('author@test.com', 'Darla#1', 'FIFA 25', 'down');
+
+    expect(mockSend).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to:      'author@test.com',
+        html:    expect.stringContaining('FIFA 25'),
+      }),
+    );
+  });
+
+  it('does nothing when RESEND_API_KEY is not set', async () => {
+    delete process.env.RESEND_API_KEY;
+
+    await sendVoteEmail('author@test.com', 'Darla#1', 'Game', 'up');
+
+    expect(mockSend).not.toHaveBeenCalled();
+  });
+});
+
+describe('sendReclassifyEmail', () => {
+  it('sends a reclassify notification to the review author', async () => {
+    mockSend.mockResolvedValue({ id: 'email-7' });
+
+    await sendReclassifyEmail('author@test.com', 'Hades', 'helpful');
+
+    expect(mockSend).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to:      'author@test.com',
+        subject: expect.stringMatching(/review|reclassif/i),
+        html:    expect.stringContaining('Hades'),
+      }),
+    );
+  });
+
+  it('does nothing when RESEND_API_KEY is not set', async () => {
+    delete process.env.RESEND_API_KEY;
+
+    await sendReclassifyEmail('author@test.com', 'Hades', 'spam');
 
     expect(mockSend).not.toHaveBeenCalled();
   });

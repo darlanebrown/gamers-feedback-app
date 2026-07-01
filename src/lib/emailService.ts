@@ -25,6 +25,60 @@ export async function sendBombingEmail(gameTitle: string, count: number): Promis
   });
 }
 
+export async function sendFollowEmail(toEmail: string, followerTag: string): Promise<void> {
+  if (!ready()) return;
+  await client().emails.send({
+    from:    'Gamers Feedback <notifications@gamersfeedback.app>',
+    to:      toEmail,
+    subject: `${followerTag} is now following you`,
+    html: `
+      <h2>New Follower</h2>
+      <p><strong>${followerTag}</strong> started following you on Gamers Feedback.</p>
+      <p><a href="${baseUrl()}/profile/${encodeURIComponent(followerTag)}">View their profile →</a></p>
+    `,
+  });
+}
+
+export async function sendVoteEmail(
+  toEmail: string,
+  voterTag: string,
+  gameTitle: string,
+  type: 'up' | 'down',
+): Promise<void> {
+  if (!ready()) return;
+  const icon = type === 'up' ? '👍' : '👎';
+  const label = type === 'up' ? 'upvoted' : 'downvoted';
+  await client().emails.send({
+    from:    'Gamers Feedback <notifications@gamersfeedback.app>',
+    to:      toEmail,
+    subject: `${icon} ${voterTag} ${label} your review of ${gameTitle}`,
+    html: `
+      <h2>Vote on Your Review</h2>
+      <p><strong>${voterTag}</strong> ${label} your review of <strong>${gameTitle}</strong>.</p>
+      <p><a href="${baseUrl()}">See your reviews →</a></p>
+    `,
+  });
+}
+
+export async function sendReclassifyEmail(
+  toEmail: string,
+  gameTitle: string,
+  classification: string,
+): Promise<void> {
+  if (!ready()) return;
+  await client().emails.send({
+    from:    'Gamers Feedback <notifications@gamersfeedback.app>',
+    to:      toEmail,
+    subject: `Your review of ${gameTitle} was reclassified`,
+    html: `
+      <h2>Review Update</h2>
+      <p>A moderator reclassified your review of <strong>${gameTitle}</strong>
+      as <strong>${classification}</strong>.</p>
+      <p><a href="${baseUrl()}/my-reviews">View your reviews →</a></p>
+    `,
+  });
+}
+
 export async function sendClassificationEmail(
   reviewId: string,
   gameTitle: string,

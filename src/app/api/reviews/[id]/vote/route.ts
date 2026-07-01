@@ -3,6 +3,8 @@ import { getSession } from '@/lib/auth';
 import { upsertVote, removeVote, getVoteCounts, getUserVote, VoteType } from '@/lib/voteStore';
 import { getReviewById } from '@/lib/reviewStore';
 import { createNotification } from '@/lib/notificationStore';
+import { findUserByTag } from '@/lib/userStore';
+import { sendVoteEmail } from '@/lib/emailService';
 
 export async function GET(
   req: NextRequest,
@@ -41,6 +43,11 @@ export async function POST(
       params.id,
       review.gameTitle,
     ).catch(() => {});
+    findUserByTag(review.reviewerTag)
+      .then((author) => {
+        if (author) sendVoteEmail(author.email, session.gamerTag, review.gameTitle, type as 'up' | 'down').catch(() => {});
+      })
+      .catch(() => {});
   }
   return NextResponse.json({ ok: true, votes });
 }

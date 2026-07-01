@@ -8,6 +8,14 @@ jest.mock('@/lib/notificationStore', () => ({
   createNotification: jest.fn(),
 }));
 
+jest.mock('@/lib/userStore', () => ({
+  findUserByTag: jest.fn(),
+}));
+
+jest.mock('@/lib/emailService', () => ({
+  sendReclassifyEmail: jest.fn().mockResolvedValue(undefined),
+}));
+
 import { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { GET  } from '@/app/api/admin/reviews/route';
@@ -15,12 +23,16 @@ import { PATCH } from '@/app/api/admin/reviews/[id]/route';
 import { requireAdmin } from '@/lib/adminMiddleware';
 import { getAllReviews, getReviewById, updateReviewClassification } from '@/lib/reviewStore';
 import { createNotification } from '@/lib/notificationStore';
+import { findUserByTag } from '@/lib/userStore';
+import { sendReclassifyEmail } from '@/lib/emailService';
 
-const mockGuard  = requireAdmin               as jest.Mock;
-const mockGetAll = getAllReviews              as jest.Mock;
-const mockGetOne = getReviewById             as jest.Mock;
-const mockUpdate = updateReviewClassification as jest.Mock;
-const mockNotify = createNotification         as jest.Mock;
+const mockGuard         = requireAdmin               as jest.Mock;
+const mockGetAll        = getAllReviews              as jest.Mock;
+const mockGetOne        = getReviewById             as jest.Mock;
+const mockUpdate        = updateReviewClassification as jest.Mock;
+const mockNotify        = createNotification         as jest.Mock;
+const mockFindTag       = findUserByTag              as jest.Mock;
+const mockReclassEmail  = sendReclassifyEmail        as jest.Mock;
 
 function makeReview(overrides = {}) {
   return {
@@ -40,6 +52,9 @@ const FORBID_FAIL = NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 beforeEach(() => {
   jest.resetAllMocks();
   mockNotify.mockResolvedValue(undefined);
+  mockFindTag.mockResolvedValue({ id: 'u1', email: 'darla@test.com', gamerTag: 'Darla#1' });
+  (jest.requireMock('@/lib/emailService') as { sendReclassifyEmail: jest.Mock })
+    .sendReclassifyEmail.mockResolvedValue(undefined);
 });
 
 // ── GET /api/admin/reviews ────────────────────────────────────────────────────
@@ -115,6 +130,20 @@ describe('PATCH /api/admin/reviews/[id]', () => {
     const res = await PATCH(req, { params: { id: 'r1' } });
     expect(res.status).toBe(200);
     expect(mockUpdate).toHaveBeenCalledWith('r1', 'spam', 'Admin override');
+  });
+
+  it('sends a reclassify email to the review author', async () => {
+    mockGuard.mockResolvedValue(ADMIN_PASS);
+    mockGetOne.mockResolvedValue(makeReview({ classification: 'helpful' }));
+    mockUpdate.mockResolvedValue(undefined);
+    const req = new NextRequest('http://localhost/api/admin/reviews/r1', {
+      method: 'PATCH', body: JSON.stringify({ classification: 'spam', reason: 'Admin override' }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    await PATCH(req, { params: { id: 'r1' } });
+
+    expect(mockReclassEmail).toHaveBeenCalledWith('darla@test.com', 'Hades', 'spam');
   });
 
   it('returns 400 for an invalid classification value', async () => {
