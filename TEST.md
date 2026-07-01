@@ -64,7 +64,9 @@ npx jest --no-coverage # skip coverage report (faster)
 | `lib/reviewedGames` | `lib/reviewedGames.test.ts` | 5 |
 | `api/games-index-route` | `api/games-index-route.test.ts` | 4 |
 | `lib/similarReviews` | `lib/similarReviews.test.ts` | 4 |
-| **Total** | **42 suites** | **274** |
+| `lib/reviewMutations` | `lib/reviewMutations.test.ts` | 4 |
+| `api/review-mutation-route` | `api/review-mutation-route.test.ts` | 6 |
+| **Total** | **44 suites** | **284** |
 
 ## Test File Structure
 
@@ -113,7 +115,8 @@ src/__tests__/
     ├── game-analytics-route.test.ts — GET /api/games/[title]/analytics (4 tests)
     ├── trending-route.test.ts    — GET /api/trending (4 tests)
     ├── recommendations-route.test.ts — GET /api/recommendations (4 tests)
-    └── games-index-route.test.ts    — GET /api/games index (4 tests)
+    ├── games-index-route.test.ts    — GET /api/games index (4 tests)
+    └── review-mutation-route.test.ts — PATCH + DELETE /api/reviews/[id] (6 tests)
 ```
 
 ---
@@ -674,6 +677,31 @@ Mocks `@/lib/prisma`. Tests `findSimilarReviewsById` in `src/lib/reviewStore.ts`
 - Calls `$queryRaw` exactly once (single subquery, no round-trip for embedding)
 - Maps raw rows to full `Review` objects
 - Converts numeric `rating` field from raw DB string to number
+
+---
+
+### `lib/reviewMutations.test.ts` — 4 tests
+Mocks `@/lib/prisma`. Tests `updateReview` and `deleteReview` in `src/lib/reviewStore.ts`.
+
+- `updateReview` returns null and skips the DB update when reviewer tag doesn't match
+- `updateReview` resets `classification` to `'pending'` and clears `classificationReason` on every edit
+- `deleteReview` returns false and skips the DB delete when reviewer tag doesn't match
+- `deleteReview` calls `prisma.review.delete` and returns true when reviewer matches
+
+---
+
+### `api/review-mutation-route.test.ts` — 6 tests
+Mocks `@/lib/reviewStore` and `@/lib/auth`. Tests `PATCH` + `DELETE /api/reviews/[id]`.
+
+**PATCH** (3 tests)
+- 401 when not authenticated
+- 404 when `updateReview` returns null (review not found or not owner)
+- 200 with updated review on success
+
+**DELETE** (3 tests)
+- 401 when not authenticated
+- 403 when the authenticated user doesn't own the review and is not admin
+- 200 with `{ ok: true }` when owner deletes their review
 
 ---
 

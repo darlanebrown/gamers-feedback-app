@@ -203,6 +203,30 @@ export async function getRecentReviewCountByTag(
   });
 }
 
+export async function updateReview(
+  id: string,
+  reviewerTag: string,
+  fields: {
+    headline?: string; body?: string; pros?: string;
+    cons?: string; rating?: number; playtime?: string;
+  },
+): Promise<Review | null> {
+  const existing = await prisma.review.findUnique({ where: { id } });
+  if (!existing || existing.reviewerTag !== reviewerTag) return null;
+  const row = await prisma.review.update({
+    where: { id },
+    data: { ...fields, classification: 'pending', classificationReason: null },
+  });
+  return toReview(row);
+}
+
+export async function deleteReview(id: string, reviewerTag: string): Promise<boolean> {
+  const existing = await prisma.review.findUnique({ where: { id } });
+  if (!existing || existing.reviewerTag !== reviewerTag) return false;
+  await prisma.review.delete({ where: { id } });
+  return true;
+}
+
 export async function storeEmbedding(id: string, embedding: number[]): Promise<void> {
   const vec = `[${embedding.join(',')}]`;
   await prisma.$executeRaw`UPDATE "Review" SET embedding = ${vec}::vector WHERE id = ${id}`;

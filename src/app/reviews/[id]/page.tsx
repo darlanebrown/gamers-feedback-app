@@ -1,9 +1,12 @@
 import { Metadata } from 'next';
+import { cookies } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { getReviewById, findSimilarReviewsById } from '@/lib/reviewStore';
 import { getOrFetchGame } from '@/lib/gameService';
+import { verifyToken, SESSION_COOKIE } from '@/lib/auth';
 import styles from './review-page.module.css';
 import ShareButton from './ShareButton';
+import ReviewActions from './ReviewActions';
 
 type Props = { params: { id: string } };
 
@@ -48,10 +51,15 @@ export default async function ReviewPage({ params }: Props) {
   const review = await getReviewById(params.id);
   if (!review) notFound();
 
-  const [game, similar] = await Promise.all([
+  const token = cookies().get(SESSION_COOKIE)?.value;
+  const [game, similar, session] = await Promise.all([
     getOrFetchGame(review.gameTitle).catch(() => null),
     findSimilarReviewsById(params.id, 3).catch(() => []),
+    token ? verifyToken(token).catch(() => null) : Promise.resolve(null),
   ]);
+
+  const isOwner = session?.gamerTag === review.reviewerTag;
+  const isAdmin = session?.role === 'admin';
   const cls = CLASS_MAP[review.classification] ?? CLASS_MAP.pending;
   const ratingColor = review.rating >= 8 ? 'var(--neon)' : review.rating >= 5 ? 'var(--yellow)' : 'var(--red)';
 
@@ -148,6 +156,20 @@ export default async function ReviewPage({ params }: Props) {
           </time>
           <ShareButton reviewId={review.id} />
         </footer>
+
+        {(isOwner || isAdmin) && (
+          <ReviewActions
+            reviewId={review.id}
+            initial={{
+              headline: review.headline,
+              body:     review.body,
+              pros:     review.pros ?? '',
+              cons:     review.cons ?? '',
+              rating:   review.rating,
+              playtime: review.playtime ?? '',
+            }}
+          />
+        )}
       </article>
 
       {similar.length > 0 && (

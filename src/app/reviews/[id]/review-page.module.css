@@ -349,3 +349,138 @@
   font-size: 0.75rem;
   color: var(--text-dim);
 }
+
+/* ── Owner actions ── */
+.ownerActions {
+  display: flex;
+  gap: 10px;
+  padding: 16px 0 0;
+  border-top: 1px solid var(--border);
+  margin-top: 16px;
+}
+
+.editBtn {
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.editBtn:hover { border-color: var(--neon); color: var(--neon); }
+
+.deleteBtn {
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.deleteBtn:hover { border-color: var(--red); color: var(--red); }
+
+/* ── Edit form ── */
+.editForm {
+  padding: 20px 0 0;
+  border-top: 1px solid var(--border);
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.editField { display: flex; flex-direction: column; gap: 6px; }
+
+.editLabel {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.editInput {
+  padding: 8px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  outline: none;
+}
+.editInput:focus { border-color: var(--neon); }
+
+.editTextarea {
+  padding: 8px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  resize: vertical;
+  outline: none;
+}
+.editTextarea:focus { border-color: var(--neon); }
+
+.editSlider { width: 100%; accent-color: var(--neon); }
+
+.editRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.editActions {
+  display: flex;
+  gap: 10px;
+}
+
+.saveBtn {
+  padding: 9px 20px;
+  background: var(--neon);
+  border: none;
+  border-radius: 6px;
+  color: var(--black);
+  font-family: var(--font-display);
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.saveBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.cancelBtn {
+  padding: 9px 16px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-family: var(--font-display);
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+/* ── Delete confirm ── */
+.deleteConfirm {
+  padding: 16px 0 0;
+  border-top: 1px solid var(--border);
+  margin-top: 16px;
+}
+
+.deleteWarning {
+  color: var(--red);
+  font-size: 0.9rem;
+  margin-bottom: 14px;
+}
+
+.editError {
+  color: var(--red);
+  font-size: 0.82rem;
+}
