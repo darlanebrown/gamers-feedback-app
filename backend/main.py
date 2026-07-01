@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from openai import AsyncOpenAI
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
 
 from backend.classify import classify_by_rules
 
@@ -51,16 +51,29 @@ app.add_middleware(
 
 # ── Pydantic models ───────────────────────────────────────────────────────────
 
+VALID_PLATFORMS = [
+    "PC", "PlayStation 5", "PlayStation 4", "Xbox Series X/S",
+    "Xbox One", "Nintendo Switch", "Steam Deck", "Mobile",
+]
+
+
 class ReviewCreate(BaseModel):
-    gameTitle: str
-    platform: str
-    rating: int
-    headline: str
-    body: str
-    pros: str = ""
-    cons: str = ""
-    playtime: str = ""
-    reviewerTag: str
+    gameTitle:   str = Field(..., min_length=2, max_length=100)
+    platform:    str
+    rating:      int = Field(..., ge=1, le=10)
+    headline:    str = Field(..., min_length=5, max_length=120)
+    body:        str = Field(..., min_length=20)
+    pros:        str = Field("", max_length=500)
+    cons:        str = Field("", max_length=500)
+    playtime:    str = Field("", max_length=50)
+    reviewerTag: str = Field(..., min_length=2, max_length=50)
+
+    @field_validator("platform")
+    @classmethod
+    def platform_must_be_valid(cls, v: str) -> str:
+        if v not in VALID_PLATFORMS:
+            raise ValueError(f"platform must be one of: {', '.join(VALID_PLATFORMS)}")
+        return v
 
 
 class ClassifyRequest(BaseModel):

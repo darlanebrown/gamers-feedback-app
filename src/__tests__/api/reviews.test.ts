@@ -75,6 +75,86 @@ describe('GET /api/reviews', () => {
   });
 });
 
+const VALID_BODY = {
+  gameTitle: 'Hades', platform: 'PC', rating: 9,
+  headline: 'Roguelike perfection',
+  body: 'Every run feels completely fresh thanks to procedural generation and tight combat.',
+  pros: 'Tight gameplay', cons: 'Repetitive music',
+  playtime: '80 hours', reviewerTag: 'Player#99',
+};
+
+describe('POST /api/reviews — validation', () => {
+  it('rejects rating below 1', async () => {
+    const req = new NextRequest('http://localhost/api/reviews', {
+      method: 'POST',
+      body: JSON.stringify({ ...VALID_BODY, rating: 0 }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects rating above 10', async () => {
+    const req = new NextRequest('http://localhost/api/reviews', {
+      method: 'POST',
+      body: JSON.stringify({ ...VALID_BODY, rating: 11 }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects headline shorter than 5 characters', async () => {
+    const req = new NextRequest('http://localhost/api/reviews', {
+      method: 'POST',
+      body: JSON.stringify({ ...VALID_BODY, headline: 'Ok' }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects headline longer than 120 characters', async () => {
+    const req = new NextRequest('http://localhost/api/reviews', {
+      method: 'POST',
+      body: JSON.stringify({ ...VALID_BODY, headline: 'x'.repeat(121) }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects body shorter than 20 characters', async () => {
+    const req = new NextRequest('http://localhost/api/reviews', {
+      method: 'POST',
+      body: JSON.stringify({ ...VALID_BODY, body: 'Too short.' }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects invalid platform', async () => {
+    const req = new NextRequest('http://localhost/api/reviews', {
+      method: 'POST',
+      body: JSON.stringify({ ...VALID_BODY, platform: 'Atari 2600' }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects gameTitle shorter than 2 characters', async () => {
+    const req = new NextRequest('http://localhost/api/reviews', {
+      method: 'POST',
+      body: JSON.stringify({ ...VALID_BODY, gameTitle: 'X' }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+  });
+});
+
 describe('POST /api/reviews', () => {
   it('creates a review and returns 201', async () => {
     const created = makeReview({ classification: 'pending' });
@@ -104,7 +184,7 @@ describe('POST /api/reviews', () => {
 
     const req = new NextRequest('http://localhost/api/reviews', {
       method: 'POST',
-      body: JSON.stringify({ gameTitle: 'Test' }),
+      body: JSON.stringify(VALID_BODY),
       headers: { 'Content-Type': 'application/json' },
     });
 
