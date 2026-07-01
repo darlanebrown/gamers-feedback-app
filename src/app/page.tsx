@@ -995,6 +995,7 @@ export default function Home() {
             <a href={`/profile/${encodeURIComponent(currentUser.gamerTag)}`} className={styles.authTag}>
               {currentUser.gamerTag}
             </a>
+            <a href="/settings" className={styles.authLink}>Settings</a>
             <button className={styles.authLink} onClick={handleLogout}>Sign out</button>
           </div>
         ) : (

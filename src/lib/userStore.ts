@@ -5,6 +5,8 @@ export type User = {
   email: string;
   passwordHash: string;
   gamerTag: string;
+  displayName: string | null;
+  bio: string | null;
   role: string;
   banned: boolean;
   createdAt: Date;
@@ -49,4 +51,29 @@ export async function updateUserById(
 
 export async function countUsers(): Promise<number> {
   return prisma.user.count();
+}
+
+export type ProfileUpdate = {
+  displayName?: string;
+  bio?: string;
+  passwordHash?: string;
+};
+
+export async function updateProfile(id: string, data: ProfileUpdate): Promise<PublicUser> {
+  const updated = await prisma.user.update({ where: { id }, data });
+  const { passwordHash: _, ...rest } = updated as unknown as User;
+  return rest as PublicUser;
+}
+
+export async function anonymizeUser(id: string): Promise<void> {
+  await prisma.user.update({
+    where: { id },
+    data: {
+      email: `deleted_${id}@deleted.invalid`,
+      passwordHash: '',
+      displayName: null,
+      bio: null,
+      banned: true,
+    },
+  });
 }
