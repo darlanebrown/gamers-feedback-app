@@ -22,19 +22,35 @@ function toReview(row: any): Review {
   };
 }
 
-export async function getAllReviews(): Promise<Review[]> {
+export async function getAllReviews(
+  { skip = 0, take = 20 }: { skip?: number; take?: number } = {},
+): Promise<Review[]> {
   const rows = await prisma.review.findMany({
     orderBy: { createdAt: 'desc' },
+    skip,
+    take,
   });
   return rows.map(toReview);
 }
 
-export async function getHelpfulReviews(): Promise<Review[]> {
+export async function countAllReviews(): Promise<number> {
+  return prisma.review.count({});
+}
+
+export async function getHelpfulReviews(
+  { skip = 0, take = 20 }: { skip?: number; take?: number } = {},
+): Promise<Review[]> {
   const rows = await prisma.review.findMany({
     where: { classification: 'helpful' },
     orderBy: { createdAt: 'desc' },
+    skip,
+    take,
   });
   return rows.map(toReview);
+}
+
+export async function countHelpfulReviews(): Promise<number> {
+  return prisma.review.count({ where: { classification: 'helpful' } });
 }
 
 export type GameReviewSort = 'newest' | 'highest' | 'lowest';

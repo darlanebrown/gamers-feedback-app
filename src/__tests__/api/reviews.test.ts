@@ -1,9 +1,11 @@
 jest.mock('@/lib/reviewStore', () => ({
-  getAllReviews:    jest.fn(),
-  getHelpfulReviews: jest.fn(),
-  getReviewsByGame: jest.fn(),
-  addReview:        jest.fn(),
+  getAllReviews:             jest.fn(),
+  getHelpfulReviews:        jest.fn(),
+  getReviewsByGame:         jest.fn(),
+  addReview:                jest.fn(),
   getRecentReviewCountByTag: jest.fn(),
+  countAllReviews:          jest.fn(),
+  countHelpfulReviews:      jest.fn(),
 }));
 
 jest.mock('@/lib/alertService', () => ({
@@ -12,7 +14,7 @@ jest.mock('@/lib/alertService', () => ({
 
 import { NextRequest } from 'next/server';
 import { GET, POST } from '@/app/api/reviews/route';
-import { getAllReviews, getHelpfulReviews, getReviewsByGame, addReview, getRecentReviewCountByTag } from '@/lib/reviewStore';
+import { getAllReviews, getHelpfulReviews, getReviewsByGame, addReview, getRecentReviewCountByTag, countAllReviews, countHelpfulReviews } from '@/lib/reviewStore';
 import { checkForBombing } from '@/lib/alertService';
 
 const mockGetAll          = getAllReviews              as jest.Mock;
@@ -21,6 +23,8 @@ const mockGetByGame       = getReviewsByGame           as jest.Mock;
 const mockAdd             = addReview                  as jest.Mock;
 const mockCheckBombing    = checkForBombing            as jest.Mock;
 const mockRecentCount     = getRecentReviewCountByTag  as jest.Mock;
+const mockCountAll        = countAllReviews            as jest.Mock;
+const mockCountHelp       = countHelpfulReviews        as jest.Mock;
 
 function makeReview(overrides = {}) {
   return {
@@ -43,32 +47,50 @@ function makeReview(overrides = {}) {
 beforeEach(() => {
   jest.resetAllMocks();
   mockCheckBombing.mockResolvedValue(undefined);
-  mockRecentCount.mockResolvedValue(0); // under the limit by default
+  mockRecentCount.mockResolvedValue(0);
+  mockCountAll.mockResolvedValue(0);
+  mockCountHelp.mockResolvedValue(0);
 });
 
 describe('GET /api/reviews', () => {
-  it('returns all reviews when no query params', async () => {
+  it('returns all reviews with default pagination', async () => {
     mockGetAll.mockResolvedValue([makeReview()]);
+    mockCountAll.mockResolvedValue(1);
     const req = new NextRequest('http://localhost/api/reviews');
     const res = await GET(req);
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(mockGetAll).toHaveBeenCalledTimes(1);
+    expect(mockGetAll).toHaveBeenCalledWith({ skip: 0, take: 20 });
     expect(body.reviews).toHaveLength(1);
-    expect(body.reviews[0].gameTitle).toBe('Hades');
+    expect(body.total).toBe(1);
+    expect(body.page).toBe(1);
+    expect(body.limit).toBe(20);
   });
 
-  it('calls getHelpfulReviews when filter=helpful', async () => {
-    mockGetHelp.mockResolvedValue([makeReview()]);
-    const req = new NextRequest('http://localhost/api/reviews?filter=helpful');
+  it('passes correct skip for page 2', async () => {
+    mockGetAll.mockResolvedValue([]);
+    mockCountAll.mockResolvedValue(25);
+    const req = new NextRequest('http://localhost/api/reviews?page=2&limit=10');
     await GET(req);
 
-    expect(mockGetHelp).toHaveBeenCalledTimes(1);
+    expect(mockGetAll).toHaveBeenCalledWith({ skip: 10, take: 10 });
+  });
+
+  it('calls getHelpfulReviews and countHelpfulReviews when filter=helpful', async () => {
+    mockGetHelp.mockResolvedValue([makeReview()]);
+    mockCountHelp.mockResolvedValue(5);
+    const req = new NextRequest('http://localhost/api/reviews?filter=helpful');
+    const res = await GET(req);
+    const body = await res.json();
+
+    expect(mockGetHelp).toHaveBeenCalledWith({ skip: 0, take: 20 });
+    expect(mockCountHelp).toHaveBeenCalledTimes(1);
+    expect(body.total).toBe(5);
     expect(mockGetAll).not.toHaveBeenCalled();
   });
 
-  it('calls getReviewsByGame when game param provided', async () => {
+  it('calls getReviewsByGame when game param provided (no pagination)', async () => {
     mockGetByGame.mockResolvedValue([makeReview()]);
     const req = new NextRequest('http://localhost/api/reviews?game=Hades');
     await GET(req);

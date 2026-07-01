@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
   getAllReviews,
+  countAllReviews,
   getHelpfulReviews,
+  countHelpfulReviews,
   getReviewsByGame,
   addReview,
   getRecentReviewCountByTag,
@@ -38,19 +40,31 @@ function validate(body: Record<string, unknown>): string | null {
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const game = searchParams.get('game');
+  const game   = searchParams.get('game');
   const filter = searchParams.get('filter');
+  const page   = Math.max(1, parseInt(searchParams.get('page')  ?? '1',  10));
+  const limit  = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') ?? '20', 10)));
+  const skip   = (page - 1) * limit;
 
-  let reviews;
+  // Game filter bypasses pagination (game pages handle their own sorting/display)
   if (game) {
-    reviews = await getReviewsByGame(game);
-  } else if (filter === 'helpful') {
-    reviews = await getHelpfulReviews();
-  } else {
-    reviews = await getAllReviews();
+    const reviews = await getReviewsByGame(game);
+    return NextResponse.json({ reviews });
   }
 
-  return NextResponse.json({ reviews });
+  if (filter === 'helpful') {
+    const [reviews, total] = await Promise.all([
+      getHelpfulReviews({ skip, take: limit }),
+      countHelpfulReviews(),
+    ]);
+    return NextResponse.json({ reviews, total, page, limit });
+  }
+
+  const [reviews, total] = await Promise.all([
+    getAllReviews({ skip, take: limit }),
+    countAllReviews(),
+  ]);
+  return NextResponse.json({ reviews, total, page, limit });
 }
 
 export async function POST(req: NextRequest) {

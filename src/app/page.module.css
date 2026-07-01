@@ -1381,6 +1381,35 @@
   margin-top: 2px;
 }
 
+/* ── Pagination ── */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 32px 0 16px;
+}
+
+.pageBtn {
+  padding: 8px 20px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-muted);
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.pageBtn:hover:not(:disabled) { border-color: var(--neon); color: var(--neon); }
+.pageBtn:disabled { opacity: 0.35; cursor: default; }
+
+.pageInfo {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+}
+
 /* ── Device strip ── */
 .deviceStrip {
   display: flex;
