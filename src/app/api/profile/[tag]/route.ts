@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getReviewsByTag } from '@/lib/reviewStore';
+import { getReviewsByTag, getGamesByReviewer } from '@/lib/reviewStore';
 import { getFollowerCount, getFollowingCount, isFollowing } from '@/lib/followStore';
 import { getSession } from '@/lib/auth';
 
@@ -16,10 +16,11 @@ export async function GET(
   req: NextRequest,
   { params }: { params: { tag: string } },
 ) {
-  const [reviews, followers, following] = await Promise.all([
+  const [reviews, followers, following, games] = await Promise.all([
     getReviewsByTag(params.tag),
     getFollowerCount(params.tag),
     getFollowingCount(params.tag),
+    getGamesByReviewer(params.tag),
   ]);
 
   const helpful = reviews.filter((r) => r.classification === 'helpful');
@@ -47,5 +48,6 @@ export async function GET(
       avgRating,
     },
     social: { followers, following, viewerFollows },
+    games,
   });
 }

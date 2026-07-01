@@ -565,11 +565,16 @@ function ReviewCard({ review, onClassify, onAnalytics, gameCover, currentUserTag
       )}
 
       <div className={styles.cardFooter}>
-        <time className={styles.timestamp}>
-          {new Date(review.createdAt).toLocaleDateString('en-US', {
-            month: 'short', day: 'numeric', year: 'numeric',
-          })}
-        </time>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <time className={styles.timestamp}>
+            {new Date(review.createdAt).toLocaleDateString('en-US', {
+              month: 'short', day: 'numeric', year: 'numeric',
+            })}
+          </time>
+          <a href={`/reviews/${review.id}`} className={styles.readMoreLink}>
+            Read full review →
+          </a>
+        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {votes !== null && (
             <div className={styles.voteRow}>

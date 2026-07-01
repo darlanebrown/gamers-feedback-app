@@ -67,7 +67,8 @@ npx jest --no-coverage # skip coverage report (faster)
 | `lib/reviewMutations` | `lib/reviewMutations.test.ts` | 4 |
 | `api/review-mutation-route` | `api/review-mutation-route.test.ts` | 6 |
 | `api/vote-get-route` | `api/vote-get-route.test.ts` | 3 |
-| **Total** | **45 suites** | **287** |
+| `lib/reviewerGames` | `lib/reviewerGames.test.ts` | 3 |
+| **Total** | **46 suites** | **290** |
 
 ## Test File Structure
 
@@ -119,6 +120,11 @@ src/__tests__/
     ├── games-index-route.test.ts    — GET /api/games index (4 tests)
     ├── review-mutation-route.test.ts — PATCH + DELETE /api/reviews/[id] (6 tests)
     └── vote-get-route.test.ts        — GET /api/reviews/[id]/vote (3 tests)
+```
+
+```
+src/__tests__/lib/
+    └── reviewerGames.test.ts         — getGamesByReviewer dedup + sort (3 tests)
 ```
 
 ---
@@ -713,6 +719,15 @@ Mocks `@/lib/auth` and `@/lib/voteStore`. Tests `GET /api/reviews/[id]/vote`.
 - Returns votes and `null` userVote when not authenticated; never calls `getUserVote`
 - Returns votes and `userVote` when authenticated; calls `getUserVote` with correct args
 - Returns zero counts when no votes exist for the review
+
+---
+
+### `lib/reviewerGames.test.ts` — 3 tests
+Mocks `@/lib/prisma`. Tests `getGamesByReviewer` in `src/lib/reviewStore.ts`.
+
+- Returns empty array when reviewer has no reviews
+- Returns unique game titles sorted alphabetically (deduplicates repeats)
+- Queries only `helpful`-classified reviews for the given `reviewerTag`
 
 ---
 

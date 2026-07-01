@@ -18,6 +18,7 @@ const BADGE_COLORS: Record<string, string> = {
 export default function ProfilePage({ params }: { params: { tag: string } }) {
   const tag = decodeURIComponent(params.tag);
   const [reviews, setReviews]       = useState<Review[]>([]);
+  const [games, setGames]           = useState<string[]>([]);
   const [reputation, setReputation] = useState<Reputation>({ score: 0, badge: null });
   const [stats, setStats]           = useState<Stats>({ total: 0, helpful: 0, spam: 0, toxic: 0, avgRating: 0 });
   const [social, setSocial]         = useState<Social>({ followers: 0, following: 0, viewerFollows: false });
@@ -38,6 +39,7 @@ export default function ProfilePage({ params }: { params: { tag: string } }) {
       .then((r) => r.json())
       .then((data) => {
         setReviews(data.reviews ?? []);
+        setGames(data.games ?? []);
         setReputation(data.reputation ?? { score: 0, badge: null });
         setStats(data.stats ?? { total: 0, helpful: 0, spam: 0, toxic: 0, avgRating: 0 });
         setSocial(data.social ?? { followers: 0, following: 0, viewerFollows: false });
@@ -123,6 +125,20 @@ export default function ProfilePage({ params }: { params: { tag: string } }) {
             ))}
           </div>
 
+          {/* ── Games Reviewed ── */}
+          {games.length > 0 && (
+            <div className={styles.gamesSection}>
+              <p className={styles.gamesSectionLabel}>Games Reviewed</p>
+              <div className={styles.gameChips}>
+                {games.map((g) => (
+                  <a key={g} href={`/games/${encodeURIComponent(g)}`} className={styles.gameChip}>
+                    {g}
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* ── Filter tabs ── */}
           {reviews.length > 0 && (
             <div className={styles.filterRow}>
@@ -150,7 +166,12 @@ export default function ProfilePage({ params }: { params: { tag: string } }) {
                 <article key={review.id} className={styles.card}>
                   <div className={styles.cardTop}>
                     <div>
-                      <p className={styles.gameTitle}>{review.gameTitle}</p>
+                      <a
+                        href={`/games/${encodeURIComponent(review.gameTitle)}`}
+                        className={styles.gameTitle}
+                      >
+                        {review.gameTitle}
+                      </a>
                       <p className={styles.cardMeta}>{review.platform} · {review.playtime} played</p>
                     </div>
                     <div className={styles.cardRight}>
@@ -170,7 +191,9 @@ export default function ProfilePage({ params }: { params: { tag: string } }) {
                       </span>
                     </div>
                   </div>
-                  <p className={styles.headline}>"{review.headline}"</p>
+                  <a href={`/reviews/${review.id}`} className={styles.headlineLink}>
+                    "{review.headline}"
+                  </a>
                   <p className={styles.body}>{review.body}</p>
                   <time className={styles.time}>
                     {new Date(review.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}

@@ -1251,6 +1251,16 @@
   margin-top: 12px;
 }
 
+.readMoreLink {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-decoration: none;
+  letter-spacing: 0.02em;
+  transition: color 0.15s;
+}
+.readMoreLink:hover { color: var(--neon); }
+
 .voteRow {
   display: flex;
   gap: 6px;

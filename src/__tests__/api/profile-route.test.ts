@@ -1,5 +1,6 @@
 jest.mock('@/lib/reviewStore', () => ({
-  getReviewsByTag: jest.fn(),
+  getReviewsByTag:     jest.fn(),
+  getGamesByReviewer:  jest.fn().mockResolvedValue([]),
 }));
 
 jest.mock('@/lib/followStore', () => ({
