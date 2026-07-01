@@ -704,6 +704,215 @@
   animation: spin 0.7s linear infinite;
 }
 
+/* ── Phase 4: Analytics & Recommendations ── */
+
+/* Clickable game title */
+.gameTitleLink {
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.gameTitleLink:hover { color: var(--neon); }
+
+.analyticsHint {
+  font-size: 12px;
+  margin-left: 6px;
+  opacity: 0.5;
+  vertical-align: super;
+}
+.gameTitleLink:hover .analyticsHint { opacity: 1; }
+
+/* Analytics badge next to modal title */
+.analyticsBadge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border: 1px solid var(--neon);
+  border-radius: 3px;
+  color: var(--neon);
+  margin-left: 12px;
+  vertical-align: middle;
+  letter-spacing: 0.05em;
+}
+
+/* Bomb alert banner */
+.bombBanner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: rgba(255, 71, 87, 0.1);
+  border: 1px solid var(--red);
+  border-radius: 6px;
+  color: var(--red);
+  font-size: 0.88rem;
+  font-weight: 600;
+  margin-bottom: 24px;
+}
+.bombIcon { font-size: 1.1rem; }
+
+/* Analytics grid */
+.analyticsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.analyticsCard {
+  background: var(--black);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 16px;
+  text-align: center;
+}
+
+.analyticsLabel {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+
+.analyticsScore {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.analyticsTrend {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+/* Breakdown bar */
+.analyticsBreakdown {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.breakdownItem {
+  flex: 1;
+  padding: 14px 8px;
+  text-align: center;
+  border-right: 1px solid var(--border);
+}
+.breakdownItem:last-child { border-right: none; }
+
+.breakdownNum {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.breakdownLabel {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.7;
+}
+
+/* Themes */
+.analyticsThemes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.themeList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.themeTag {
+  font-size: 0.8rem;
+  padding: 3px 10px;
+  border: 1px solid;
+  border-radius: 20px;
+  background: transparent;
+}
+
+/* Analytics loading */
+.analyticsLoading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 40px 0;
+  color: var(--text-muted);
+}
+
+/* ── Recommendations Section ── */
+.recsSection {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 32px 24px 48px;
+  border-top: 1px solid var(--border);
+}
+
+.recsTitle {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 16px;
+}
+
+.recGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.recCard {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  transition: border-color 0.15s;
+}
+.recCard:hover { border-color: var(--neon); }
+
+.recRank {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--neon);
+  min-width: 32px;
+  text-align: center;
+  opacity: 0.6;
+}
+
+.recInfo { flex: 1; }
+
+.recTitle {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.recMeta {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
 /* Responsive */
 @media (max-width: 640px) {
   .heroTitle { font-size: 48px; }
@@ -713,4 +922,6 @@
   .proscons { grid-template-columns: 1fr; }
   .cardHeader { flex-direction: column; }
   .modal { padding: 20px; }
+  .analyticsGrid { grid-template-columns: 1fr 1fr; }
+  .analyticsThemes { grid-template-columns: 1fr; }
 }

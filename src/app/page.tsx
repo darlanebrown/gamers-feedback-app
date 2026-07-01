@@ -4,6 +4,25 @@ import { useState, useEffect, useCallback } from 'react';
 import { Review, PLATFORMS } from '@/types';
 import styles from './page.module.css';
 
+type AnalyticsData = {
+  gameTitle: string;
+  totalReviews: number;
+  helpfulCount: number;
+  spamCount: number;
+  toxicCount: number;
+  sentimentScore: number | null;
+  topPros: string[];
+  topCons: string[];
+  bombAlert: boolean;
+  trend: 'improving' | 'declining' | 'stable';
+};
+
+type Recommendation = {
+  gameTitle: string;
+  avgRating: number;
+  reviewCount: number;
+};
+
 // ── Rating display ─────────────────────────────────────────────────────────────
 function RatingBar({ rating }: { rating: number }) {
   const color =
@@ -40,10 +59,207 @@ function ClassBadge({ classification }: { classification: string }) {
   );
 }
 
+// ── Game Analytics Modal ───────────────────────────────────────────────────────
+function GameAnalyticsModal({ gameTitle, apiUrl, onClose }: {
+  gameTitle: string;
+  apiUrl: string;
+  onClose: () => void;
+}) {
+  const [data, setData] = useState<AnalyticsData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`${apiUrl}/api/analytics/${encodeURIComponent(gameTitle)}`)
+      .then((r) => r.json())
+      .then((d) => { setData(d); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, [gameTitle, apiUrl]);
+
+  const trendColor = data?.trend === 'improving'
+    ? 'var(--neon)' : data?.trend === 'declining'
+    ? 'var(--red)' : 'var(--yellow)';
+  const trendIcon = data?.trend === 'improving' ? '↑' : data?.trend === 'declining' ? '↓' : '→';
+
+  return (
+    <div className={styles.modalOverlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className={styles.modal}>
+        <div className={styles.modalHeader}>
+          <h2 className={styles.modalTitle}>
+            {gameTitle}
+            <span className={styles.analyticsBadge}>Analytics</span>
+          </h2>
+          <button className={styles.closeBtn} onClick={onClose} aria-label="Close">✕</button>
+        </div>
+
+        {loading ? (
+          <div className={styles.analyticsLoading}>
+            <div className={styles.loadingSpinner} />
+            <p>Loading analytics…</p>
+          </div>
+        ) : !data ? (
+          <p style={{ color: 'var(--text-muted)' }}>Could not load analytics. Is the Python backend running?</p>
+        ) : (
+          <>
+            {data.bombAlert && (
+              <div className={styles.bombBanner}>
+                <span className={styles.bombIcon}>⚠</span>
+                <span>Review bombing detected — {data.totalReviews}+ negative reviews in the last 2 hours.</span>
+              </div>
+            )}
+
+            <div className={styles.analyticsGrid}>
+              {/* Sentiment score */}
+              <div className={styles.analyticsCard}>
+                <p className={styles.analyticsLabel}>Sentiment Score</p>
+                <p className={styles.analyticsScore} style={{
+                  color: data.sentimentScore !== null
+                    ? data.sentimentScore >= 8 ? 'var(--neon)' : data.sentimentScore >= 5 ? 'var(--yellow)' : 'var(--red)'
+                    : 'var(--text-dim)'
+                }}>
+                  {data.sentimentScore !== null ? `${data.sentimentScore}/10` : 'N/A'}
+                </p>
+              </div>
+
+              {/* Trend */}
+              <div className={styles.analyticsCard}>
+                <p className={styles.analyticsLabel}>Trend</p>
+                <p className={styles.analyticsTrend} style={{ color: trendColor }}>
+                  {trendIcon} {data.trend.charAt(0).toUpperCase() + data.trend.slice(1)}
+                </p>
+              </div>
+
+              {/* Counts */}
+              <div className={styles.analyticsCard}>
+                <p className={styles.analyticsLabel}>Total Reviews</p>
+                <p className={styles.analyticsScore} style={{ color: 'var(--text)' }}>{data.totalReviews}</p>
+              </div>
+            </div>
+
+            {/* Breakdown */}
+            <div className={styles.analyticsBreakdown}>
+              <div className={styles.breakdownItem} style={{ color: 'var(--neon)' }}>
+                <span className={styles.breakdownNum}>{data.helpfulCount}</span>
+                <span className={styles.breakdownLabel}>Verified</span>
+              </div>
+              <div className={styles.breakdownItem} style={{ color: 'var(--red)' }}>
+                <span className={styles.breakdownNum}>{data.spamCount}</span>
+                <span className={styles.breakdownLabel}>Spam</span>
+              </div>
+              <div className={styles.breakdownItem} style={{ color: 'var(--yellow)' }}>
+                <span className={styles.breakdownNum}>{data.toxicCount}</span>
+                <span className={styles.breakdownLabel}>Toxic</span>
+              </div>
+            </div>
+
+            {/* Pros & Cons themes */}
+            {(data.topPros.length > 0 || data.topCons.length > 0) && (
+              <div className={styles.analyticsThemes}>
+                {data.topPros.length > 0 && (
+                  <div>
+                    <p className={styles.analyticsLabel} style={{ color: 'var(--neon)', marginBottom: 8 }}>Top Pros</p>
+                    <div className={styles.themeList}>
+                      {data.topPros.map((p) => (
+                        <span key={p} className={styles.themeTag} style={{ borderColor: 'rgba(0,255,135,0.3)', color: 'var(--neon)' }}>{p}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {data.topCons.length > 0 && (
+                  <div>
+                    <p className={styles.analyticsLabel} style={{ color: 'var(--red)', marginBottom: 8 }}>Top Cons</p>
+                    <div className={styles.themeList}>
+                      {data.topCons.map((c) => (
+                        <span key={c} className={styles.themeTag} style={{ borderColor: 'rgba(255,71,87,0.3)', color: 'var(--red)' }}>{c}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Recommendations Section ────────────────────────────────────────────────────
+function RecommendationsSection({ apiUrl }: { apiUrl: string }) {
+  const [tag, setTag] = useState('');
+  const [recs, setRecs] = useState<Recommendation[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [searched, setSearched] = useState(false);
+
+  const fetchRecs = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!tag.trim()) return;
+    setLoading(true);
+    setError('');
+    setSearched(true);
+    try {
+      const res = await fetch(
+        `${apiUrl}/api/recommendations?reviewerTag=${encodeURIComponent(tag.trim())}`,
+      );
+      if (!res.ok) throw new Error('Request failed');
+      const data = await res.json();
+      setRecs(data.recommendations);
+    } catch {
+      setError('Could not load recommendations. Make sure the Python backend is running.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <section className={styles.recsSection}>
+      <p className={styles.askEyebrow}>Personalized · Based on Your Review History</p>
+      <h2 className={styles.recsTitle}>What should I play next?</h2>
+      <form onSubmit={fetchRecs} className={styles.askForm} style={{ marginBottom: 20 }}>
+        <input
+          className={styles.askInput}
+          value={tag}
+          onChange={(e) => setTag(e.target.value)}
+          placeholder="Enter your gamer tag (e.g. Player#99)"
+        />
+        <button type="submit" className={styles.askBtn} disabled={loading || !tag.trim()}>
+          {loading ? <span className={styles.spinner} /> : 'Get Recs'}
+        </button>
+      </form>
+
+      {error && <p className={styles.askError}>{error}</p>}
+
+      {searched && !loading && recs.length === 0 && !error && (
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+          No recommendations yet — submit some reviews first so we can learn your taste.
+        </p>
+      )}
+
+      {recs.length > 0 && (
+        <div className={styles.recGrid}>
+          {recs.map((rec, i) => (
+            <div key={rec.gameTitle} className={styles.recCard}>
+              <div className={styles.recRank}>#{i + 1}</div>
+              <div className={styles.recInfo}>
+                <p className={styles.recTitle}>{rec.gameTitle}</p>
+                <p className={styles.recMeta}>
+                  Avg rating <strong style={{ color: 'var(--neon)' }}>{rec.avgRating}/10</strong>
+                  {' '}· {rec.reviewCount} {rec.reviewCount === 1 ? 'review' : 'reviews'}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 // ── Review card ────────────────────────────────────────────────────────────────
-function ReviewCard({ review, onClassify }: {
+function ReviewCard({ review, onClassify, onAnalytics }: {
   review: Review;
   onClassify?: (id: string) => void;
+  onAnalytics?: (gameTitle: string) => void;
 }) {
   const borderColor =
     review.classification === 'helpful'
@@ -59,7 +275,14 @@ function ReviewCard({ review, onClassify }: {
       <div className={styles.cardGlow} />
       <header className={styles.cardHeader}>
         <div>
-          <h3 className={styles.gameTitle}>{review.gameTitle}</h3>
+          <h3
+            className={`${styles.gameTitle} ${onAnalytics ? styles.gameTitleLink : ''}`}
+            onClick={() => onAnalytics?.(review.gameTitle)}
+            title={onAnalytics ? `View ${review.gameTitle} analytics` : undefined}
+          >
+            {review.gameTitle}
+            {onAnalytics && <span className={styles.analyticsHint}>↗</span>}
+          </h3>
           <div className={styles.cardMeta}>
             <span className={styles.platform}>{review.platform}</span>
             <span className={styles.dot}>·</span>
@@ -377,6 +600,9 @@ export default function Home() {
   const [filter, setFilter] = useState<'all' | 'helpful' | 'spam' | 'toxic'>('helpful');
   const [search, setSearch] = useState('');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'warn' | 'error' } | null>(null);
+  const [analyticsGame, setAnalyticsGame] = useState<string | null>(null);
+
+  const fastapiUrl = process.env.NEXT_PUBLIC_FASTAPI_URL ?? '';
 
   const fetchReviews = useCallback(async () => {
     setLoading(true);
@@ -511,11 +737,15 @@ export default function Home() {
                 key={review.id}
                 review={review}
                 onClassify={handleClassify}
+                onAnalytics={fastapiUrl ? setAnalyticsGame : undefined}
               />
             ))}
           </div>
         )}
       </section>
+
+      {/* ── Recommendations ── */}
+      {fastapiUrl && <RecommendationsSection apiUrl={fastapiUrl} />}
 
       {/* ── Submit modal ── */}
       {toast && (
@@ -523,6 +753,15 @@ export default function Home() {
           {toast.message}
           <button className={styles.toastClose} onClick={() => setToast(null)}>✕</button>
         </div>
+      )}
+
+      {/* ── Game Analytics Modal ── */}
+      {analyticsGame && fastapiUrl && (
+        <GameAnalyticsModal
+          gameTitle={analyticsGame}
+          apiUrl={fastapiUrl}
+          onClose={() => setAnalyticsGame(null)}
+        />
       )}
 
       {showModal && (

@@ -1,12 +1,13 @@
 import json
 import os
 import uuid
+from collections import Counter, defaultdict
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 import asyncpg
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from openai import AsyncOpenAI
 from pydantic import BaseModel, Field, field_validator
@@ -19,6 +20,9 @@ load_dotenv(_root / ".env")
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
+
+BOMB_THRESHOLD = int(os.environ.get("BOMB_THRESHOLD", "10"))
+BOMB_WINDOW_HOURS = int(os.environ.get("BOMB_WINDOW_HOURS", "2"))
 
 pool: asyncpg.Pool = None
 
@@ -329,4 +333,155 @@ async def ask(body: AskRequest):
             {"gameTitle": r["gameTitle"], "headline": r["headline"], "rating": r["rating"]}
             for r in rows
         ],
+    }
+
+
+# ── Phase 4: Intelligence Layer ───────────────────────────────────────────────
+
+@app.get("/api/games/{title}/bomb-check")
+async def bomb_check(title: str):
+    async with pool.acquire() as conn:
+        count = await conn.fetchval(
+            """SELECT COUNT(*) FROM "Review"
+               WHERE LOWER("gameTitle") = LOWER($1)
+               AND (rating <= 4 OR classification = 'toxic')
+               AND "createdAt" >= NOW() - ($2 * INTERVAL '1 hour')""",
+            title, BOMB_WINDOW_HOURS,
+        )
+    return {
+        "gameTitle": title,
+        "isBombing": count >= BOMB_THRESHOLD,
+        "negativeReviewsInWindow": count,
+        "threshold": BOMB_THRESHOLD,
+        "windowHours": BOMB_WINDOW_HOURS,
+    }
+
+
+@app.get("/api/games/{title}/trends")
+async def get_trends(title: str):
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """SELECT
+                   DATE_TRUNC('week', "createdAt") AS week,
+                   AVG(rating)::float               AS avg_rating,
+                   COUNT(*)::int                    AS review_count
+               FROM "Review"
+               WHERE LOWER("gameTitle") = LOWER($1)
+               AND classification = 'helpful'
+               GROUP BY DATE_TRUNC('week', "createdAt")
+               ORDER BY week""",
+            title,
+        )
+
+    periods = [
+        {
+            "week": row["week"].isoformat(),
+            "avgRating": round(float(row["avg_rating"]), 1),
+            "reviewCount": row["review_count"],
+        }
+        for row in rows
+    ]
+
+    overall_avg = None
+    if periods:
+        overall_avg = round(sum(p["avgRating"] for p in periods) / len(periods), 1)
+
+    trend = "stable"
+    if len(periods) >= 2:
+        mid = len(periods) // 2
+        first_half_avg = sum(p["avgRating"] for p in periods[:mid]) / mid
+        second_half_avg = sum(p["avgRating"] for p in periods[mid:]) / (len(periods) - mid)
+        diff = second_half_avg - first_half_avg
+        if diff > 0.5:
+            trend = "improving"
+        elif diff < -0.5:
+            trend = "declining"
+
+    return {
+        "gameTitle": title,
+        "trend": trend,
+        "periods": periods,
+        "overallAvg": overall_avg,
+    }
+
+
+@app.get("/api/recommendations")
+async def get_recommendations(reviewerTag: str = Query(...)):
+    async with pool.acquire() as conn:
+        reviewer_games = await conn.fetch(
+            """SELECT DISTINCT "gameTitle" FROM "Review"
+               WHERE "reviewerTag" = $1""",
+            reviewerTag,
+        )
+        recs = await conn.fetch(
+            """SELECT "gameTitle",
+                      AVG(rating)::float AS avg_rating,
+                      COUNT(*)::int      AS review_count
+               FROM "Review"
+               WHERE classification = 'helpful'
+               AND "gameTitle" NOT IN (
+                   SELECT DISTINCT "gameTitle" FROM "Review"
+                   WHERE "reviewerTag" = $1
+               )
+               GROUP BY "gameTitle"
+               ORDER BY avg_rating DESC, review_count DESC
+               LIMIT 5""",
+            reviewerTag,
+        )
+
+    return {
+        "reviewerTag": reviewerTag,
+        "recommendations": [
+            {
+                "gameTitle": r["gameTitle"],
+                "avgRating": round(float(r["avg_rating"]), 1),
+                "reviewCount": r["review_count"],
+            }
+            for r in recs
+        ],
+    }
+
+
+def _extract_themes(rows: list, field: str) -> list[str]:
+    all_text = ", ".join(r[field] or "" for r in rows if r.get(field))
+    items = [t.strip() for t in all_text.split(",") if t.strip()]
+    return [theme for theme, _ in Counter(items).most_common(5)]
+
+
+@app.get("/api/analytics/{title}")
+async def get_analytics(title: str):
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """SELECT rating, classification, pros, cons
+               FROM "Review"
+               WHERE LOWER("gameTitle") = LOWER($1)""",
+            title,
+        )
+        bomb_count = await conn.fetchval(
+            """SELECT COUNT(*) FROM "Review"
+               WHERE LOWER("gameTitle") = LOWER($1)
+               AND (rating <= 4 OR classification = 'toxic')
+               AND "createdAt" >= NOW() - ($2 * INTERVAL '1 hour')""",
+            title, BOMB_WINDOW_HOURS,
+        )
+
+    helpful = [r for r in rows if r["classification"] == "helpful"]
+    spam    = [r for r in rows if r["classification"] == "spam"]
+    toxic   = [r for r in rows if r["classification"] == "toxic"]
+
+    sentiment_score = None
+    if helpful:
+        sentiment_score = round(sum(r["rating"] for r in helpful) / len(helpful), 1)
+
+    return {
+        "gameTitle": title,
+        "totalReviews": len(rows),
+        "helpfulCount": len(helpful),
+        "spamCount": len(spam),
+        "toxicCount": len(toxic),
+        "sentimentScore": sentiment_score,
+        "topPros": _extract_themes(helpful, "pros"),
+        "topCons": _extract_themes(helpful, "cons"),
+        "bombAlert": bomb_count >= BOMB_THRESHOLD,
+        "trend": "stable",
     }
