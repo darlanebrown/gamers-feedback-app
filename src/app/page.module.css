@@ -1034,6 +1034,77 @@
   color: var(--text-muted);
 }
 
+/* ── Trending Section ── */
+.trendingSection {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 32px 24px;
+  border-top: 1px solid var(--border);
+}
+
+.trendingGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+@media (max-width: 560px) {
+  .trendingGrid { grid-template-columns: 1fr; }
+}
+
+.trendCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  text-decoration: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+.trendCard:hover {
+  border-color: var(--neon);
+  background: var(--card-hover);
+}
+
+.trendRank {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--neon);
+  min-width: 24px;
+  text-align: center;
+  opacity: 0.55;
+  flex-shrink: 0;
+}
+
+.trendInfo { flex: 1; min-width: 0; }
+
+.trendTitle {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.trendMeta {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.trendRating {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
 /* ── Recommendations Section ── */
 .recsSection {
   max-width: 760px;
