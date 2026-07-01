@@ -2,6 +2,17 @@ jest.mock('@/lib/reviewStore', () => ({
   getReviewsByTag: jest.fn(),
 }));
 
+jest.mock('@/lib/followStore', () => ({
+  getFollowerCount:  jest.fn().mockResolvedValue(0),
+  getFollowingCount: jest.fn().mockResolvedValue(0),
+  isFollowing:       jest.fn().mockResolvedValue(false),
+}));
+
+jest.mock('@/lib/auth', () => ({
+  getSession:    jest.fn().mockResolvedValue(null),
+  SESSION_COOKIE: 'gf_session',
+}));
+
 import { NextRequest } from 'next/server';
 import { GET } from '@/app/api/profile/[tag]/route';
 import { getReviewsByTag } from '@/lib/reviewStore';

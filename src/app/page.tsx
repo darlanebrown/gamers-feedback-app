@@ -403,12 +403,42 @@ function RecommendationsSection({ apiUrl }: { apiUrl: string }) {
 }
 
 // ── Review card ────────────────────────────────────────────────────────────────
-function ReviewCard({ review, onClassify, onAnalytics, gameCover }: {
+function ReviewCard({ review, onClassify, onAnalytics, gameCover, currentUserTag }: {
   review: Review;
   onClassify?: (id: string) => void;
   onAnalytics?: (gameTitle: string) => void;
   gameCover?: string | null;
+  currentUserTag?: string | null;
 }) {
+  const [votes, setVotes] = useState<{ up: number; down: number } | null>(null);
+  const [userVote, setUserVote] = useState<'up' | 'down' | null>(null);
+  const [voteLoading, setVoteLoading] = useState(false);
+
+  useEffect(() => {
+    fetch(`/api/reviews/${review.id}/vote`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => {
+        if (d) { setVotes(d.votes); setUserVote(d.userVote ?? null); }
+      })
+      .catch(() => {});
+  }, [review.id]);
+
+  const handleVote = async (type: 'up' | 'down') => {
+    if (!currentUserTag) return;
+    setVoteLoading(true);
+    if (userVote === type) {
+      const res = await fetch(`/api/reviews/${review.id}/vote`, { method: 'DELETE' });
+      if (res.ok) { const d = await res.json(); setVotes(d.votes); setUserVote(null); }
+    } else {
+      const res = await fetch(`/api/reviews/${review.id}/vote`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type }),
+      });
+      if (res.ok) { const d = await res.json(); setVotes(d.votes); setUserVote(type); }
+    }
+    setVoteLoading(false);
+  };
   const borderColor =
     review.classification === 'helpful'
       ? 'var(--neon)'
@@ -492,11 +522,33 @@ function ReviewCard({ review, onClassify, onAnalytics, gameCover }: {
         <p className={styles.classReason}>AI: {review.classificationReason}</p>
       )}
 
-      <time className={styles.timestamp}>
-        {new Date(review.createdAt).toLocaleDateString('en-US', {
-          month: 'short', day: 'numeric', year: 'numeric',
-        })}
-      </time>
+      <div className={styles.cardFooter}>
+        <time className={styles.timestamp}>
+          {new Date(review.createdAt).toLocaleDateString('en-US', {
+            month: 'short', day: 'numeric', year: 'numeric',
+          })}
+        </time>
+        {votes !== null && (
+          <div className={styles.voteRow}>
+            <button
+              className={`${styles.voteBtn} ${userVote === 'up' ? styles.voteBtnActive : ''}`}
+              onClick={() => handleVote('up')}
+              disabled={voteLoading || !currentUserTag}
+              title={currentUserTag ? 'Helpful' : 'Sign in to vote'}
+            >
+              ▲ {votes.up}
+            </button>
+            <button
+              className={`${styles.voteBtn} ${styles.voteBtnDown} ${userVote === 'down' ? styles.voteBtnDownActive : ''}`}
+              onClick={() => handleVote('down')}
+              disabled={voteLoading || !currentUserTag}
+              title={currentUserTag ? 'Not helpful' : 'Sign in to vote'}
+            >
+              ▼ {votes.down}
+            </button>
+          </div>
+        )}
+      </div>
     </article>
   );
 }
@@ -770,6 +822,10 @@ export default function Home() {
   const [currentUser, setCurrentUser] = useState<SessionUser | null>(null);
   const [showAuth, setShowAuth] = useState(false);
   const [gameCovers, setGameCovers] = useState<Record<string, string>>({});
+  const [feedTab, setFeedTab] = useState<'all' | 'following'>('all');
+  const [feedReviews, setFeedReviews] = useState<Review[]>([]);
+  const [feedFollowedCount, setFeedFollowedCount] = useState(0);
+  const [feedLoading, setFeedLoading] = useState(false);
 
   const fastapiUrl = process.env.NEXT_PUBLIC_FASTAPI_URL ?? '';
 
@@ -830,6 +886,23 @@ export default function Home() {
   }, [filter, search]);
 
   useEffect(() => { fetchReviews(); }, [fetchReviews]);
+
+  const fetchFeed = useCallback(async () => {
+    if (!currentUser) return;
+    setFeedLoading(true);
+    try {
+      const res = await fetch('/api/feed');
+      if (res.ok) {
+        const data = await res.json();
+        setFeedReviews(data.reviews ?? []);
+        setFeedFollowedCount(data.followedCount ?? 0);
+      }
+    } finally {
+      setFeedLoading(false);
+    }
+  }, [currentUser]);
+
+  useEffect(() => { if (feedTab === 'following') fetchFeed(); }, [feedTab, fetchFeed]);
 
   const handleClassify = async (reviewId: string) => {
     const review = reviews.find((r) => r.id === reviewId);
@@ -909,7 +982,26 @@ export default function Home() {
       {/* ── Ask AI ── */}
       <AskAI />
 
-      {/* ── Filter bar ── */}
+      {/* ── Feed tab switcher ── */}
+      {currentUser && (
+        <div className={styles.feedTabBar}>
+          <button
+            className={`${styles.feedTabBtn} ${feedTab === 'all' ? styles.feedTabBtnActive : ''}`}
+            onClick={() => setFeedTab('all')}
+          >
+            All Reviews
+          </button>
+          <button
+            className={`${styles.feedTabBtn} ${feedTab === 'following' ? styles.feedTabBtnActive : ''}`}
+            onClick={() => setFeedTab('following')}
+          >
+            Following
+          </button>
+        </div>
+      )}
+
+      {/* ── Filter bar (All tab only) ── */}
+      {feedTab === 'all' && (
       <section className={styles.filterSection}>
         <div className={styles.filterBar}>
           <div className={styles.filterTabs}>
@@ -931,10 +1023,35 @@ export default function Home() {
           />
         </div>
       </section>
+      )}
 
       {/* ── Reviews feed ── */}
       <section className={styles.feed}>
-        {loading ? (
+        {feedTab === 'following' ? (
+          feedLoading ? (
+            <div className={styles.loading}><div className={styles.loadingSpinner} /><p>Loading feed...</p></div>
+          ) : feedReviews.length === 0 ? (
+            <div className={styles.empty}>
+              <p className={styles.emptyIcon}>👥</p>
+              <p className={styles.emptyText}>
+                {feedFollowedCount === 0 ? 'You\'re not following anyone yet.' : 'No reviews from people you follow.'}
+              </p>
+              <p className={styles.emptySubtext}>Visit a reviewer's profile and hit Follow to build your feed.</p>
+            </div>
+          ) : (
+            <div className={styles.reviewGrid}>
+              {feedReviews.map((review) => (
+                <ReviewCard
+                  key={review.id}
+                  review={review}
+                  onAnalytics={fastapiUrl ? setAnalyticsGame : undefined}
+                  gameCover={gameCovers[review.gameTitle]}
+                  currentUserTag={currentUser?.gamerTag}
+                />
+              ))}
+            </div>
+          )
+        ) : loading ? (
           <div className={styles.loading}>
             <div className={styles.loadingSpinner} />
             <p>Loading reviews...</p>
@@ -959,6 +1076,7 @@ export default function Home() {
                 onClassify={handleClassify}
                 onAnalytics={fastapiUrl ? setAnalyticsGame : undefined}
                 gameCover={gameCovers[review.gameTitle]}
+                currentUserTag={currentUser?.gamerTag}
               />
             ))}
           </div>

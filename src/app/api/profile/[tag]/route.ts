@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getReviewsByTag } from '@/lib/reviewStore';
+import { getFollowerCount, getFollowingCount, isFollowing } from '@/lib/followStore';
+import { getSession } from '@/lib/auth';
 
 function computeReputation(reviews: { classification: string }[]) {
   const total = reviews.length;
@@ -11,10 +13,15 @@ function computeReputation(reviews: { classification: string }[]) {
 }
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: { tag: string } },
 ) {
-  const reviews = await getReviewsByTag(params.tag);
+  const [reviews, followers, following] = await Promise.all([
+    getReviewsByTag(params.tag),
+    getFollowerCount(params.tag),
+    getFollowingCount(params.tag),
+  ]);
+
   const helpful = reviews.filter((r) => r.classification === 'helpful');
   const spam    = reviews.filter((r) => r.classification === 'spam');
   const toxic   = reviews.filter((r) => r.classification === 'toxic');
@@ -22,6 +29,11 @@ export async function GET(
     helpful.length > 0
       ? helpful.reduce((sum, r) => sum + r.rating, 0) / helpful.length
       : 0;
+
+  const session = await getSession(req);
+  const viewerFollows = session
+    ? await isFollowing(session.gamerTag, params.tag)
+    : false;
 
   return NextResponse.json({
     gamerTag: params.tag,
@@ -34,5 +46,6 @@ export async function GET(
       toxic: toxic.length,
       avgRating,
     },
+    social: { followers, following, viewerFollows },
   });
 }

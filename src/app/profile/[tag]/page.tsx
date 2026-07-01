@@ -7,6 +7,7 @@ import mainStyles from '@/app/page.module.css';
 
 type Reputation = { score: number; badge: 'Gold' | 'Silver' | 'Bronze' | null };
 type Stats = { total: number; helpful: number; spam: number; toxic: number; avgRating: number };
+type Social = { followers: number; following: number; viewerFollows: boolean };
 
 const BADGE_COLORS: Record<string, string> = {
   Gold:   '#ffd700',
@@ -16,22 +17,43 @@ const BADGE_COLORS: Record<string, string> = {
 
 export default function ProfilePage({ params }: { params: { tag: string } }) {
   const tag = decodeURIComponent(params.tag);
-  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviews, setReviews]       = useState<Review[]>([]);
   const [reputation, setReputation] = useState<Reputation>({ score: 0, badge: null });
-  const [stats, setStats] = useState<Stats>({ total: 0, helpful: 0, spam: 0, toxic: 0, avgRating: 0 });
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'helpful' | 'spam' | 'toxic'>('all');
+  const [stats, setStats]           = useState<Stats>({ total: 0, helpful: 0, spam: 0, toxic: 0, avgRating: 0 });
+  const [social, setSocial]         = useState<Social>({ followers: 0, following: 0, viewerFollows: false });
+  const [loading, setLoading]       = useState(true);
+  const [followLoading, setFollowLoading] = useState(false);
+  const [filter, setFilter]         = useState<'all' | 'helpful' | 'spam' | 'toxic'>('all');
+  const [currentUserTag, setCurrentUserTag] = useState<string | null>(null);
 
   useEffect(() => {
+    fetch('/api/auth/me')
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => d && setCurrentUserTag(d.user?.gamerTag ?? null))
+      .catch(() => {});
+  }, []);
+
+  const loadProfile = () => {
     fetch(`/api/profile/${encodeURIComponent(tag)}`)
       .then((r) => r.json())
       .then((data) => {
         setReviews(data.reviews ?? []);
         setReputation(data.reputation ?? { score: 0, badge: null });
         setStats(data.stats ?? { total: 0, helpful: 0, spam: 0, toxic: 0, avgRating: 0 });
+        setSocial(data.social ?? { followers: 0, following: 0, viewerFollows: false });
       })
       .finally(() => setLoading(false));
-  }, [tag]);
+  };
+
+  useEffect(() => { loadProfile(); }, [tag]);
+
+  const handleFollow = async () => {
+    setFollowLoading(true);
+    const method = social.viewerFollows ? 'DELETE' : 'POST';
+    await fetch(`/api/profile/${encodeURIComponent(tag)}/follow`, { method });
+    await loadProfile();
+    setFollowLoading(false);
+  };
 
   const displayed = filter === 'all'
     ? reviews
@@ -53,7 +75,23 @@ export default function ProfilePage({ params }: { params: { tag: string } }) {
               {tag.charAt(0).toUpperCase()}
             </div>
             <div className={styles.headerInfo}>
-              <h1 className={styles.tag}>{tag}</h1>
+              <div className={styles.headerTop}>
+                <h1 className={styles.tag}>{tag}</h1>
+                {currentUserTag && currentUserTag !== tag && (
+                  <button
+                    className={`${styles.followBtn} ${social.viewerFollows ? styles.followBtnActive : ''}`}
+                    onClick={handleFollow}
+                    disabled={followLoading}
+                  >
+                    {followLoading ? '…' : social.viewerFollows ? 'Following' : '+ Follow'}
+                  </button>
+                )}
+              </div>
+              <div className={styles.socialCounts}>
+                <span><strong>{social.followers}</strong> followers</span>
+                <span className={styles.dot}>·</span>
+                <span><strong>{social.following}</strong> following</span>
+              </div>
               {reputation.badge && (
                 <span
                   className={styles.badge}

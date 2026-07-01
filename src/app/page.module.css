@@ -973,6 +973,76 @@
   color: var(--text-dim);
 }
 
+/* ── Feed tab switcher ── */
+.feedTabBar {
+  display: flex;
+  gap: 4px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px 0;
+}
+
+.feedTabBtn {
+  padding: 8px 20px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.feedTabBtn:hover { color: var(--text); }
+
+.feedTabBtnActive {
+  color: var(--neon) !important;
+  border-bottom-color: var(--neon) !important;
+}
+
+/* ── Vote buttons ── */
+.cardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+
+.voteRow {
+  display: flex;
+  gap: 6px;
+}
+
+.voteBtn {
+  padding: 4px 10px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--font-display);
+}
+.voteBtn:hover:not(:disabled) { border-color: var(--neon); color: var(--neon); }
+.voteBtn:disabled { opacity: 0.4; cursor: default; }
+
+.voteBtnActive {
+  border-color: var(--neon) !important;
+  color: var(--neon) !important;
+  background: rgba(0, 255, 135, 0.08) !important;
+}
+
+.voteBtnDown:hover:not(:disabled) { border-color: var(--red); color: var(--red); }
+
+.voteBtnDownActive {
+  border-color: var(--red) !important;
+  color: var(--red) !important;
+  background: rgba(255, 71, 87, 0.08) !important;
+}
+
 /* ── Game metadata banner (in analytics modal) ── */
 .gameMetaBanner {
   display: flex;
