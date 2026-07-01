@@ -10,7 +10,7 @@ jest.mock('@/lib/prisma', () => ({
   },
 }));
 
-import { createComment, getComments, deleteComment, countComments } from '@/lib/commentStore';
+import { createComment, getComments, deleteComment, countComments, deleteCommentAsAdmin } from '@/lib/commentStore';
 import { prisma } from '@/lib/prisma';
 
 const mockCreate     = (prisma.reviewComment as any).create     as jest.Mock;
@@ -107,5 +107,26 @@ describe('countComments', () => {
 
     expect(mockCount).toHaveBeenCalledWith({ where: { reviewId: 'r1' } });
     expect(result).toBe(5);
+  });
+});
+
+describe('deleteCommentAsAdmin', () => {
+  it('deletes the comment without checking authorship', async () => {
+    mockFindUnique.mockResolvedValue(COMMENT);
+    mockDelete.mockResolvedValue(COMMENT);
+
+    const result = await deleteCommentAsAdmin('c1');
+
+    expect(mockDelete).toHaveBeenCalledWith({ where: { id: 'c1' } });
+    expect(result).toBe(true);
+  });
+
+  it('returns false when comment does not exist', async () => {
+    mockFindUnique.mockResolvedValue(null);
+
+    const result = await deleteCommentAsAdmin('c1');
+
+    expect(mockDelete).not.toHaveBeenCalled();
+    expect(result).toBe(false);
   });
 });
