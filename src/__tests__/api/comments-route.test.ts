@@ -8,9 +8,10 @@ jest.mock('@/lib/reviewStore', () => ({
 }));
 
 jest.mock('@/lib/commentStore', () => ({
-  createComment: jest.fn(),
-  getComments:   jest.fn(),
-  deleteComment: jest.fn(),
+  createComment:  jest.fn(),
+  getComments:    jest.fn(),
+  deleteComment:  jest.fn(),
+  countComments:  jest.fn(),
 }));
 
 jest.mock('@/lib/emailService', () => ({
@@ -29,7 +30,7 @@ import { NextRequest } from 'next/server';
 import { GET, POST, DELETE } from '@/app/api/reviews/[id]/comments/route';
 import { getSession } from '@/lib/auth';
 import { getReviewById } from '@/lib/reviewStore';
-import { createComment, getComments, deleteComment } from '@/lib/commentStore';
+import { createComment, getComments, deleteComment, countComments } from '@/lib/commentStore';
 import { sendCommentEmail } from '@/lib/emailService';
 import { createNotification } from '@/lib/notificationStore';
 import { findUserByTag } from '@/lib/userStore';
@@ -39,6 +40,7 @@ const mockGetReview        = getReviewById       as jest.Mock;
 const mockCreateComment    = createComment       as jest.Mock;
 const mockGetComments      = getComments         as jest.Mock;
 const mockDeleteComment    = deleteComment       as jest.Mock;
+const mockCountComments    = countComments       as jest.Mock;
 const mockSendCommentEmail = sendCommentEmail    as jest.Mock;
 const mockCreateNotif      = createNotification  as jest.Mock;
 const mockFindUserByTag    = findUserByTag       as jest.Mock;
@@ -53,6 +55,7 @@ const COMMENT = {
 beforeEach(() => {
   jest.resetAllMocks();
   mockGetComments.mockResolvedValue([COMMENT]);
+  mockCountComments.mockResolvedValue(1);
   mockGetReview.mockResolvedValue(REVIEW);
   mockFindUserByTag.mockResolvedValue({ email: 'player99@test.com', gamerTag: 'Player#99' });
   (jest.requireMock('@/lib/commentStore') as { createComment: jest.Mock })
@@ -99,11 +102,30 @@ describe('GET /api/reviews/[id]/comments', () => {
     expect(res.status).toBe(404);
   });
 
-  it('includes total comment count', async () => {
+  it('includes total comment count independently of page size', async () => {
     mockSession.mockResolvedValue(null);
     const res = await GET(makeGetReq(), { params: { id: 'r1' } });
     const body = await res.json();
     expect(typeof body.total).toBe('number');
+  });
+
+  it('returns page and limit in response', async () => {
+    mockSession.mockResolvedValue(null);
+    const res = await GET(
+      new NextRequest('http://localhost/api/reviews/r1/comments?page=2&limit=5'),
+      { params: { id: 'r1' } },
+    );
+    const body = await res.json();
+    expect(body.page).toBe(2);
+    expect(body.limit).toBe(5);
+  });
+
+  it('uses default page=1 and limit=20 when not specified', async () => {
+    mockSession.mockResolvedValue(null);
+    const res = await GET(makeGetReq(), { params: { id: 'r1' } });
+    const body = await res.json();
+    expect(body.page).toBe(1);
+    expect(body.limit).toBe(20);
   });
 });
 
