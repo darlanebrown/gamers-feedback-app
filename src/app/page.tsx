@@ -802,14 +802,11 @@ function SubmitModal({ onClose, onSuccess, defaultTag }: {
 
 // ── Ask AI ────────────────────────────────────────────────────────────────────
 function AskAI() {
-  const apiUrl = process.env.NEXT_PUBLIC_FASTAPI_URL;
   const [question, setQuestion] = useState('');
-  const [answer, setAnswer] = useState('');
-  const [sources, setSources] = useState<{ gameTitle: string; headline: string; rating: number }[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  if (!apiUrl) return null;
+  const [answer, setAnswer]     = useState('');
+  const [sources, setSources]   = useState<{ gameTitle: string; headline: string; rating: number }[]>([]);
+  const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState('');
 
   const handleAsk = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -819,17 +816,13 @@ function AskAI() {
     setAnswer('');
     setSources([]);
     try {
-      const res = await fetch(`${apiUrl}/api/ask`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question }),
-      });
+      const res = await fetch(`/api/ask?q=${encodeURIComponent(question.trim())}`);
       if (!res.ok) throw new Error('Ask failed');
       const data = await res.json();
       setAnswer(data.answer);
       setSources(data.sources || []);
     } catch {
-      setError('Could not reach the Python backend. Make sure it is running on port 8000.');
+      setError('Could not get an answer. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -846,7 +839,7 @@ function AskAI() {
           placeholder='Ask anything — "Is Elden Ring worth it on PC?"'
         />
         <button type="submit" className={styles.askBtn} disabled={loading || !question.trim()}>
-          {loading ? <span className={styles.spinner} /> : 'Ask AI'}
+          {loading ? '…' : 'Ask AI'}
         </button>
       </form>
 

@@ -202,3 +202,21 @@ export async function getRecentReviewCountByTag(
     where: { reviewerTag, createdAt: { gte: since } },
   });
 }
+
+export async function storeEmbedding(id: string, embedding: number[]): Promise<void> {
+  const vec = `[${embedding.join(',')}]`;
+  await prisma.$executeRaw`UPDATE "Review" SET embedding = ${vec}::vector WHERE id = ${id}`;
+}
+
+export async function findSimilarReviews(embedding: number[], limit: number): Promise<Review[]> {
+  const vec = `[${embedding.join(',')}]`;
+  const rows = await prisma.$queryRaw<any[]>`
+    SELECT id, "gameTitle", platform, rating, headline, body, pros, cons, playtime,
+           "reviewerTag", classification, "classificationReason", "createdAt"
+    FROM "Review"
+    WHERE classification = 'helpful' AND embedding IS NOT NULL
+    ORDER BY embedding <=> ${vec}::vector
+    LIMIT ${limit}
+  `;
+  return rows.map((row) => toReview({ ...row, rating: Number(row.rating) }));
+}
