@@ -3,6 +3,7 @@ import { getOrFetchGame } from '@/lib/gameService';
 import { getGameAnalytics } from '@/lib/gameAnalytics';
 import { getReviewsByGame } from '@/lib/reviewStore';
 import styles from './game-page.module.css';
+import WriteReviewButton from './WriteReviewButton';
 
 type Props = { params: { title: string } };
 
@@ -203,9 +204,12 @@ export default async function GamePage({ params }: Props) {
 
       {/* ── Review list ── */}
       <div className={styles.section}>
-        <p className={styles.sectionTitle}>
-          Verified Reviews ({analytics.helpfulCount})
-        </p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+          <p className={styles.sectionTitle} style={{ marginBottom: 0 }}>
+            Verified Reviews ({analytics.helpfulCount})
+          </p>
+          <WriteReviewButton gameTitle={title} />
+        </div>
         {reviews.length === 0 ? (
           <p className={styles.emptyReviews}>No verified reviews yet.</p>
         ) : (

@@ -68,7 +68,8 @@ npx jest --no-coverage # skip coverage report (faster)
 | `api/review-mutation-route` | `api/review-mutation-route.test.ts` | 6 |
 | `api/vote-get-route` | `api/vote-get-route.test.ts` | 3 |
 | `lib/reviewerGames` | `lib/reviewerGames.test.ts` | 3 |
-| **Total** | **46 suites** | **290** |
+| `api/game-reviews-route` | `api/game-reviews-route.test.ts` | 4 |
+| **Total** | **47 suites** | **294** |
 
 ## Test File Structure
 
@@ -125,6 +126,11 @@ src/__tests__/
 ```
 src/__tests__/lib/
     └── reviewerGames.test.ts         — getGamesByReviewer dedup + sort (3 tests)
+```
+
+```
+src/__tests__/api/
+    └── game-reviews-route.test.ts    — GET /api/games/[title]/reviews (4 tests)
 ```
 
 ---
@@ -728,6 +734,16 @@ Mocks `@/lib/prisma`. Tests `getGamesByReviewer` in `src/lib/reviewStore.ts`.
 - Returns empty array when reviewer has no reviews
 - Returns unique game titles sorted alphabetically (deduplicates repeats)
 - Queries only `helpful`-classified reviews for the given `reviewerTag`
+
+---
+
+### `api/game-reviews-route.test.ts` — 4 tests
+Mocks `@/lib/reviewStore`. Tests `GET /api/games/[title]/reviews`.
+
+- Returns 200 with `{ reviews }` array for a known game
+- Passes decoded title to `getReviewsByGame` (handles URL-encoded titles)
+- Returns empty array when no reviews exist for the game
+- Returns 500 when `getReviewsByGame` throws
 
 ---
 
