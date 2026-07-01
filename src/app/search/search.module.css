@@ -1,0 +1,200 @@
+.page {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 32px 24px 80px;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 28px;
+  font-size: 0.85rem;
+}
+
+.navLink { color: var(--neon); text-decoration: none; }
+.navLink:hover { text-decoration: underline; }
+.sep { color: var(--text-dim); }
+
+.title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 24px;
+  letter-spacing: -0.01em;
+}
+
+/* ── Filters ── */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+  align-items: center;
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 200px;
+  padding: 9px 14px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  outline: none;
+}
+.searchInput:focus { border-color: var(--neon); }
+
+.select {
+  padding: 9px 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  outline: none;
+  cursor: pointer;
+}
+.select:focus { border-color: var(--neon); }
+
+.ratingRange {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ratingInput {
+  width: 56px;
+  padding: 9px 8px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  text-align: center;
+  outline: none;
+}
+.ratingInput:focus { border-color: var(--neon); }
+
+.rangeSep { color: var(--text-muted); font-size: 0.85rem; }
+
+.searchBtn {
+  padding: 9px 20px;
+  background: var(--neon);
+  border: none;
+  border-radius: 6px;
+  color: var(--black);
+  font-family: var(--font-display);
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.searchBtn:hover { opacity: 0.88; }
+.searchBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Meta ── */
+.resultsMeta {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+/* ── Results ── */
+.results { display: flex; flex-direction: column; gap: 12px; }
+
+.card {
+  display: block;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px 18px;
+  text-decoration: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+.card:hover { border-color: var(--neon); background: var(--card-hover, var(--card)); }
+
+.cardTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.gameTitle {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+  text-decoration: none;
+  margin-bottom: 3px;
+  transition: color 0.15s;
+}
+.gameTitle:hover { color: var(--neon); }
+
+.cardMeta { font-size: 0.75rem; color: var(--text-dim); }
+
+.reviewer { color: var(--text-dim); text-decoration: none; transition: color 0.15s; }
+.reviewer:hover { color: var(--neon); }
+
+.rating {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.headline {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-style: italic;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.body {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* ── Pagination ── */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 32px;
+}
+
+.pageBtn {
+  padding: 7px 16px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.pageBtn:hover:not(:disabled) { border-color: var(--neon); color: var(--neon); }
+.pageBtn:disabled { opacity: 0.35; cursor: default; }
+
+.pageInfo { font-size: 0.82rem; color: var(--text-dim); }
+
+@media (max-width: 600px) {
+  .filters { flex-direction: column; }
+  .searchInput { min-width: unset; width: 100%; }
+  .select { width: 100%; }
+  .ratingRange { width: 100%; }
+}
