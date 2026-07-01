@@ -1,0 +1,196 @@
+.page {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 32px 24px 80px;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+  font-size: 0.85rem;
+}
+
+.navLink { color: var(--neon); text-decoration: none; }
+.navLink:hover { text-decoration: underline; }
+
+/* ── Header ── */
+.header { margin-bottom: 28px; }
+
+.eyebrow {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--neon);
+  margin-bottom: 6px;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.subtitle {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+/* ── Pagination info ── */
+.paginationInfo {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin-bottom: 16px;
+}
+
+/* ── Review cards ── */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px 24px;
+  transition: border-color 0.15s;
+}
+.card:hover { border-color: rgba(0, 255, 135, 0.3); }
+
+.cardTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.gameTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  text-decoration: none;
+}
+.gameTitle:hover { color: var(--neon); }
+
+.meta {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  margin-top: 3px;
+}
+
+.reviewer {
+  color: var(--neon);
+  text-decoration: none;
+}
+.reviewer:hover { text-decoration: underline; }
+
+.rating {
+  font-size: 1.2rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.ratingDenom {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.headline {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+  text-decoration: none;
+  margin-bottom: 8px;
+  font-style: italic;
+}
+.headline:hover { color: var(--neon); }
+
+.body {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 12px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.time {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+.readMore {
+  font-size: 0.78rem;
+  color: var(--neon);
+  text-decoration: none;
+  font-weight: 600;
+}
+.readMore:hover { text-decoration: underline; }
+
+/* ── Pagination ── */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 32px;
+}
+
+.pageBtn {
+  padding: 8px 20px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.pageBtn:hover:not(:disabled) { border-color: var(--neon); color: var(--neon); }
+.pageBtn:disabled { opacity: 0.35; cursor: default; }
+
+.pageIndicator {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+/* ── Empty / unauthenticated ── */
+.loading {
+  text-align: center;
+  padding: 60px 0;
+  color: var(--text-muted);
+}
+
+.empty {
+  text-align: center;
+  padding: 60px 0;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.8;
+}
+
+.cta {
+  display: inline-block;
+  margin-top: 12px;
+  color: var(--neon);
+  text-decoration: none;
+  font-weight: 600;
+}
+.cta:hover { text-decoration: underline; }
