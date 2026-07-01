@@ -1,7 +1,7 @@
 const mockFetch = jest.fn();
 global.fetch = mockFetch;
 
-import { sendBombingWebhook, sendClassificationWebhook } from '@/lib/webhookService';
+import { sendBombingWebhook, sendClassificationWebhook, sendFlagWebhook } from '@/lib/webhookService';
 
 beforeEach(() => {
   jest.resetAllMocks();
@@ -74,6 +74,31 @@ describe('sendClassificationWebhook', () => {
     delete process.env.MODERATOR_WEBHOOK_URL;
 
     await sendClassificationWebhook('rev-3', 'Game', 'User#1', 'spam');
+
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+});
+
+describe('sendFlagWebhook', () => {
+  it('POSTs a flag payload with review and reporter details', async () => {
+    mockFetch.mockResolvedValue({ ok: true });
+
+    await sendFlagWebhook('r1', 'Elden Ring', 'Player#99', 'Darla#1');
+
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+    expect(body.type).toBe('review_flag');
+    expect(body.reviewId).toBe('r1');
+    expect(body.gameTitle).toBe('Elden Ring');
+    expect(body.reviewerTag).toBe('Player#99');
+    expect(body.reporterTag).toBe('Darla#1');
+    expect(body.reviewUrl).toContain('r1');
+  });
+
+  it('does nothing when MODERATOR_WEBHOOK_URL is not set', async () => {
+    delete process.env.MODERATOR_WEBHOOK_URL;
+
+    await sendFlagWebhook('r1', 'Elden Ring', 'Player#99', 'Darla#1');
 
     expect(mockFetch).not.toHaveBeenCalled();
   });

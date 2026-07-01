@@ -116,6 +116,29 @@ export async function sendDigestEmail(
   });
 }
 
+export async function sendFlagEmail(
+  reviewId: string,
+  gameTitle: string,
+  reviewerTag: string,
+  reporterTag: string,
+): Promise<void> {
+  if (!ready()) return;
+  await client().emails.send({
+    from:    'Gamers Feedback <alerts@gamersfeedback.app>',
+    to:      process.env.MODERATOR_EMAIL!,
+    subject: `🚩 Review Flagged — ${gameTitle}`,
+    html: `
+      <h2>Review Flagged by User</h2>
+      <p><strong>${reporterTag}</strong> flagged a review by <strong>${reviewerTag}</strong>
+      on <strong>${gameTitle}</strong>.</p>
+      <p>
+        <a href="${baseUrl()}/reviews/${reviewId}">View Review →</a> &nbsp;|&nbsp;
+        <a href="${baseUrl()}/admin">Admin Panel →</a>
+      </p>
+    `,
+  });
+}
+
 export async function sendClassificationEmail(
   reviewId: string,
   gameTitle: string,

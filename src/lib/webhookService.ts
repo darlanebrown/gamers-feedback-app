@@ -20,6 +20,24 @@ export async function sendBombingWebhook(gameTitle: string, count: number): Prom
   });
 }
 
+export async function sendFlagWebhook(
+  reviewId: string,
+  gameTitle: string,
+  reviewerTag: string,
+  reporterTag: string,
+): Promise<void> {
+  await post({
+    type:        'review_flag',
+    reviewId,
+    gameTitle,
+    reviewerTag,
+    reporterTag,
+    message:     `🚩 ${reporterTag} flagged a review by ${reviewerTag} on "${gameTitle}"`,
+    reviewUrl:   `${baseUrl()}/reviews/${reviewId}`,
+    adminUrl:    `${baseUrl()}/admin`,
+  });
+}
+
 export async function sendClassificationWebhook(
   reviewId: string,
   gameTitle: string,
