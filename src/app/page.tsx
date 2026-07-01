@@ -1169,6 +1169,146 @@ export default function Home() {
           </button>
         </div>
 
+        {/* ── Device strip ── */}
+        <div className={styles.deviceStrip}>
+          {/* Game Controller */}
+          <div className={styles.device}>
+            <svg width="80" height="56" viewBox="0 0 80 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+              {/* Body */}
+              <path d="M8 20 C8 12 16 8 24 8 L56 8 C64 8 72 12 72 20 L72 28 C72 42 62 52 50 52 L48 52 C44 52 41 50 40 48 C39 50 36 52 32 52 L30 52 C18 52 8 42 8 28 Z" fill="#1a1a1a" stroke="#fff" strokeWidth="1.5"/>
+              {/* Left grip */}
+              <ellipse cx="20" cy="40" rx="11" ry="13" fill="#111" stroke="#fff" strokeWidth="1.2"/>
+              {/* Right grip */}
+              <ellipse cx="60" cy="40" rx="11" ry="13" fill="#111" stroke="#fff" strokeWidth="1.2"/>
+              {/* D-pad vertical */}
+              <rect x="19" y="16" width="6" height="16" rx="2" fill="#333" stroke="#fff" strokeWidth="1"/>
+              {/* D-pad horizontal */}
+              <rect x="13" y="22" width="18" height="6" rx="2" fill="#333" stroke="#fff" strokeWidth="1"/>
+              {/* Face buttons */}
+              <circle cx="57" cy="18" r="3.5" fill="#00ff87" opacity="0.85"/>
+              <circle cx="63" cy="24" r="3.5" fill="#fff" opacity="0.7"/>
+              <circle cx="51" cy="24" r="3.5" fill="#fff" opacity="0.5"/>
+              <circle cx="57" cy="30" r="3.5" fill="#fff" opacity="0.5"/>
+              {/* Left stick */}
+              <circle cx="32" cy="30" r="6" fill="#222" stroke="#fff" strokeWidth="1.2"/>
+              <circle cx="32" cy="30" r="3" fill="#444"/>
+              {/* Right stick */}
+              <circle cx="48" cy="36" r="6" fill="#222" stroke="#fff" strokeWidth="1.2"/>
+              <circle cx="48" cy="36" r="3" fill="#444"/>
+              {/* Shoulder bumpers */}
+              <path d="M14 8 C14 4 20 2 26 3 L32 4" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
+              <path d="M66 8 C66 4 60 2 54 3 L48 4" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
+              {/* Center buttons */}
+              <rect x="35" y="18" width="5" height="3" rx="1.5" fill="#555"/>
+              <rect x="40" y="18" width="5" height="3" rx="1.5" fill="#555"/>
+            </svg>
+            <span className={styles.deviceLabel}>Controller</span>
+          </div>
+
+          {/* Smartphone */}
+          <div className={styles.device}>
+            <svg width="38" height="62" viewBox="0 0 38 62" fill="none" xmlns="http://www.w3.org/2000/svg">
+              {/* Body */}
+              <rect x="1" y="1" width="36" height="60" rx="6" fill="#1a1a1a" stroke="#fff" strokeWidth="1.5"/>
+              {/* Screen */}
+              <rect x="4" y="8" width="30" height="44" rx="3" fill="#0a0a0a" stroke="#333" strokeWidth="0.8"/>
+              {/* Screen glow */}
+              <rect x="5" y="9" width="28" height="42" rx="2.5" fill="url(#phoneScreen)"/>
+              <defs>
+                <linearGradient id="phoneScreen" x1="5" y1="9" x2="33" y2="51" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stopColor="#00ff87" stopOpacity="0.08"/>
+                  <stop offset="100%" stopColor="#1a1a2e" stopOpacity="0.4"/>
+                </linearGradient>
+              </defs>
+              {/* Notch */}
+              <rect x="13" y="3" width="12" height="4" rx="2" fill="#0a0a0a"/>
+              {/* Home indicator */}
+              <rect x="13" y="55" width="12" height="2.5" rx="1.25" fill="#444"/>
+              {/* Side buttons */}
+              <rect x="0" y="18" width="1.5" height="8" rx="0.75" fill="#555"/>
+              <rect x="0" y="28" width="1.5" height="8" rx="0.75" fill="#555"/>
+              <rect x="36.5" y="22" width="1.5" height="10" rx="0.75" fill="#555"/>
+              {/* App icons on screen */}
+              <rect x="8"  y="14" width="6" height="6" rx="1.5" fill="#00ff87" opacity="0.5"/>
+              <rect x="16" y="14" width="6" height="6" rx="1.5" fill="#fff" opacity="0.2"/>
+              <rect x="24" y="14" width="6" height="6" rx="1.5" fill="#fff" opacity="0.2"/>
+              <rect x="8"  y="22" width="6" height="6" rx="1.5" fill="#fff" opacity="0.2"/>
+              <rect x="16" y="22" width="6" height="6" rx="1.5" fill="#fff" opacity="0.2"/>
+              <rect x="24" y="22" width="6" height="6" rx="1.5" fill="#fff" opacity="0.2"/>
+            </svg>
+            <span className={styles.deviceLabel}>Mobile</span>
+          </div>
+
+          {/* Desktop Computer */}
+          <div className={styles.device}>
+            <svg width="88" height="62" viewBox="0 0 88 62" fill="none" xmlns="http://www.w3.org/2000/svg">
+              {/* Monitor bezel */}
+              <rect x="2" y="2" width="84" height="52" rx="5" fill="#1a1a1a" stroke="#fff" strokeWidth="1.5"/>
+              {/* Screen */}
+              <rect x="6" y="6" width="76" height="42" rx="3" fill="#0a0a0a"/>
+              {/* Screen content glow */}
+              <rect x="7" y="7" width="74" height="40" rx="2.5" fill="url(#desktopScreen)"/>
+              <defs>
+                <linearGradient id="desktopScreen" x1="7" y1="7" x2="81" y2="47" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stopColor="#00ff87" stopOpacity="0.06"/>
+                  <stop offset="60%" stopColor="#0a0a1a" stopOpacity="0.5"/>
+                  <stop offset="100%" stopColor="#00ff87" stopOpacity="0.03"/>
+                </linearGradient>
+              </defs>
+              {/* Simulated UI bars on screen */}
+              <rect x="10" y="10" width="68" height="3" rx="1.5" fill="#222"/>
+              <rect x="10" y="16" width="30" height="2" rx="1" fill="#00ff87" opacity="0.4"/>
+              <rect x="10" y="21" width="50" height="2" rx="1" fill="#333"/>
+              <rect x="10" y="26" width="40" height="2" rx="1" fill="#333"/>
+              <rect x="10" y="31" width="55" height="2" rx="1" fill="#333"/>
+              <rect x="10" y="36" width="35" height="2" rx="1" fill="#00ff87" opacity="0.25"/>
+              {/* Power LED */}
+              <circle cx="79" cy="51" r="1.5" fill="#00ff87" opacity="0.8"/>
+              {/* Stand neck */}
+              <rect x="40" y="54" width="8" height="5" rx="1" fill="#222" stroke="#555" strokeWidth="0.8"/>
+              {/* Stand base */}
+              <rect x="28" y="59" width="32" height="3" rx="1.5" fill="#1a1a1a" stroke="#fff" strokeWidth="1"/>
+            </svg>
+            <span className={styles.deviceLabel}>Desktop</span>
+          </div>
+
+          {/* Laptop */}
+          <div className={styles.device}>
+            <svg width="90" height="60" viewBox="0 0 90 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+              {/* Screen lid */}
+              <rect x="8" y="2" width="74" height="46" rx="4" fill="#1a1a1a" stroke="#fff" strokeWidth="1.5"/>
+              {/* Screen */}
+              <rect x="12" y="6" width="66" height="38" rx="2" fill="#0a0a0a"/>
+              {/* Screen glow */}
+              <rect x="13" y="7" width="64" height="36" rx="1.5" fill="url(#laptopScreen)"/>
+              <defs>
+                <linearGradient id="laptopScreen" x1="13" y1="7" x2="77" y2="43" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stopColor="#00ff87" stopOpacity="0.07"/>
+                  <stop offset="100%" stopColor="#0a0a1a" stopOpacity="0.4"/>
+                </linearGradient>
+              </defs>
+              {/* Webcam dot */}
+              <circle cx="45" cy="4.5" r="1.2" fill="#333"/>
+              {/* Screen lines */}
+              <rect x="16" y="11" width="58" height="2.5" rx="1.2" fill="#222"/>
+              <rect x="16" y="17" width="28" height="2" rx="1" fill="#00ff87" opacity="0.4"/>
+              <rect x="16" y="22" width="45" height="2" rx="1" fill="#333"/>
+              <rect x="16" y="27" width="38" height="2" rx="1" fill="#333"/>
+              <rect x="16" y="32" width="50" height="2" rx="1" fill="#00ff87" opacity="0.2"/>
+              {/* Hinge */}
+              <rect x="6" y="46" width="78" height="3" rx="1" fill="#222" stroke="#555" strokeWidth="0.8"/>
+              {/* Base / keyboard area */}
+              <rect x="1" y="49" width="88" height="9" rx="3" fill="#111" stroke="#fff" strokeWidth="1.2"/>
+              {/* Keyboard rows */}
+              <rect x="8"  y="51.5" width="74" height="1.5" rx="0.75" fill="#2a2a2a"/>
+              <rect x="10" y="54.5" width="70" height="1.5" rx="0.75" fill="#2a2a2a"/>
+              {/* Trackpad */}
+              <rect x="32" y="51" width="26" height="6" rx="1.5" fill="#1e1e1e" stroke="#333" strokeWidth="0.6"/>
+            </svg>
+            <span className={styles.deviceLabel}>Laptop</span>
+          </div>
+        </div>
+
         {/* Stats bar */}
         <div className={styles.statsBar}>
           {[
