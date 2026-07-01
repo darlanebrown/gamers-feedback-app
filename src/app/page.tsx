@@ -1136,6 +1136,7 @@ export default function Home() {
               )}
             </div>
             <a href="/feed" className={styles.authLink}>Feed</a>
+            <a href="/my-reviews" className={styles.authLink}>My Reviews</a>
             <a href="/games" className={styles.authLink}>Games</a>
             <a href="/search" className={styles.authLink}>Search</a>
             <a href="/leaderboard" className={styles.authLink}>Leaderboard</a>

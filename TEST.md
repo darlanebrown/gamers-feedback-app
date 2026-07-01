@@ -81,7 +81,8 @@ npx jest --no-coverage # skip coverage report (faster)
 | `api/game-reviews-sort-route` | `api/game-reviews-sort-route.test.ts` | 4 |
 | `lib/followLists` | `lib/followLists.test.ts` | 3 |
 | `api/follow-lists-route` | `api/follow-lists-route.test.ts` | 5 |
-| **Total** | **59 suites** | **338** |
+| `api/reviews-mine-route` | `api/reviews-mine-route.test.ts` | 4 |
+| **Total** | **60 suites** | **342** |
 
 ## Test File Structure
 
@@ -733,6 +734,17 @@ Mocks `@/lib/reviewStore` and `@/lib/auth`. Tests `PATCH` + `DELETE /api/reviews
 - 401 when not authenticated
 - 403 when the authenticated user doesn't own the review and is not admin
 - 200 with `{ ok: true }` when owner deletes their review
+
+---
+
+### `api/reviews-mine-route.test.ts` — 4 tests
+Mocks `@/lib/reviewStore` and `@/lib/auth`.
+Tests `GET /api/reviews/mine`.
+
+- Returns 401 when not authenticated
+- Calls `getReviewsByTag` with the session's `gamerTag`
+- Returns all reviews regardless of classification (helpful, spam, pending…)
+- Response includes `total` count
 
 ---
 

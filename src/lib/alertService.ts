@@ -1,4 +1,6 @@
 import { prisma } from './prisma';
+import { sendBombingEmail } from './emailService';
+import { sendBombingWebhook } from './webhookService';
 
 export type Alert = {
   id: string;
@@ -31,6 +33,9 @@ export async function checkForBombing(gameTitle: string): Promise<void> {
   await prisma.alert.create({
     data: { type: 'review_bombing', gameTitle, count: lowRated },
   });
+
+  sendBombingEmail(gameTitle, lowRated).catch(() => {});
+  sendBombingWebhook(gameTitle, lowRated).catch(() => {});
 }
 
 export async function getActiveAlerts(): Promise<Alert[]> {
