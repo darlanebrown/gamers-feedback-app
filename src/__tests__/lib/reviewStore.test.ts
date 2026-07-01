@@ -18,6 +18,8 @@ import {
   updateReviewClassification,
   getStats,
   getRecentReviewCountByTag,
+  countAllReviews,
+  countHelpfulReviews,
 } from '@/lib/reviewStore';
 
 const findMany = prisma.review.findMany as jest.Mock;
@@ -49,10 +51,16 @@ function row(overrides: Record<string, unknown> = {}) {
 beforeEach(() => jest.resetAllMocks());
 
 describe('getAllReviews', () => {
-  it('queries all reviews ordered by createdAt desc', async () => {
+  it('queries all reviews ordered by createdAt desc with default pagination', async () => {
     findMany.mockResolvedValue([row()]);
     await getAllReviews();
-    expect(findMany).toHaveBeenCalledWith({ orderBy: { createdAt: 'desc' } });
+    expect(findMany).toHaveBeenCalledWith({ orderBy: { createdAt: 'desc' }, skip: 0, take: 20 });
+  });
+
+  it('passes custom skip/take when provided', async () => {
+    findMany.mockResolvedValue([]);
+    await getAllReviews({ skip: 20, take: 10 });
+    expect(findMany).toHaveBeenCalledWith({ orderBy: { createdAt: 'desc' }, skip: 20, take: 10 });
   });
 
   it('maps Prisma rows to Review objects', async () => {
@@ -75,12 +83,25 @@ describe('getAllReviews', () => {
 });
 
 describe('getHelpfulReviews', () => {
-  it('filters by classification: helpful', async () => {
+  it('filters by classification: helpful with default pagination', async () => {
     findMany.mockResolvedValue([]);
     await getHelpfulReviews();
     expect(findMany).toHaveBeenCalledWith({
       where: { classification: 'helpful' },
       orderBy: { createdAt: 'desc' },
+      skip: 0,
+      take: 20,
+    });
+  });
+
+  it('passes custom skip/take when provided', async () => {
+    findMany.mockResolvedValue([]);
+    await getHelpfulReviews({ skip: 40, take: 20 });
+    expect(findMany).toHaveBeenCalledWith({
+      where: { classification: 'helpful' },
+      orderBy: { createdAt: 'desc' },
+      skip: 40,
+      take: 20,
     });
   });
 });
@@ -204,6 +225,24 @@ describe('getStats', () => {
     ]);
     const stats = await getStats();
     expect(stats.uniqueGames).toBe(2);
+  });
+});
+
+describe('countAllReviews', () => {
+  it('counts all reviews with no filter', async () => {
+    count.mockResolvedValue(42);
+    const result = await countAllReviews();
+    expect(count).toHaveBeenCalledWith({});
+    expect(result).toBe(42);
+  });
+});
+
+describe('countHelpfulReviews', () => {
+  it('counts reviews where classification is helpful', async () => {
+    count.mockResolvedValue(17);
+    const result = await countHelpfulReviews();
+    expect(count).toHaveBeenCalledWith({ where: { classification: 'helpful' } });
+    expect(result).toBe(17);
   });
 });
 

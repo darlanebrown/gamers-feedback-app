@@ -914,6 +914,9 @@ function AskAI() {
 // ── Main page ──────────────────────────────────────────────────────────────────
 export default function Home() {
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewTotal, setReviewTotal] = useState(0);
+  const [reviewPage, setReviewPage]   = useState(1);
+  const REVIEW_LIMIT = 20;
   const [stats, setStats] = useState({ total: 0, helpful: 0, spam: 0, toxic: 0, avgRating: '0', uniqueGames: 0 });
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -976,29 +979,37 @@ export default function Home() {
     setCurrentUser(null);
   };
 
-  const fetchReviews = useCallback(async () => {
+  const fetchReviews = useCallback(async (page = 1) => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
       if (filter === 'helpful') params.set('filter', 'helpful');
       if (search) params.set('game', search);
+      if (!search) {
+        params.set('page', String(page));
+        params.set('limit', String(REVIEW_LIMIT));
+      }
 
       const [revRes, statsRes] = await Promise.all([
         fetch(`/api/reviews?${params}`),
         fetch('/api/stats'),
       ]);
-      const { reviews: revData } = await revRes.json();
+      const revJson = await revRes.json();
       const statsData = await statsRes.json();
 
-      const filtered = filter === 'all'
+      const revData: Review[] = revJson.reviews ?? [];
+
+      const displayed = filter === 'all' || filter === 'helpful'
         ? revData
         : revData.filter((r: Review) => r.classification === filter);
 
-      setReviews(filtered);
+      setReviews(displayed);
+      setReviewTotal(revJson.total ?? displayed.length);
+      setReviewPage(page);
       setStats(statsData);
 
       // Fetch cover art for unique game titles (fire-and-forget, best-effort)
-      const titles = Array.from(new Set<string>(filtered.map((r: Review) => r.gameTitle)));
+      const titles = Array.from(new Set<string>(displayed.map((r: Review) => r.gameTitle)));
       setGameCovers((prev) => {
         const missing = titles.filter((t) => !(t in prev));
         if (missing.length === 0) return prev;
@@ -1019,7 +1030,7 @@ export default function Home() {
     }
   }, [filter, search]);
 
-  useEffect(() => { fetchReviews(); }, [fetchReviews]);
+  useEffect(() => { fetchReviews(1); }, [fetchReviews]);
 
   const fetchFeed = useCallback(async () => {
     if (!currentUser) return;
@@ -1494,18 +1505,41 @@ export default function Home() {
             </button>
           </div>
         ) : (
-          <div className={styles.reviewGrid}>
-            {reviews.map((review) => (
-              <ReviewCard
-                key={review.id}
-                review={review}
-                onClassify={handleClassify}
-                onAnalytics={setAnalyticsGame}
-                gameCover={gameCovers[review.gameTitle]}
-                currentUserTag={currentUser?.gamerTag}
-              />
-            ))}
-          </div>
+          <>
+            <div className={styles.reviewGrid}>
+              {reviews.map((review) => (
+                <ReviewCard
+                  key={review.id}
+                  review={review}
+                  onClassify={handleClassify}
+                  onAnalytics={setAnalyticsGame}
+                  gameCover={gameCovers[review.gameTitle]}
+                  currentUserTag={currentUser?.gamerTag}
+                />
+              ))}
+            </div>
+            {!searchActive && reviewTotal > REVIEW_LIMIT && (
+              <div className={styles.pagination}>
+                <button
+                  className={styles.pageBtn}
+                  disabled={reviewPage <= 1}
+                  onClick={() => { fetchReviews(reviewPage - 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                >
+                  ← Prev
+                </button>
+                <span className={styles.pageInfo}>
+                  Page {reviewPage} of {Math.ceil(reviewTotal / REVIEW_LIMIT)}
+                </span>
+                <button
+                  className={styles.pageBtn}
+                  disabled={reviewPage >= Math.ceil(reviewTotal / REVIEW_LIMIT)}
+                  onClick={() => { fetchReviews(reviewPage + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                >
+                  Next →
+                </button>
+              </div>
+            )}
+          </>
         )}
       </section>
 
