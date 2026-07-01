@@ -973,6 +973,79 @@
   color: var(--text-dim);
 }
 
+/* ── Game metadata banner (in analytics modal) ── */
+.gameMetaBanner {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.gameCover {
+  width: 80px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 4px;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+}
+
+.gameMetaInfo { flex: 1; min-width: 0; }
+
+.genreTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.genreTag {
+  padding: 2px 8px;
+  background: rgba(0, 255, 135, 0.08);
+  border: 1px solid rgba(0, 255, 135, 0.25);
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--neon);
+  letter-spacing: 0.04em;
+}
+
+.gameMetaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+}
+
+.gameMetaItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.gameMetaLabel {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+}
+
+/* ── Review card cover thumbnail ── */
+.cardCover {
+  width: 44px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
 /* Responsive */
 @media (max-width: 640px) {
   .heroTitle { font-size: 48px; }

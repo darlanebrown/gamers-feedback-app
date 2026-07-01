@@ -25,6 +25,12 @@ type Recommendation = {
 
 type SessionUser = { id: string; email: string; gamerTag: string; role?: string };
 
+type GameMeta = {
+  slug: string; title: string; coverUrl: string | null; genres: string | null;
+  releaseDate: string | null; developer: string | null; metacritic: number | null;
+  description: string | null;
+};
+
 // ── Auth Modal ────────────────────────────────────────────────────────────────
 function AuthModal({ onClose, onSuccess }: {
   onClose: () => void;
@@ -157,14 +163,19 @@ function GameAnalyticsModal({ gameTitle, apiUrl, onClose }: {
   apiUrl: string;
   onClose: () => void;
 }) {
-  const [data, setData] = useState<AnalyticsData | null>(null);
+  const [data, setData]       = useState<AnalyticsData | null>(null);
+  const [gameMeta, setGameMeta] = useState<GameMeta | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${apiUrl}/api/analytics/${encodeURIComponent(gameTitle)}`)
-      .then((r) => r.json())
-      .then((d) => { setData(d); setLoading(false); })
-      .catch(() => setLoading(false));
+    Promise.all([
+      fetch(`${apiUrl}/api/analytics/${encodeURIComponent(gameTitle)}`).then((r) => r.json()).catch(() => null),
+      fetch(`/api/games/${encodeURIComponent(gameTitle)}`).then((r) => r.ok ? r.json() : null).catch(() => null),
+    ]).then(([analytics, gameMeta]) => {
+      setData(analytics);
+      setGameMeta(gameMeta?.game ?? null);
+      setLoading(false);
+    });
   }, [gameTitle, apiUrl]);
 
   const trendColor = data?.trend === 'improving'
@@ -182,6 +193,50 @@ function GameAnalyticsModal({ gameTitle, apiUrl, onClose }: {
           </h2>
           <button className={styles.closeBtn} onClick={onClose} aria-label="Close">✕</button>
         </div>
+
+        {/* Game metadata banner */}
+        {gameMeta && (
+          <div className={styles.gameMetaBanner}>
+            {gameMeta.coverUrl && (
+              <img
+                src={gameMeta.coverUrl}
+                alt={gameMeta.title}
+                className={styles.gameCover}
+              />
+            )}
+            <div className={styles.gameMetaInfo}>
+              {gameMeta.genres && (
+                <div className={styles.genreTags}>
+                  {gameMeta.genres.split(', ').map((g) => (
+                    <span key={g} className={styles.genreTag}>{g}</span>
+                  ))}
+                </div>
+              )}
+              <div className={styles.gameMetaRow}>
+                {gameMeta.releaseDate && (
+                  <span className={styles.gameMetaItem}>
+                    <span className={styles.gameMetaLabel}>Released</span>
+                    {gameMeta.releaseDate}
+                  </span>
+                )}
+                {gameMeta.developer && (
+                  <span className={styles.gameMetaItem}>
+                    <span className={styles.gameMetaLabel}>Developer</span>
+                    {gameMeta.developer}
+                  </span>
+                )}
+                {gameMeta.metacritic !== null && (
+                  <span className={styles.gameMetaItem}>
+                    <span className={styles.gameMetaLabel}>Metacritic</span>
+                    <span style={{ color: gameMeta.metacritic >= 75 ? 'var(--neon)' : gameMeta.metacritic >= 50 ? 'var(--yellow)' : 'var(--red)', fontWeight: 700 }}>
+                      {gameMeta.metacritic}
+                    </span>
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {loading ? (
           <div className={styles.analyticsLoading}>
@@ -348,10 +403,11 @@ function RecommendationsSection({ apiUrl }: { apiUrl: string }) {
 }
 
 // ── Review card ────────────────────────────────────────────────────────────────
-function ReviewCard({ review, onClassify, onAnalytics }: {
+function ReviewCard({ review, onClassify, onAnalytics, gameCover }: {
   review: Review;
   onClassify?: (id: string) => void;
   onAnalytics?: (gameTitle: string) => void;
+  gameCover?: string | null;
 }) {
   const borderColor =
     review.classification === 'helpful'
@@ -366,7 +422,17 @@ function ReviewCard({ review, onClassify, onAnalytics }: {
     <article className={styles.card} style={{ '--border-color': borderColor } as React.CSSProperties}>
       <div className={styles.cardGlow} />
       <header className={styles.cardHeader}>
-        <div>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+          {gameCover && (
+            <img
+              src={gameCover}
+              alt={review.gameTitle}
+              className={styles.cardCover}
+              onClick={() => onAnalytics?.(review.gameTitle)}
+              style={{ cursor: onAnalytics ? 'pointer' : 'default' }}
+            />
+          )}
+          <div>
           <h3
             className={`${styles.gameTitle} ${onAnalytics ? styles.gameTitleLink : ''}`}
             onClick={() => onAnalytics?.(review.gameTitle)}
@@ -387,6 +453,7 @@ function ReviewCard({ review, onClassify, onAnalytics }: {
             >
               {review.reviewerTag}
             </a>
+          </div>
           </div>
         </div>
         <div className={styles.cardRight}>
@@ -702,6 +769,7 @@ export default function Home() {
   const [analyticsGame, setAnalyticsGame] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<SessionUser | null>(null);
   const [showAuth, setShowAuth] = useState(false);
+  const [gameCovers, setGameCovers] = useState<Record<string, string>>({});
 
   const fastapiUrl = process.env.NEXT_PUBLIC_FASTAPI_URL ?? '';
 
@@ -738,6 +806,24 @@ export default function Home() {
 
       setReviews(filtered);
       setStats(statsData);
+
+      // Fetch cover art for unique game titles (fire-and-forget, best-effort)
+      const titles = Array.from(new Set<string>(filtered.map((r: Review) => r.gameTitle)));
+      setGameCovers((prev) => {
+        const missing = titles.filter((t) => !(t in prev));
+        if (missing.length === 0) return prev;
+        missing.forEach((title) => {
+          fetch(`/api/games/${encodeURIComponent(title)}`)
+            .then((r) => r.ok ? r.json() : null)
+            .then((d) => {
+              if (d?.game?.coverUrl) {
+                setGameCovers((c) => ({ ...c, [title]: d.game.coverUrl }));
+              }
+            })
+            .catch(() => {});
+        });
+        return prev;
+      });
     } finally {
       setLoading(false);
     }
@@ -872,6 +958,7 @@ export default function Home() {
                 review={review}
                 onClassify={handleClassify}
                 onAnalytics={fastapiUrl ? setAnalyticsGame : undefined}
+                gameCover={gameCovers[review.gameTitle]}
               />
             ))}
           </div>
