@@ -50,10 +50,10 @@ describe('GET /api/leaderboard', () => {
     expect(body.topGames[0].reviewCount).toBe(8);
   });
 
-  it('calls getTopReviewers and getTopGames with limit 10', async () => {
+  it('calls getTopReviewers and getTopGames with limit 10 and no since date for all-time', async () => {
     await GET(new NextRequest('http://localhost/api/leaderboard'));
-    expect(mockGetTopReviewers).toHaveBeenCalledWith(10);
-    expect(mockGetTopGames).toHaveBeenCalledWith(10);
+    expect(mockGetTopReviewers).toHaveBeenCalledWith(10, undefined);
+    expect(mockGetTopGames).toHaveBeenCalledWith(10, undefined);
   });
 
   it('returns empty arrays when no data', async () => {

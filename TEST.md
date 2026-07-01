@@ -70,7 +70,8 @@ npx jest --no-coverage # skip coverage report (faster)
 | `lib/reviewerGames` | `lib/reviewerGames.test.ts` | 3 |
 | `api/game-reviews-route` | `api/game-reviews-route.test.ts` | 4 |
 | `lib/searchCount` | `lib/searchCount.test.ts` | 4 |
-| **Total** | **48 suites** | **298** |
+| `api/leaderboard-period-route` | `api/leaderboard-period-route.test.ts` | 4 |
+| **Total** | **49 suites** | **302** |
 
 ## Test File Structure
 
@@ -740,6 +741,16 @@ Mocks `@/lib/prisma`. Tests `getGamesByReviewer` in `src/lib/reviewStore.ts`.
 - Returns empty array when reviewer has no reviews
 - Returns unique game titles sorted alphabetically (deduplicates repeats)
 - Queries only `helpful`-classified reviews for the given `reviewerTag`
+
+---
+
+### `api/leaderboard-period-route.test.ts` — 4 tests
+Mocks `@/lib/leaderboardStore`. Tests period-aware `GET /api/leaderboard`.
+
+- Passes `undefined` as since date when `period=all` (default)
+- Passes a Date ~7 days in the past when `period=weekly`
+- Passes a Date ~30 days in the past when `period=monthly`
+- Response includes `period` field matching the requested value
 
 ---
 
