@@ -1,5 +1,100 @@
 /* src/app/page.module.css */
 
+/* ── Ask AI ── */
+.askSection {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 32px 24px 24px;
+}
+
+.askEyebrow {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--neon);
+  margin-bottom: 12px;
+}
+
+.askForm {
+  display: flex;
+  gap: 10px;
+}
+
+.askInput {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 0.95rem;
+  padding: 12px 16px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.askInput:focus { border-color: var(--neon); }
+.askInput::placeholder { color: var(--text-muted); }
+
+.askBtn {
+  background: var(--neon);
+  border: none;
+  border-radius: 8px;
+  color: #000;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 12px 24px;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+}
+.askBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+.askBtn:hover:not(:disabled) { opacity: 0.85; }
+
+.askAnswer {
+  margin-top: 20px;
+  background: var(--surface);
+  border: 1px solid var(--neon);
+  border-radius: 10px;
+  padding: 20px;
+}
+
+.answerText {
+  color: var(--text);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin: 0 0 14px;
+}
+
+.sources {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.sourcesLabel {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.sourceTag {
+  background: rgba(0, 255, 135, 0.08);
+  border: 1px solid rgba(0, 255, 135, 0.25);
+  border-radius: 20px;
+  color: var(--neon);
+  font-size: 0.78rem;
+  padding: 3px 10px;
+}
+
+.askError {
+  color: var(--red);
+  font-size: 0.85rem;
+  margin-top: 12px;
+}
+
 /* ── Toast notification ── */
 .toast {
   position: fixed;

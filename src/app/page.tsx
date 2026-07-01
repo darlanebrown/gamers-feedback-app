@@ -297,6 +297,77 @@ function SubmitModal({ onClose, onSuccess }: {
   );
 }
 
+// ── Ask AI ────────────────────────────────────────────────────────────────────
+function AskAI() {
+  const apiUrl = process.env.NEXT_PUBLIC_FASTAPI_URL;
+  const [question, setQuestion] = useState('');
+  const [answer, setAnswer] = useState('');
+  const [sources, setSources] = useState<{ gameTitle: string; headline: string; rating: number }[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  if (!apiUrl) return null;
+
+  const handleAsk = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!question.trim()) return;
+    setLoading(true);
+    setError('');
+    setAnswer('');
+    setSources([]);
+    try {
+      const res = await fetch(`${apiUrl}/api/ask`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question }),
+      });
+      if (!res.ok) throw new Error('Ask failed');
+      const data = await res.json();
+      setAnswer(data.answer);
+      setSources(data.sources || []);
+    } catch {
+      setError('Could not reach the Python backend. Make sure it is running on port 8000.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <section className={styles.askSection}>
+      <p className={styles.askEyebrow}>Powered by RAG · Real reviews, real answers</p>
+      <form onSubmit={handleAsk} className={styles.askForm}>
+        <input
+          className={styles.askInput}
+          value={question}
+          onChange={(e) => setQuestion(e.target.value)}
+          placeholder='Ask anything — "Is Elden Ring worth it on PC?"'
+        />
+        <button type="submit" className={styles.askBtn} disabled={loading || !question.trim()}>
+          {loading ? <span className={styles.spinner} /> : 'Ask AI'}
+        </button>
+      </form>
+
+      {answer && (
+        <div className={styles.askAnswer}>
+          <p className={styles.answerText}>{answer}</p>
+          {sources.length > 0 && (
+            <div className={styles.sources}>
+              <span className={styles.sourcesLabel}>Based on:</span>
+              {sources.map((s, i) => (
+                <span key={i} className={styles.sourceTag}>
+                  {s.gameTitle} · {s.rating}/10
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {error && <p className={styles.askError}>{error}</p>}
+    </section>
+  );
+}
+
 // ── Main page ──────────────────────────────────────────────────────────────────
 export default function Home() {
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -388,6 +459,9 @@ export default function Home() {
           ))}
         </div>
       </section>
+
+      {/* ── Ask AI ── */}
+      <AskAI />
 
       {/* ── Filter bar ── */}
       <section className={styles.filterSection}>
