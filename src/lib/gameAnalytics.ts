@@ -1,7 +1,8 @@
 import { prisma } from './prisma';
 
-export type PlatformCount  = { platform: string; count: number };
+export type PlatformCount    = { platform: string; count: number };
 export type RatingTrendPoint = { week: string; avgRating: number; count: number };
+export type ReviewedGame     = { gameTitle: string; avgRating: number; reviewCount: number };
 
 export type GameAnalytics = {
   gameTitle: string;
@@ -94,4 +95,30 @@ export async function getGameAnalytics(gameTitle: string): Promise<GameAnalytics
     topCons:     topTerms(helpful.map((r) => r.cons)),
     ratingTrend: buildRatingTrend(helpful),
   };
+}
+
+export async function getReviewedGames(opts: {
+  limit: number;
+  offset: number;
+  sort: 'rating' | 'reviews';
+}): Promise<ReviewedGame[]> {
+  const orderBy = opts.sort === 'rating'
+    ? { _avg: { rating: 'desc' as const } }
+    : { _count: { id: 'desc' as const } };
+
+  const groups = await prisma.review.groupBy({
+    by: ['gameTitle'],
+    where: { classification: 'helpful' },
+    _count: { id: true },
+    _avg: { rating: true },
+    orderBy,
+    take: opts.limit,
+    skip: opts.offset,
+  });
+
+  return groups.map((g) => ({
+    gameTitle:   g.gameTitle,
+    reviewCount: g._count.id,
+    avgRating:   Math.round((g._avg.rating ?? 0) * 10) / 10,
+  }));
 }

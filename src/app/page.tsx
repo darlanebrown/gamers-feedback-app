@@ -1130,6 +1130,7 @@ export default function Home() {
                 </div>
               )}
             </div>
+            <a href="/games" className={styles.authLink}>Games</a>
             <a href="/leaderboard" className={styles.authLink}>Leaderboard</a>
             <a href="/settings" className={styles.authLink}>Settings</a>
             <button className={styles.authLink} onClick={handleLogout}>Sign out</button>
