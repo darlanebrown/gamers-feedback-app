@@ -79,7 +79,9 @@ npx jest --no-coverage # skip coverage report (faster)
 | `lib/notificationsCount` | `lib/notificationsCount.test.ts` | 2 |
 | `lib/reviewsByGameSort` | `lib/reviewsByGameSort.test.ts` | 4 |
 | `api/game-reviews-sort-route` | `api/game-reviews-sort-route.test.ts` | 4 |
-| **Total** | **57 suites** | **330** |
+| `lib/followLists` | `lib/followLists.test.ts` | 3 |
+| `api/follow-lists-route` | `api/follow-lists-route.test.ts` | 5 |
+| **Total** | **59 suites** | **338** |
 
 ## Test File Structure
 
@@ -731,6 +733,25 @@ Mocks `@/lib/reviewStore` and `@/lib/auth`. Tests `PATCH` + `DELETE /api/reviews
 - 401 when not authenticated
 - 403 when the authenticated user doesn't own the review and is not admin
 - 200 with `{ ok: true }` when owner deletes their review
+
+---
+
+### `lib/followLists.test.ts` — 3 tests
+Mocks `@/lib/prisma`. Tests `getFollowers` and `getFollowedTags` in `src/lib/followStore.ts`.
+
+- `getFollowers` returns empty array when nobody follows the user
+- `getFollowers` queries by `followingTag`, returns `followerTag` strings
+- `getFollowedTags` queries by `followerTag`, returns `followingTag` strings
+
+---
+
+### `api/follow-lists-route.test.ts` — 5 tests
+Mocks `@/lib/followStore` and `@/lib/auth`.
+Tests `GET /api/profile/[tag]/followers` and `GET /api/profile/[tag]/following`.
+
+- Followers: returns list + total; empty list when nobody follows
+- Followers: includes `viewerTag` from session when authenticated
+- Following: returns list + total; empty list when user follows nobody
 
 ---
 
