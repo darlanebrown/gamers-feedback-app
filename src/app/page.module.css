@@ -1093,6 +1093,19 @@
   background: rgba(255, 71, 87, 0.08) !important;
 }
 
+.copyLinkBtn {
+  padding: 4px 8px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-dim);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--font-display);
+}
+.copyLinkBtn:hover { border-color: var(--neon); color: var(--neon); }
+
 /* ── Game metadata banner (in analytics modal) ── */
 .gameMetaBanner {
   display: flex;
