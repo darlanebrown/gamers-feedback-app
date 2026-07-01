@@ -8,3 +8,4 @@ node_modules/
 /src/generated/prisma
 __pycache__/
 *.pyc
+tsconfig.tsbuildinfo
