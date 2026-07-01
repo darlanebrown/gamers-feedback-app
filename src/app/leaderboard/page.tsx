@@ -86,7 +86,12 @@ export default function LeaderboardPage() {
               <div className={styles.empty}>No games reviewed yet.</div>
             ) : (
               topGames.map((g, i) => (
-                <div key={g.gameTitle} className={styles.item}>
+                <Link
+                  key={g.gameTitle}
+                  href={`/games/${encodeURIComponent(g.gameTitle)}`}
+                  className={styles.item}
+                  style={{ textDecoration: 'none' }}
+                >
                   <span className={`${styles.rank}${i < 3 ? ` ${styles.top3}` : ''}`}>
                     {i + 1}
                   </span>
@@ -95,7 +100,7 @@ export default function LeaderboardPage() {
                     <div className={styles.itemMeta}>{g.reviewCount} helpful review{g.reviewCount !== 1 ? 's' : ''}</div>
                   </div>
                   <span className={styles.score}>{g.avgRating.toFixed(1)}</span>
-                </div>
+                </Link>
               ))
             )}
           </div>

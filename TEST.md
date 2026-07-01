@@ -55,7 +55,9 @@ npx jest --no-coverage # skip coverage report (faster)
 | `api/drafts-route` | `api/drafts-route.test.ts` | 7 |
 | `api/leaderboard-route` | `api/leaderboard-route.test.ts` | 5 |
 | `api/ask-route` | `api/ask-route.test.ts` | 5 |
-| **Total** | **33 suites** | **227** |
+| `lib/gameAnalytics` | `lib/gameAnalytics.test.ts` | 7 |
+| `api/game-analytics-route` | `api/game-analytics-route.test.ts` | 4 |
+| **Total** | **35 suites** | **238** |
 
 ## Test File Structure
 
@@ -75,7 +77,8 @@ src/__tests__/
 │   ├── leaderboardStore.test.ts  — top reviewers + top games queries (6 tests)
 │   ├── embeddingService.test.ts  — buildReviewText + generateEmbedding + embedAndStore (5 tests)
 │   ├── reviewEmbeddings.test.ts  — storeEmbedding + findSimilarReviews raw SQL (6 tests)
-│   └── askService.test.ts        — askQuestion RAG flow (5 tests)
+│   ├── askService.test.ts        — askQuestion RAG flow (5 tests)
+│   └── gameAnalytics.test.ts     — getGameAnalytics analytics aggregation (7 tests)
 └── api/
     ├── reviews.test.ts           — GET + POST /api/reviews (16 tests)
     ├── classify.test.ts          — POST /api/classify (7 tests)
@@ -95,7 +98,8 @@ src/__tests__/
     ├── notifications-route.test.ts — GET + PATCH /api/notifications (5 tests)
     ├── drafts-route.test.ts      — GET + PUT + DELETE /api/drafts (7 tests)
     ├── leaderboard-route.test.ts — GET /api/leaderboard (5 tests)
-    └── ask-route.test.ts         — GET /api/ask?q= (5 tests)
+    ├── ask-route.test.ts         — GET /api/ask?q= (5 tests)
+    └── game-analytics-route.test.ts — GET /api/games/[title]/analytics (4 tests)
 ```
 
 ---
@@ -555,6 +559,29 @@ Mocks `@/lib/askService`. Tests `GET /api/ask`.
 - Calls `askQuestion` with the decoded query string; returns 200
 - Response body contains `answer` and `sources`
 - Returns 500 when `askQuestion` throws
+
+---
+
+### `lib/gameAnalytics.test.ts` — 7 tests
+Mocks `@/lib/prisma`. Tests `getGameAnalytics` in `src/lib/gameAnalytics.ts`.
+
+- Returns zero counts and empty arrays when no reviews exist
+- Counts helpful / spam / toxic correctly from classification field
+- Computes `avgRating` from helpful reviews only; rounds to 1 decimal
+- Returns 0 `avgRating` when no helpful reviews exist
+- Builds `platformBreakdown` sorted by count descending from helpful reviews
+- Extracts `topPros` and `topCons` by term frequency (splits on `,`, `\n`, `;`)
+- Case-insensitive `gameTitle` match via `contains` + `mode: insensitive`
+
+---
+
+### `api/game-analytics-route.test.ts` — 4 tests
+Mocks `@/lib/gameAnalytics`. Tests `GET /api/games/[title]/analytics`.
+
+- Returns 200 with `{ analytics }` object for a known game
+- Passes decoded `title` param to `getGameAnalytics`
+- Returns 500 when `getGameAnalytics` throws
+- `analytics` object contains all expected fields (`avgRating`, `platformBreakdown`, `topPros`, `topCons`)
 
 ---
 
