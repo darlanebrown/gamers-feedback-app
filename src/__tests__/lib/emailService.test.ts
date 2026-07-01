@@ -6,7 +6,7 @@ jest.mock('resend', () => ({
   })),
 }));
 
-import { sendBombingEmail, sendClassificationEmail, sendFollowEmail, sendVoteEmail, sendReclassifyEmail } from '@/lib/emailService';
+import { sendBombingEmail, sendClassificationEmail, sendFollowEmail, sendVoteEmail, sendReclassifyEmail, sendDigestEmail } from '@/lib/emailService';
 
 beforeEach(() => {
   jest.resetAllMocks();
@@ -172,6 +172,34 @@ describe('sendReclassifyEmail', () => {
     delete process.env.RESEND_API_KEY;
 
     await sendReclassifyEmail('author@test.com', 'Hades', 'spam');
+
+    expect(mockSend).not.toHaveBeenCalled();
+  });
+});
+
+describe('sendDigestEmail', () => {
+  it('sends a weekly digest with follower and vote counts', async () => {
+    mockSend.mockResolvedValue({ id: 'email-8' });
+
+    await sendDigestEmail('darla@test.com', 'Darla#1', {
+      newFollowers: 3, upvotes: 7, downvotes: 1, totalReviews: 12,
+    });
+
+    expect(mockSend).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to:      'darla@test.com',
+        subject: expect.stringMatching(/weekly|digest/i),
+        html:    expect.stringContaining('3'),
+      }),
+    );
+  });
+
+  it('does nothing when RESEND_API_KEY is not set', async () => {
+    delete process.env.RESEND_API_KEY;
+
+    await sendDigestEmail('darla@test.com', 'Darla#1', {
+      newFollowers: 1, upvotes: 2, downvotes: 0, totalReviews: 5,
+    });
 
     expect(mockSend).not.toHaveBeenCalled();
   });
