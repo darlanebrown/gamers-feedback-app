@@ -80,3 +80,14 @@ model Alert {
   dismissed   Boolean   @default(false)
   dismissedAt DateTime?
 }
+
+model Notification {
+  id        String   @id @default(cuid())
+  userTag   String
+  type      String
+  actorTag  String?
+  reviewId  String?
+  gameTitle String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}

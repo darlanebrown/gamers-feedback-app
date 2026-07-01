@@ -13,17 +13,23 @@ jest.mock('@/lib/reviewStore', () => ({
   getReviewById: jest.fn(),
 }));
 
+jest.mock('@/lib/notificationStore', () => ({
+  createNotification: jest.fn(),
+}));
+
 import { NextRequest } from 'next/server';
 import { POST, DELETE } from '@/app/api/reviews/[id]/vote/route';
 import { getSession } from '@/lib/auth';
 import { upsertVote, removeVote, getVoteCounts } from '@/lib/voteStore';
 import { getReviewById } from '@/lib/reviewStore';
+import { createNotification } from '@/lib/notificationStore';
 
-const mockSession     = getSession     as jest.Mock;
-const mockUpsertVote  = upsertVote     as jest.Mock;
-const mockRemoveVote  = removeVote     as jest.Mock;
-const mockGetCounts   = getVoteCounts  as jest.Mock;
-const mockGetReview   = getReviewById  as jest.Mock;
+const mockSession     = getSession        as jest.Mock;
+const mockUpsertVote  = upsertVote        as jest.Mock;
+const mockRemoveVote  = removeVote        as jest.Mock;
+const mockGetCounts   = getVoteCounts     as jest.Mock;
+const mockGetReview   = getReviewById     as jest.Mock;
+const mockNotify      = createNotification as jest.Mock;
 
 const SESSION = { id: 'u1', email: 'darla@test.com', gamerTag: 'Darla#1' };
 const REVIEW  = { id: 'r1', gameTitle: 'Elden Ring', reviewerTag: 'Player#99' };
@@ -31,6 +37,7 @@ const REVIEW  = { id: 'r1', gameTitle: 'Elden Ring', reviewerTag: 'Player#99' };
 beforeEach(() => {
   jest.resetAllMocks();
   mockGetCounts.mockResolvedValue({ up: 3, down: 1 });
+  mockNotify.mockResolvedValue(undefined);
 });
 
 function makeReq(method: string, body?: object) {
