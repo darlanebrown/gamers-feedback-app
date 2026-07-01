@@ -1,0 +1,28 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+model Review {
+  id                   String   @id @default(cuid())
+  gameTitle            String
+  platform             String
+  rating               Int
+  headline             String
+  body                 String
+  pros                 String
+  cons                 String
+  playtime             String
+  reviewerTag          String
+  classification       String   @default("pending")
+  classificationReason String?
+  createdAt            DateTime @default(now())
+}
