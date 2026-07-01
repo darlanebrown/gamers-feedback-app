@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { getReviewById } from '@/lib/reviewStore';
-import { createComment, getComments, deleteComment } from '@/lib/commentStore';
+import { createComment, getComments, deleteComment, countComments } from '@/lib/commentStore';
 import { sendCommentEmail } from '@/lib/emailService';
 import { createNotification } from '@/lib/notificationStore';
 import { findUserByTag } from '@/lib/userStore';
@@ -13,8 +13,17 @@ export async function GET(
   const review = await getReviewById(params.id);
   if (!review) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  const comments = await getComments(params.id);
-  return NextResponse.json({ comments, total: comments.length });
+  const { searchParams } = new URL(req.url);
+  const page  = Math.max(1, parseInt(searchParams.get('page')  ?? '1',  10));
+  const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') ?? '20', 10)));
+  const skip  = (page - 1) * limit;
+
+  const [comments, total] = await Promise.all([
+    getComments(params.id, { skip, take: limit }),
+    countComments(params.id),
+  ]);
+
+  return NextResponse.json({ comments, total, page, limit });
 }
 
 export async function POST(

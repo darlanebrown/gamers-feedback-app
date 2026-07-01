@@ -40,7 +40,7 @@ describe('createComment', () => {
 });
 
 describe('getComments', () => {
-  it('returns all comments for a review ordered oldest-first', async () => {
+  it('returns comments ordered oldest-first with default pagination', async () => {
     const comments = [COMMENT, { ...COMMENT, id: 'c2' }];
     mockFindMany.mockResolvedValue(comments);
 
@@ -49,8 +49,23 @@ describe('getComments', () => {
     expect(mockFindMany).toHaveBeenCalledWith({
       where:   { reviewId: 'r1' },
       orderBy: { createdAt: 'asc' },
+      skip:    0,
+      take:    20,
     });
     expect(result).toHaveLength(2);
+  });
+
+  it('passes skip and take when provided', async () => {
+    mockFindMany.mockResolvedValue([]);
+
+    await getComments('r1', { skip: 20, take: 10 });
+
+    expect(mockFindMany).toHaveBeenCalledWith({
+      where:   { reviewId: 'r1' },
+      orderBy: { createdAt: 'asc' },
+      skip:    20,
+      take:    10,
+    });
   });
 });
 

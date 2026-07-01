@@ -29,10 +29,15 @@ export async function createComment(
   return toComment(row);
 }
 
-export async function getComments(reviewId: string): Promise<ReviewComment[]> {
+export async function getComments(
+  reviewId: string,
+  { skip = 0, take = 20 }: { skip?: number; take?: number } = {},
+): Promise<ReviewComment[]> {
   const rows = await prisma.reviewComment.findMany({
     where:   { reviewId },
     orderBy: { createdAt: 'asc' },
+    skip,
+    take,
   });
   return rows.map(toComment);
 }
