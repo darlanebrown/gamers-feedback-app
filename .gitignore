@@ -6,3 +6,5 @@ node_modules/
 .DS_Store
 
 /src/generated/prisma
+__pycache__/
+*.pyc
