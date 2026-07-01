@@ -92,6 +92,14 @@ model Notification {
   createdAt DateTime @default(now())
 }
 
+model ReviewComment {
+  id        String   @id @default(cuid())
+  reviewId  String
+  authorTag String
+  body      String
+  createdAt DateTime @default(now())
+}
+
 model ReviewFlag {
   id          String   @id @default(cuid())
   reviewId    String
