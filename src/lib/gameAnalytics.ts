@@ -1,6 +1,7 @@
 import { prisma } from './prisma';
 
-export type PlatformCount = { platform: string; count: number };
+export type PlatformCount  = { platform: string; count: number };
+export type RatingTrendPoint = { week: string; avgRating: number; count: number };
 
 export type GameAnalytics = {
   gameTitle: string;
@@ -12,6 +13,7 @@ export type GameAnalytics = {
   platformBreakdown: PlatformCount[];
   topPros: string[];
   topCons: string[];
+  ratingTrend: RatingTrendPoint[];
 };
 
 function topTerms(fields: string[], limit = 6): string[] {
@@ -29,10 +31,39 @@ function topTerms(fields: string[], limit = 6): string[] {
     .map(([term]) => term);
 }
 
+function isoWeek(date: Date): string {
+  // ISO week: Monday-based. Returns "YYYY-Www". Use UTC accessors to avoid
+  // timezone shifts when dates are stored as midnight UTC.
+  const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  const day = d.getUTCDay() || 7; // Sun=0 → 7
+  d.setUTCDate(d.getUTCDate() + 4 - day); // move to Thursday of ISO week
+  const year = d.getUTCFullYear();
+  const week = Math.ceil(((d.getTime() - Date.UTC(year, 0, 1)) / 86400000 + 1) / 7);
+  return `${year}-W${String(week).padStart(2, '0')}`;
+}
+
+function buildRatingTrend(
+  helpful: { rating: number; createdAt: Date }[],
+): RatingTrendPoint[] {
+  const weekMap = new Map<string, { sum: number; count: number }>();
+  for (const r of helpful) {
+    const wk = isoWeek(r.createdAt);
+    const cur = weekMap.get(wk) ?? { sum: 0, count: 0 };
+    weekMap.set(wk, { sum: cur.sum + r.rating, count: cur.count + 1 });
+  }
+  return Array.from(weekMap.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([week, { sum, count }]) => ({
+      week,
+      avgRating: Math.round((sum / count) * 10) / 10,
+      count,
+    }));
+}
+
 export async function getGameAnalytics(gameTitle: string): Promise<GameAnalytics> {
   const rows = await prisma.review.findMany({
     where: { gameTitle: { contains: gameTitle, mode: 'insensitive' } },
-    select: { platform: true, pros: true, cons: true, rating: true, classification: true },
+    select: { platform: true, pros: true, cons: true, rating: true, classification: true, createdAt: true },
   });
 
   const helpful = rows.filter((r) => r.classification === 'helpful');
@@ -59,7 +90,8 @@ export async function getGameAnalytics(gameTitle: string): Promise<GameAnalytics
     toxicCount:   toxic.length,
     avgRating,
     platformBreakdown,
-    topPros: topTerms(helpful.map((r) => r.pros)),
-    topCons: topTerms(helpful.map((r) => r.cons)),
+    topPros:     topTerms(helpful.map((r) => r.pros)),
+    topCons:     topTerms(helpful.map((r) => r.cons)),
+    ratingTrend: buildRatingTrend(helpful),
   };
 }

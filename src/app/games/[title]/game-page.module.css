@@ -237,6 +237,28 @@
   color: var(--red);
 }
 
+/* ── Rating trend sparkline ── */
+.sparklineWrap {
+  overflow-x: auto;
+  margin-bottom: 8px;
+}
+
+.sparklineSvg {
+  display: block;
+  min-width: 100%;
+}
+
+.sparklineAxisLabel {
+  font-size: 10px;
+  fill: var(--text-muted, #888);
+}
+
+.trendEmpty {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  padding: 12px 0;
+}
+
 /* ── Review list ── */
 .reviewList { display: flex; flex-direction: column; gap: 12px; }
 

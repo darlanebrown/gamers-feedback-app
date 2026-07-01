@@ -55,11 +55,11 @@ npx jest --no-coverage # skip coverage report (faster)
 | `api/drafts-route` | `api/drafts-route.test.ts` | 7 |
 | `api/leaderboard-route` | `api/leaderboard-route.test.ts` | 5 |
 | `api/ask-route` | `api/ask-route.test.ts` | 5 |
-| `lib/gameAnalytics` | `lib/gameAnalytics.test.ts` | 7 |
+| `lib/gameAnalytics` | `lib/gameAnalytics.test.ts` | 11 |
 | `api/game-analytics-route` | `api/game-analytics-route.test.ts` | 4 |
 | `lib/trendingService` | `lib/trendingService.test.ts` | 5 |
 | `api/trending-route` | `api/trending-route.test.ts` | 4 |
-| **Total** | **37 suites** | **247** |
+| **Total** | **37 suites** | **251** |
 
 ## Test File Structure
 
@@ -80,7 +80,7 @@ src/__tests__/
 │   ├── embeddingService.test.ts  — buildReviewText + generateEmbedding + embedAndStore (5 tests)
 │   ├── reviewEmbeddings.test.ts  — storeEmbedding + findSimilarReviews raw SQL (6 tests)
 │   ├── askService.test.ts        — askQuestion RAG flow (5 tests)
-│   ├── gameAnalytics.test.ts     — getGameAnalytics analytics aggregation (7 tests)
+│   ├── gameAnalytics.test.ts     — getGameAnalytics + ratingTrend sparkline data (11 tests)
 │   └── trendingService.test.ts   — getTrendingGames rolling-window groupBy (5 tests)
 └── api/
     ├── reviews.test.ts           — GET + POST /api/reviews (16 tests)
@@ -566,7 +566,7 @@ Mocks `@/lib/askService`. Tests `GET /api/ask`.
 
 ---
 
-### `lib/gameAnalytics.test.ts` — 7 tests
+### `lib/gameAnalytics.test.ts` — 11 tests
 Mocks `@/lib/prisma`. Tests `getGameAnalytics` in `src/lib/gameAnalytics.ts`.
 
 - Returns zero counts and empty arrays when no reviews exist
@@ -576,6 +576,10 @@ Mocks `@/lib/prisma`. Tests `getGameAnalytics` in `src/lib/gameAnalytics.ts`.
 - Builds `platformBreakdown` sorted by count descending from helpful reviews
 - Extracts `topPros` and `topCons` by term frequency (splits on `,`, `\n`, `;`)
 - Case-insensitive `gameTitle` match via `contains` + `mode: insensitive`
+- `ratingTrend` is empty array when no reviews exist
+- Groups helpful reviews into ISO-week trend points (excludes spam/toxic)
+- Trend points are sorted chronologically by week string
+- Rounds weekly `avgRating` to 1 decimal place
 
 ---
 

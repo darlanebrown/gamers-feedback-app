@@ -18,6 +18,7 @@ function row(overrides: Record<string, unknown> = {}) {
     cons: 'Short story',
     rating: 9,
     classification: 'helpful',
+    createdAt: new Date('2026-06-30'),
     ...overrides,
   };
 }
@@ -99,5 +100,44 @@ describe('getGameAnalytics', () => {
     expect(result.platformBreakdown).toEqual([]);
     expect(result.topPros).toEqual([]);
     expect(result.topCons).toEqual([]);
+  });
+
+  it('includes ratingTrend as an empty array when no reviews exist', async () => {
+    mockFindMany.mockResolvedValue([]);
+    const result = await getGameAnalytics('Unknown Game');
+    expect(result.ratingTrend).toEqual([]);
+  });
+
+  it('groups helpful reviews into weekly trend points', async () => {
+    mockFindMany.mockResolvedValue([
+      row({ rating: 8, classification: 'helpful', createdAt: new Date('2026-06-22') }),
+      row({ rating: 10, classification: 'helpful', createdAt: new Date('2026-06-22') }),
+      row({ rating: 6, classification: 'helpful', createdAt: new Date('2026-06-29') }),
+      row({ rating: 2, classification: 'spam',    createdAt: new Date('2026-06-22') }),
+    ]);
+    const result = await getGameAnalytics('Elden Ring');
+    expect(result.ratingTrend).toHaveLength(2);
+    const firstWeek = result.ratingTrend.find((p) => p.week === '2026-W26');
+    expect(firstWeek?.avgRating).toBe(9.0);
+    expect(firstWeek?.count).toBe(2);
+  });
+
+  it('sorts trend points chronologically', async () => {
+    mockFindMany.mockResolvedValue([
+      row({ rating: 5, classification: 'helpful', createdAt: new Date('2026-06-29') }),
+      row({ rating: 9, classification: 'helpful', createdAt: new Date('2026-06-08') }),
+    ]);
+    const result = await getGameAnalytics('Elden Ring');
+    expect(result.ratingTrend[0].week < result.ratingTrend[1].week).toBe(true);
+  });
+
+  it('rounds weekly avgRating to 1 decimal', async () => {
+    mockFindMany.mockResolvedValue([
+      row({ rating: 7, classification: 'helpful', createdAt: new Date('2026-06-22') }),
+      row({ rating: 8, classification: 'helpful', createdAt: new Date('2026-06-22') }),
+      row({ rating: 9, classification: 'helpful', createdAt: new Date('2026-06-22') }),
+    ]);
+    const result = await getGameAnalytics('Elden Ring');
+    expect(result.ratingTrend[0].avgRating).toBe(8.0);
   });
 });
