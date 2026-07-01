@@ -827,6 +827,17 @@ export default function Home() {
   const [feedFollowedCount, setFeedFollowedCount] = useState(0);
   const [feedLoading, setFeedLoading] = useState(false);
 
+  // Search state
+  const [searchQuery, setSearchQuery]       = useState('');
+  const [searchPlatform, setSearchPlatform] = useState('');
+  const [searchMinRating, setSearchMinRating] = useState('');
+  const [searchMaxRating, setSearchMaxRating] = useState('');
+  const [searchSort, setSearchSort]         = useState('newest');
+  const [searchResults, setSearchResults]   = useState<Review[] | null>(null);
+  const [searchTotal, setSearchTotal]       = useState(0);
+  const [searchLoading, setSearchLoading]   = useState(false);
+  const [searchActive, setSearchActive]     = useState(false);
+
   const fastapiUrl = process.env.NEXT_PUBLIC_FASTAPI_URL ?? '';
 
   // Load session on mount
@@ -903,6 +914,42 @@ export default function Home() {
   }, [currentUser]);
 
   useEffect(() => { if (feedTab === 'following') fetchFeed(); }, [feedTab, fetchFeed]);
+
+  // Run search whenever any search param changes (debounced 300ms)
+  useEffect(() => {
+    const hasFilters = searchQuery || searchPlatform || searchMinRating || searchMaxRating || searchSort !== 'newest';
+    if (!hasFilters && !searchActive) return;
+
+    setSearchActive(true);
+    const timer = setTimeout(async () => {
+      setSearchLoading(true);
+      const params = new URLSearchParams();
+      if (searchQuery)     params.set('q',             searchQuery);
+      if (searchPlatform)  params.set('platform',      searchPlatform);
+      if (searchMinRating) params.set('minRating',     searchMinRating);
+      if (searchMaxRating) params.set('maxRating',     searchMaxRating);
+      if (searchSort)      params.set('sort',          searchSort);
+      const res = await fetch(`/api/search?${params}`).catch(() => null);
+      if (res?.ok) {
+        const data = await res.json();
+        setSearchResults(data.reviews);
+        setSearchTotal(data.total);
+      }
+      setSearchLoading(false);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery, searchPlatform, searchMinRating, searchMaxRating, searchSort]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const clearSearch = () => {
+    setSearchQuery('');
+    setSearchPlatform('');
+    setSearchMinRating('');
+    setSearchMaxRating('');
+    setSearchSort('newest');
+    setSearchResults(null);
+    setSearchTotal(0);
+    setSearchActive(false);
+  };
 
   const handleClassify = async (reviewId: string) => {
     const review = reviews.find((r) => r.id === reviewId);
@@ -1000,29 +1047,83 @@ export default function Home() {
         </div>
       )}
 
-      {/* ── Filter bar (All tab only) ── */}
+      {/* ── Search & filter panel (All tab only) ── */}
       {feedTab === 'all' && (
-      <section className={styles.filterSection}>
-        <div className={styles.filterBar}>
-          <div className={styles.filterTabs}>
-            {(['helpful', 'all', 'spam', 'toxic'] as const).map((f) => (
-              <button
-                key={f}
-                className={`${styles.filterTab} ${filter === f ? styles.filterTabActive : ''}`}
-                onClick={() => setFilter(f)}
-              >
-                {f === 'helpful' ? '✓ Verified' : f === 'all' ? 'All' : f === 'spam' ? '✗ Spam' : '⚠ Toxic'}
-              </button>
-            ))}
+        <section className={styles.filterSection}>
+          {/* Keyword + quick classification tabs */}
+          <div className={styles.filterBar}>
+            <div className={styles.filterTabs}>
+              {(['helpful', 'all', 'spam', 'toxic'] as const).map((f) => (
+                <button
+                  key={f}
+                  className={`${styles.filterTab} ${!searchActive && filter === f ? styles.filterTabActive : ''}`}
+                  onClick={() => { clearSearch(); setFilter(f); }}
+                >
+                  {f === 'helpful' ? '✓ Verified' : f === 'all' ? 'All' : f === 'spam' ? '✗ Spam' : '⚠ Toxic'}
+                </button>
+              ))}
+            </div>
+            <input
+              className={styles.searchInput}
+              placeholder="Search reviews..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
-          <input
-            className={styles.searchInput}
-            placeholder="Search by game title..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-      </section>
+
+          {/* Advanced filters row */}
+          <div className={styles.advancedFilters}>
+            <select
+              className={styles.filterSelect}
+              value={searchPlatform}
+              onChange={(e) => setSearchPlatform(e.target.value)}
+            >
+              <option value="">All Platforms</option>
+              {PLATFORMS.map((p) => <option key={p} value={p}>{p}</option>)}
+            </select>
+
+            <select
+              className={styles.filterSelect}
+              value={searchMinRating}
+              onChange={(e) => setSearchMinRating(e.target.value)}
+            >
+              <option value="">Min Rating</option>
+              {[1,2,3,4,5,6,7,8,9,10].map((n) => <option key={n} value={n}>{n}+</option>)}
+            </select>
+
+            <select
+              className={styles.filterSelect}
+              value={searchMaxRating}
+              onChange={(e) => setSearchMaxRating(e.target.value)}
+            >
+              <option value="">Max Rating</option>
+              {[1,2,3,4,5,6,7,8,9,10].map((n) => <option key={n} value={n}>≤{n}</option>)}
+            </select>
+
+            <select
+              className={styles.filterSelect}
+              value={searchSort}
+              onChange={(e) => setSearchSort(e.target.value)}
+            >
+              <option value="newest">Newest</option>
+              <option value="highest">Highest Rated</option>
+              <option value="lowest">Lowest Rated</option>
+            </select>
+
+            {searchActive && (
+              <button className={styles.clearBtn} onClick={clearSearch}>
+                Clear ✕
+              </button>
+            )}
+          </div>
+
+          {/* Result count */}
+          {searchActive && !searchLoading && (
+            <p className={styles.resultCount}>
+              Found <strong>{searchTotal}</strong> {searchTotal === 1 ? 'review' : 'reviews'}
+            </p>
+          )}
+        </section>
       )}
 
       {/* ── Reviews feed ── */}
@@ -1051,6 +1152,29 @@ export default function Home() {
               ))}
             </div>
           )
+        ) : searchActive ? (
+          searchLoading ? (
+            <div className={styles.loading}><div className={styles.loadingSpinner} /><p>Searching...</p></div>
+          ) : searchResults && searchResults.length === 0 ? (
+            <div className={styles.empty}>
+              <p className={styles.emptyIcon}>🔍</p>
+              <p className={styles.emptyText}>No reviews match your search.</p>
+              <p className={styles.emptySubtext}>Try different keywords or clear the filters.</p>
+              <button className={styles.heroBtn} onClick={clearSearch}>Clear filters</button>
+            </div>
+          ) : (
+            <div className={styles.reviewGrid}>
+              {(searchResults ?? []).map((review) => (
+                <ReviewCard
+                  key={review.id}
+                  review={review}
+                  onAnalytics={fastapiUrl ? setAnalyticsGame : undefined}
+                  gameCover={gameCovers[review.gameTitle]}
+                  currentUserTag={currentUser?.gamerTag}
+                />
+              ))}
+            </div>
+          )
         ) : loading ? (
           <div className={styles.loading}>
             <div className={styles.loadingSpinner} />
@@ -1060,9 +1184,7 @@ export default function Home() {
           <div className={styles.empty}>
             <p className={styles.emptyIcon}>🎮</p>
             <p className={styles.emptyText}>No reviews found.</p>
-            <p className={styles.emptySubtext}>
-              {search ? `No results for "${search}"` : 'Be the first to write one.'}
-            </p>
+            <p className={styles.emptySubtext}>Be the first to write one.</p>
             <button className={styles.heroBtn} onClick={() => setShowModal(true)}>
               Write the first review
             </button>

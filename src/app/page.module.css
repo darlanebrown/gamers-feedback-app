@@ -973,6 +973,56 @@
   color: var(--text-dim);
 }
 
+/* ── Advanced search panel ── */
+.advancedFilters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.filterSelect {
+  padding: 6px 10px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text);
+  font-size: 12px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23666'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 24px;
+}
+.filterSelect:hover, .filterSelect:focus { border-color: var(--neon); outline: none; }
+
+.clearBtn {
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid var(--red);
+  border-radius: 5px;
+  color: var(--red);
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font-display);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.clearBtn:hover { background: rgba(255,71,87,0.08); }
+
+.resultCount {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 8px;
+  padding: 0 2px;
+}
+.resultCount strong { color: var(--neon); }
+
 /* ── Feed tab switcher ── */
 .feedTabBar {
   display: flex;
