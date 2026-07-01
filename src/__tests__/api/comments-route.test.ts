@@ -8,10 +8,11 @@ jest.mock('@/lib/reviewStore', () => ({
 }));
 
 jest.mock('@/lib/commentStore', () => ({
-  createComment:  jest.fn(),
-  getComments:    jest.fn(),
-  deleteComment:  jest.fn(),
-  countComments:  jest.fn(),
+  createComment:              jest.fn(),
+  getComments:                jest.fn(),
+  deleteComment:              jest.fn(),
+  countComments:              jest.fn(),
+  countRecentCommentsByTag:   jest.fn(),
 }));
 
 jest.mock('@/lib/emailService', () => ({
@@ -30,20 +31,21 @@ import { NextRequest } from 'next/server';
 import { GET, POST, DELETE } from '@/app/api/reviews/[id]/comments/route';
 import { getSession } from '@/lib/auth';
 import { getReviewById } from '@/lib/reviewStore';
-import { createComment, getComments, deleteComment, countComments } from '@/lib/commentStore';
+import { createComment, getComments, deleteComment, countComments, countRecentCommentsByTag } from '@/lib/commentStore';
 import { sendCommentEmail } from '@/lib/emailService';
 import { createNotification } from '@/lib/notificationStore';
 import { findUserByTag } from '@/lib/userStore';
 
-const mockSession          = getSession          as jest.Mock;
-const mockGetReview        = getReviewById       as jest.Mock;
-const mockCreateComment    = createComment       as jest.Mock;
-const mockGetComments      = getComments         as jest.Mock;
-const mockDeleteComment    = deleteComment       as jest.Mock;
-const mockCountComments    = countComments       as jest.Mock;
-const mockSendCommentEmail = sendCommentEmail    as jest.Mock;
-const mockCreateNotif      = createNotification  as jest.Mock;
-const mockFindUserByTag    = findUserByTag       as jest.Mock;
+const mockSession                 = getSession                as jest.Mock;
+const mockGetReview               = getReviewById             as jest.Mock;
+const mockCreateComment           = createComment             as jest.Mock;
+const mockGetComments             = getComments               as jest.Mock;
+const mockDeleteComment           = deleteComment             as jest.Mock;
+const mockCountComments           = countComments             as jest.Mock;
+const mockCountRecentByTag        = countRecentCommentsByTag  as jest.Mock;
+const mockSendCommentEmail        = sendCommentEmail          as jest.Mock;
+const mockCreateNotif             = createNotification        as jest.Mock;
+const mockFindUserByTag           = findUserByTag             as jest.Mock;
 
 const SESSION = { id: 'u1', email: 'darla@test.com', gamerTag: 'Darla#1' };
 const REVIEW  = { id: 'r1', gameTitle: 'Elden Ring', reviewerTag: 'Player#99' };
@@ -58,10 +60,10 @@ beforeEach(() => {
   mockCountComments.mockResolvedValue(1);
   mockGetReview.mockResolvedValue(REVIEW);
   mockFindUserByTag.mockResolvedValue({ email: 'player99@test.com', gamerTag: 'Player#99' });
-  (jest.requireMock('@/lib/commentStore') as { createComment: jest.Mock })
-    .createComment.mockResolvedValue(COMMENT);
-  (jest.requireMock('@/lib/commentStore') as { deleteComment: jest.Mock })
-    .deleteComment.mockResolvedValue(true);
+  const cs = jest.requireMock('@/lib/commentStore') as Record<string, jest.Mock>;
+  cs.createComment.mockResolvedValue(COMMENT);
+  cs.deleteComment.mockResolvedValue(true);
+  cs.countRecentCommentsByTag.mockResolvedValue(0);
   (jest.requireMock('@/lib/emailService') as { sendCommentEmail: jest.Mock })
     .sendCommentEmail.mockResolvedValue(undefined);
   (jest.requireMock('@/lib/notificationStore') as { createNotification: jest.Mock })
@@ -189,6 +191,22 @@ describe('POST /api/reviews/[id]/comments', () => {
     await Promise.resolve();
     expect(mockSendCommentEmail).not.toHaveBeenCalled();
     expect(mockCreateNotif).not.toHaveBeenCalled();
+  });
+
+  it('returns 429 when user exceeds 10 comments per hour', async () => {
+    mockSession.mockResolvedValue(SESSION);
+    mockCountRecentByTag.mockResolvedValue(10);
+    const res = await POST(makePostReq({ body: 'One more!' }), { params: { id: 'r1' } });
+    expect(res.status).toBe(429);
+    const data = await res.json();
+    expect(data.retryAfter).toBe(3600);
+  });
+
+  it('allows comment when user is under the rate limit', async () => {
+    mockSession.mockResolvedValue(SESSION);
+    mockCountRecentByTag.mockResolvedValue(9);
+    const res = await POST(makePostReq({ body: 'Still allowed!' }), { params: { id: 'r1' } });
+    expect(res.status).toBe(201);
   });
 });
 

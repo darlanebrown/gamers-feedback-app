@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { getReviewById } from '@/lib/reviewStore';
-import { createComment, getComments, deleteComment, countComments } from '@/lib/commentStore';
+import { createComment, getComments, deleteComment, countComments, countRecentCommentsByTag } from '@/lib/commentStore';
 import { sendCommentEmail } from '@/lib/emailService';
 import { createNotification } from '@/lib/notificationStore';
 import { findUserByTag } from '@/lib/userStore';
@@ -35,6 +35,18 @@ export async function POST(
 
   const review = await getReviewById(params.id);
   if (!review) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+  const COMMENT_RATE_LIMIT = 10;
+  const COMMENT_WINDOW_MS  = 60 * 60 * 1000;
+
+  const since       = new Date(Date.now() - COMMENT_WINDOW_MS);
+  const recentCount = await countRecentCommentsByTag(session.gamerTag, since);
+  if (recentCount >= COMMENT_RATE_LIMIT) {
+    return NextResponse.json(
+      { error: 'Rate limit exceeded. Max 10 comments per hour.', retryAfter: 3600 },
+      { status: 429 },
+    );
+  }
 
   const { body } = await req.json();
   if (!body || typeof body !== 'string' || !body.trim()) {
