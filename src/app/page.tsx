@@ -317,6 +317,55 @@ function GameAnalyticsModal({ gameTitle, onClose }: {
   );
 }
 
+// ── Trending Section ─────────────────────────────────────────────────────────
+type TrendingGame = { gameTitle: string; reviewCount: number; avgRating: number };
+
+function TrendingSection() {
+  const [games, setGames]   = useState<TrendingGame[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/trending')
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => { if (d) setGames(d.trending ?? []); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading || games.length === 0) return null;
+
+  return (
+    <section className={styles.trendingSection}>
+      <p className={styles.askEyebrow}>Last 7 Days · Most Active</p>
+      <h2 className={styles.recsTitle}>🔥 Trending Games</h2>
+      <div className={styles.trendingGrid}>
+        {games.map((g, i) => {
+          const ratingColor =
+            g.avgRating >= 8 ? 'var(--neon)' : g.avgRating >= 5 ? 'var(--yellow)' : 'var(--red)';
+          return (
+            <a
+              key={g.gameTitle}
+              href={`/games/${encodeURIComponent(g.gameTitle)}`}
+              className={styles.trendCard}
+            >
+              <span className={styles.trendRank}>{i + 1}</span>
+              <div className={styles.trendInfo}>
+                <div className={styles.trendTitle}>{g.gameTitle}</div>
+                <div className={styles.trendMeta}>
+                  {g.reviewCount} review{g.reviewCount !== 1 ? 's' : ''} this week
+                </div>
+              </div>
+              <span className={styles.trendRating} style={{ color: ratingColor }}>
+                {g.avgRating > 0 ? `${g.avgRating.toFixed(1)}` : '—'}
+              </span>
+            </a>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 // ── Recommendations Section ────────────────────────────────────────────────────
 function RecommendationsSection({ apiUrl }: { apiUrl: string }) {
   const [tag, setTag] = useState('');
@@ -1127,6 +1176,9 @@ export default function Home() {
 
       {/* ── Ask AI ── */}
       <AskAI />
+
+      {/* ── Trending Games ── */}
+      <TrendingSection />
 
       {/* ── Feed tab switcher ── */}
       {currentUser && (

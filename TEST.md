@@ -57,7 +57,9 @@ npx jest --no-coverage # skip coverage report (faster)
 | `api/ask-route` | `api/ask-route.test.ts` | 5 |
 | `lib/gameAnalytics` | `lib/gameAnalytics.test.ts` | 7 |
 | `api/game-analytics-route` | `api/game-analytics-route.test.ts` | 4 |
-| **Total** | **35 suites** | **238** |
+| `lib/trendingService` | `lib/trendingService.test.ts` | 5 |
+| `api/trending-route` | `api/trending-route.test.ts` | 4 |
+| **Total** | **37 suites** | **247** |
 
 ## Test File Structure
 
@@ -78,7 +80,8 @@ src/__tests__/
 │   ├── embeddingService.test.ts  — buildReviewText + generateEmbedding + embedAndStore (5 tests)
 │   ├── reviewEmbeddings.test.ts  — storeEmbedding + findSimilarReviews raw SQL (6 tests)
 │   ├── askService.test.ts        — askQuestion RAG flow (5 tests)
-│   └── gameAnalytics.test.ts     — getGameAnalytics analytics aggregation (7 tests)
+│   ├── gameAnalytics.test.ts     — getGameAnalytics analytics aggregation (7 tests)
+│   └── trendingService.test.ts   — getTrendingGames rolling-window groupBy (5 tests)
 └── api/
     ├── reviews.test.ts           — GET + POST /api/reviews (16 tests)
     ├── classify.test.ts          — POST /api/classify (7 tests)
@@ -99,7 +102,8 @@ src/__tests__/
     ├── drafts-route.test.ts      — GET + PUT + DELETE /api/drafts (7 tests)
     ├── leaderboard-route.test.ts — GET /api/leaderboard (5 tests)
     ├── ask-route.test.ts         — GET /api/ask?q= (5 tests)
-    └── game-analytics-route.test.ts — GET /api/games/[title]/analytics (4 tests)
+    ├── game-analytics-route.test.ts — GET /api/games/[title]/analytics (4 tests)
+    └── trending-route.test.ts    — GET /api/trending (4 tests)
 ```
 
 ---
@@ -582,6 +586,27 @@ Mocks `@/lib/gameAnalytics`. Tests `GET /api/games/[title]/analytics`.
 - Passes decoded `title` param to `getGameAnalytics`
 - Returns 500 when `getGameAnalytics` throws
 - `analytics` object contains all expected fields (`avgRating`, `platformBreakdown`, `topPros`, `topCons`)
+
+---
+
+### `lib/trendingService.test.ts` — 5 tests
+Mocks `@/lib/prisma`. Tests `getTrendingGames` in `src/lib/trendingService.ts`.
+
+- Returns empty array when no reviews exist in the rolling window
+- Passes a `createdAt.gte` cutoff within the expected day range to `groupBy`
+- Passes `take` equal to the requested limit
+- Maps rows to `TrendingGame` shape (`gameTitle`, `reviewCount`, `avgRating`)
+- Rounds `avgRating` to 1 decimal place
+
+---
+
+### `api/trending-route.test.ts` — 4 tests
+Mocks `@/lib/trendingService`. Tests `GET /api/trending`.
+
+- Returns 200 with `{ trending }` array
+- Calls `getTrendingGames` with `limit: 6` and `days: 7`
+- Each trending item contains `gameTitle`, `reviewCount`, and `avgRating`
+- Returns 500 when `getTrendingGames` throws
 
 ---
 
