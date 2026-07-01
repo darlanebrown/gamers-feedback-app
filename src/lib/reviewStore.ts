@@ -193,3 +193,12 @@ export async function getStats() {
     uniqueGames,
   };
 }
+
+export async function getRecentReviewCountByTag(
+  reviewerTag: string,
+  since: Date,
+): Promise<number> {
+  return prisma.review.count({
+    where: { reviewerTag, createdAt: { gte: since } },
+  });
+}

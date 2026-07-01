@@ -3,6 +3,7 @@ jest.mock('@/lib/reviewStore', () => ({
   getHelpfulReviews: jest.fn(),
   getReviewsByGame: jest.fn(),
   addReview:        jest.fn(),
+  getRecentReviewCountByTag: jest.fn(),
 }));
 
 jest.mock('@/lib/alertService', () => ({
@@ -11,14 +12,15 @@ jest.mock('@/lib/alertService', () => ({
 
 import { NextRequest } from 'next/server';
 import { GET, POST } from '@/app/api/reviews/route';
-import { getAllReviews, getHelpfulReviews, getReviewsByGame, addReview } from '@/lib/reviewStore';
+import { getAllReviews, getHelpfulReviews, getReviewsByGame, addReview, getRecentReviewCountByTag } from '@/lib/reviewStore';
 import { checkForBombing } from '@/lib/alertService';
 
-const mockGetAll     = getAllReviews     as jest.Mock;
-const mockGetHelp    = getHelpfulReviews as jest.Mock;
-const mockGetByGame  = getReviewsByGame  as jest.Mock;
-const mockAdd        = addReview         as jest.Mock;
-const mockCheckBombing = checkForBombing as jest.Mock;
+const mockGetAll          = getAllReviews              as jest.Mock;
+const mockGetHelp         = getHelpfulReviews          as jest.Mock;
+const mockGetByGame       = getReviewsByGame           as jest.Mock;
+const mockAdd             = addReview                  as jest.Mock;
+const mockCheckBombing    = checkForBombing            as jest.Mock;
+const mockRecentCount     = getRecentReviewCountByTag  as jest.Mock;
 
 function makeReview(overrides = {}) {
   return {
@@ -41,6 +43,7 @@ function makeReview(overrides = {}) {
 beforeEach(() => {
   jest.resetAllMocks();
   mockCheckBombing.mockResolvedValue(undefined);
+  mockRecentCount.mockResolvedValue(0); // under the limit by default
 });
 
 describe('GET /api/reviews', () => {
@@ -202,5 +205,56 @@ describe('POST /api/reviews', () => {
 
     expect(res.status).toBe(500);
     expect(body.error).toBe('Failed to create review');
+  });
+});
+
+describe('POST /api/reviews — rate limiting', () => {
+  it('returns 429 when reviewer has hit the hourly limit', async () => {
+    mockRecentCount.mockResolvedValue(3);
+
+    const req = new NextRequest('http://localhost/api/reviews', {
+      method: 'POST',
+      body: JSON.stringify(VALID_BODY),
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    const res = await POST(req);
+    const body = await res.json();
+
+    expect(res.status).toBe(429);
+    expect(body.error).toMatch(/rate limit/i);
+    expect(body.retryAfter).toBeGreaterThan(0);
+    expect(mockAdd).not.toHaveBeenCalled();
+  });
+
+  it('includes retryAfter in seconds in the 429 response', async () => {
+    mockRecentCount.mockResolvedValue(5);
+
+    const req = new NextRequest('http://localhost/api/reviews', {
+      method: 'POST',
+      body: JSON.stringify(VALID_BODY),
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    const res = await POST(req);
+    const body = await res.json();
+
+    expect(typeof body.retryAfter).toBe('number');
+    expect(body.retryAfter).toBeLessThanOrEqual(3600);
+  });
+
+  it('proceeds normally when reviewer is under the limit', async () => {
+    mockRecentCount.mockResolvedValue(2);
+    mockAdd.mockResolvedValue(makeReview());
+
+    const req = new NextRequest('http://localhost/api/reviews', {
+      method: 'POST',
+      body: JSON.stringify(VALID_BODY),
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(201);
+    expect(mockAdd).toHaveBeenCalledTimes(1);
   });
 });

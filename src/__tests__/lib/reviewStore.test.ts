@@ -4,6 +4,7 @@ jest.mock('@/lib/prisma', () => ({
       findMany: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+      count: jest.fn(),
     },
   },
 }));
@@ -16,11 +17,13 @@ import {
   addReview,
   updateReviewClassification,
   getStats,
+  getRecentReviewCountByTag,
 } from '@/lib/reviewStore';
 
 const findMany = prisma.review.findMany as jest.Mock;
 const create   = prisma.review.create  as jest.Mock;
 const update   = prisma.review.update  as jest.Mock;
+const count    = prisma.review.count   as jest.Mock;
 
 function row(overrides: Record<string, unknown> = {}) {
   return {
@@ -201,5 +204,24 @@ describe('getStats', () => {
     ]);
     const stats = await getStats();
     expect(stats.uniqueGames).toBe(2);
+  });
+});
+
+describe('getRecentReviewCountByTag', () => {
+  it('queries by reviewerTag and createdAt >= since', async () => {
+    count.mockResolvedValue(2);
+    const since = new Date('2024-01-01T00:00:00.000Z');
+    const result = await getRecentReviewCountByTag('Darla#1', since);
+    expect(count).toHaveBeenCalledWith({
+      where: { reviewerTag: 'Darla#1', createdAt: { gte: since } },
+    });
+    expect(result).toBe(2);
+  });
+
+  it('returns 0 when the user has no recent reviews', async () => {
+    count.mockResolvedValue(0);
+    const since = new Date();
+    const result = await getRecentReviewCountByTag('NewUser#1', since);
+    expect(result).toBe(0);
   });
 });
