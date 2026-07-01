@@ -1,12 +1,14 @@
 jest.mock('@/lib/reviewStore', () => ({
   searchReviews: jest.fn(),
+  countReviews:  jest.fn(),
 }));
 
 import { NextRequest } from 'next/server';
 import { GET } from '@/app/api/search/route';
-import { searchReviews } from '@/lib/reviewStore';
+import { searchReviews, countReviews } from '@/lib/reviewStore';
 
 const mockSearch = searchReviews as jest.Mock;
+const mockCount  = countReviews  as jest.Mock;
 
 function makeReview(overrides = {}) {
   return {
@@ -25,11 +27,15 @@ function req(params: Record<string, string> = {}) {
   return new NextRequest(url.toString());
 }
 
-beforeEach(() => jest.resetAllMocks());
+beforeEach(() => {
+  jest.resetAllMocks();
+  mockCount.mockResolvedValue(0);
+});
 
 describe('GET /api/search', () => {
   it('returns 200 with all reviews when no params given', async () => {
     mockSearch.mockResolvedValue([makeReview()]);
+    mockCount.mockResolvedValue(1);
 
     const res = await GET(req());
     const body = await res.json();

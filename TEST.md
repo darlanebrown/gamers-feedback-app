@@ -69,7 +69,8 @@ npx jest --no-coverage # skip coverage report (faster)
 | `api/vote-get-route` | `api/vote-get-route.test.ts` | 3 |
 | `lib/reviewerGames` | `lib/reviewerGames.test.ts` | 3 |
 | `api/game-reviews-route` | `api/game-reviews-route.test.ts` | 4 |
-| **Total** | **47 suites** | **294** |
+| `lib/searchCount` | `lib/searchCount.test.ts` | 4 |
+| **Total** | **48 suites** | **298** |
 
 ## Test File Structure
 
@@ -131,6 +132,11 @@ src/__tests__/lib/
 ```
 src/__tests__/api/
     └── game-reviews-route.test.ts    — GET /api/games/[title]/reviews (4 tests)
+```
+
+```
+src/__tests__/lib/
+    └── searchCount.test.ts           — countReviews filter + no skip/take (4 tests)
 ```
 
 ---
@@ -734,6 +740,16 @@ Mocks `@/lib/prisma`. Tests `getGamesByReviewer` in `src/lib/reviewStore.ts`.
 - Returns empty array when reviewer has no reviews
 - Returns unique game titles sorted alphabetically (deduplicates repeats)
 - Queries only `helpful`-classified reviews for the given `reviewerTag`
+
+---
+
+### `lib/searchCount.test.ts` — 4 tests
+Mocks `@/lib/prisma`. Tests `countReviews` in `src/lib/reviewStore.ts`.
+
+- Returns 0 when no reviews match
+- Passes keyword `q` to the `where.OR` clause
+- Passes `platform` filter to `where.platform`
+- Ignores `page` and `limit` — counts all matching rows (no `skip`/`take`)
 
 ---
 

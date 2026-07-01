@@ -172,6 +172,28 @@ export async function searchReviews(params: SearchParams): Promise<Review[]> {
   return rows.map(toReview);
 }
 
+export async function countReviews(params: SearchParams): Promise<number> {
+  const { q, platform, minRating, maxRating, classification } = params;
+  const where: Record<string, unknown> = {};
+
+  if (q) {
+    where.OR = [
+      { headline:    { contains: q, mode: 'insensitive' } },
+      { body:        { contains: q, mode: 'insensitive' } },
+      { pros:        { contains: q, mode: 'insensitive' } },
+      { cons:        { contains: q, mode: 'insensitive' } },
+      { gameTitle:   { contains: q, mode: 'insensitive' } },
+      { reviewerTag: { contains: q, mode: 'insensitive' } },
+    ];
+  }
+  if (platform)       where.platform       = { equals: platform, mode: 'insensitive' };
+  if (minRating)      where.rating         = { ...(where.rating as object ?? {}), gte: minRating };
+  if (maxRating)      where.rating         = { ...(where.rating as object ?? {}), lte: maxRating };
+  if (classification) where.classification = classification;
+
+  return prisma.review.count({ where });
+}
+
 export async function getStats() {
   const all = await getAllReviews();
   const helpful = all.filter((r) => r.classification === 'helpful');
