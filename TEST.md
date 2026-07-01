@@ -73,7 +73,9 @@ npx jest --no-coverage # skip coverage report (faster)
 | `api/leaderboard-period-route` | `api/leaderboard-period-route.test.ts` | 4 |
 | `api/profile-user-info` | `api/profile-user-info.test.ts` | 4 |
 | `api/notification-count-route` | `api/notification-count-route.test.ts` | 3 |
-| **Total** | **51 suites** | **309** |
+| `api/feed-pagination-route` | `api/feed-pagination-route.test.ts` | 4 |
+| `lib/feedCount` | `lib/feedCount.test.ts` | 3 |
+| **Total** | **53 suites** | **316** |
 
 ## Test File Structure
 
@@ -725,6 +727,26 @@ Mocks `@/lib/reviewStore` and `@/lib/auth`. Tests `PATCH` + `DELETE /api/reviews
 - 401 when not authenticated
 - 403 when the authenticated user doesn't own the review and is not admin
 - 200 with `{ ok: true }` when owner deletes their review
+
+---
+
+### `api/feed-pagination-route.test.ts` — 4 tests
+Mocks `@/lib/auth`, `@/lib/followStore`, `@/lib/reviewStore`.
+Tests pagination behaviour of `GET /api/feed`.
+
+- Defaults to page 1, limit 10 (calls `getReviewsByTags` with `{ skip: 0, take: 10 }`)
+- Page 2 with limit 5 produces `{ skip: 5, take: 5 }`
+- Response includes `total` field from `countReviewsByTags`
+- Response includes `page` and `limit` echo
+
+---
+
+### `lib/feedCount.test.ts` — 3 tests
+Mocks `@/lib/prisma`. Tests `countReviewsByTags` in `src/lib/reviewStore.ts`.
+
+- Returns 0 without hitting the DB when tags array is empty
+- Calls `prisma.review.count` with `{ where: { reviewerTag: { in: tags } } }`
+- Returns the count value from the DB
 
 ---
 

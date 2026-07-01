@@ -8,7 +8,8 @@ jest.mock('@/lib/followStore', () => ({
 }));
 
 jest.mock('@/lib/reviewStore', () => ({
-  getReviewsByTags: jest.fn(),
+  getReviewsByTags:   jest.fn(),
+  countReviewsByTags: jest.fn().mockResolvedValue(0),
 }));
 
 import { NextRequest } from 'next/server';
@@ -58,7 +59,7 @@ describe('GET /api/feed', () => {
 
     expect(res.status).toBe(200);
     expect(body.reviews).toHaveLength(2);
-    expect(mockGetReviews).toHaveBeenCalledWith(['Player#99', 'Gamer#42']);
+    expect(mockGetReviews).toHaveBeenCalledWith(['Player#99', 'Gamer#42'], { skip: 0, take: 10 });
   });
 
   it('response includes followedCount', async () => {
