@@ -1,12 +1,19 @@
 import { Metadata } from 'next';
 import { getOrFetchGame } from '@/lib/gameService';
 import { getGameAnalytics } from '@/lib/gameAnalytics';
-import { getReviewsByGame } from '@/lib/reviewStore';
+import { getReviewsByGame, GameReviewSort } from '@/lib/reviewStore';
 import styles from './game-page.module.css';
 import WriteReviewButton from './WriteReviewButton';
 import NotificationBell from '@/app/components/NotificationBell';
 
-type Props = { params: { title: string } };
+const VALID_SORTS = new Set<GameReviewSort>(['newest', 'highest', 'lowest']);
+const SORT_LABELS: Record<GameReviewSort, string> = {
+  newest:  'Newest',
+  highest: 'Highest Rated',
+  lowest:  'Lowest Rated',
+};
+
+type Props = { params: { title: string }; searchParams: { sort?: string } };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const title = decodeURIComponent(params.title);
@@ -18,13 +25,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function GamePage({ params }: Props) {
+export default async function GamePage({ params, searchParams }: Props) {
   const title = decodeURIComponent(params.title);
+  const rawSort = searchParams.sort ?? 'newest';
+  const sort: GameReviewSort = VALID_SORTS.has(rawSort as GameReviewSort)
+    ? (rawSort as GameReviewSort)
+    : 'newest';
 
   const [game, analytics, reviews] = await Promise.all([
     getOrFetchGame(title).catch(() => null),
     getGameAnalytics(title),
-    getReviewsByGame(title),
+    getReviewsByGame(title, sort),
   ]);
 
   const maxPlatformCount = analytics.platformBreakdown[0]?.count ?? 1;
@@ -208,10 +219,21 @@ export default async function GamePage({ params }: Props) {
 
       {/* ── Review list ── */}
       <div className={styles.section}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+        <div className={styles.reviewListHeader}>
           <p className={styles.sectionTitle} style={{ marginBottom: 0 }}>
             Verified Reviews ({analytics.helpfulCount})
           </p>
+          <div className={styles.sortTabs}>
+            {(['newest', 'highest', 'lowest'] as GameReviewSort[]).map((s) => (
+              <a
+                key={s}
+                href={`/games/${encodeURIComponent(title)}?sort=${s}`}
+                className={`${styles.sortTab} ${sort === s ? styles.sortTabActive : ''}`}
+              >
+                {SORT_LABELS[s]}
+              </a>
+            ))}
+          </div>
           <WriteReviewButton gameTitle={title} />
         </div>
         {reviews.length === 0 ? (

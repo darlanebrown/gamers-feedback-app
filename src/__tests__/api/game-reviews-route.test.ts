@@ -34,9 +34,9 @@ describe('GET /api/games/[title]/reviews', () => {
     expect(body.reviews[0].id).toBe('r1');
   });
 
-  it('passes decoded title to getReviewsByGame', async () => {
+  it('passes decoded title and default sort to getReviewsByGame', async () => {
     await GET(req('Elden%20Ring'), { params: { title: 'Elden Ring' } });
-    expect(mockGetByGame).toHaveBeenCalledWith('Elden Ring');
+    expect(mockGetByGame).toHaveBeenCalledWith('Elden Ring', 'newest');
   });
 
   it('returns empty array when no reviews exist for the game', async () => {
