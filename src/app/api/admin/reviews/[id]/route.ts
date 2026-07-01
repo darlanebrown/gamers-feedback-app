@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/adminMiddleware';
 import { getReviewById, updateReviewClassification } from '@/lib/reviewStore';
 import { createNotification } from '@/lib/notificationStore';
+import { findUserByTag } from '@/lib/userStore';
+import { sendReclassifyEmail } from '@/lib/emailService';
 
 const VALID = new Set(['helpful', 'spam', 'toxic', 'pending']);
 
@@ -31,5 +33,10 @@ export async function PATCH(
     params.id,
     review.gameTitle,
   ).catch(() => {});
+  findUserByTag(review.reviewerTag)
+    .then((author) => {
+      if (author) sendReclassifyEmail(author.email, review.gameTitle, classification).catch(() => {});
+    })
+    .catch(() => {});
   return NextResponse.json({ ok: true, id: params.id, classification });
 }

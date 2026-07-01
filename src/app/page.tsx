@@ -700,6 +700,7 @@ function SubmitModal({ onClose, onSuccess, defaultTag }: {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           reviewId: review.id,
+          gameTitle: form.gameTitle,
           headline: form.headline,
           body: form.body,
           pros: form.pros,
