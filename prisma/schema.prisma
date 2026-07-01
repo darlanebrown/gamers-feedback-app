@@ -11,6 +11,14 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  gamerTag     String   @unique
+  createdAt    DateTime @default(now())
+}
+
 model Review {
   id                   String   @id @default(cuid())
   gameTitle            String
@@ -25,4 +33,5 @@ model Review {
   classification       String   @default("pending")
   classificationReason String?
   createdAt            DateTime @default(now())
+  embedding            Unsupported("vector(1536)")?
 }

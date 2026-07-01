@@ -84,6 +84,14 @@ export async function updateReviewClassification(
   });
 }
 
+export async function getReviewsByTag(reviewerTag: string): Promise<Review[]> {
+  const rows = await prisma.review.findMany({
+    where: { reviewerTag },
+    orderBy: { createdAt: 'desc' },
+  });
+  return rows.map(toReview);
+}
+
 export async function getStats() {
   const all = await getAllReviews();
   const helpful = all.filter((r) => r.classification === 'helpful');
