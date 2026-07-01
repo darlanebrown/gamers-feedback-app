@@ -1,9 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { updateReviewClassification } from '@/lib/reviewStore';
 import { classifyByRules } from '@/lib/classify';
+import { sendClassificationEmail } from '@/lib/emailService';
+import { sendClassificationWebhook } from '@/lib/webhookService';
+
+function notifyIfFlagged(
+  classification: string,
+  reviewId: string,
+  gameTitle: string,
+  reviewerTag: string,
+) {
+  if (classification !== 'spam' && classification !== 'toxic') return;
+  const c = classification as 'spam' | 'toxic';
+  sendClassificationEmail(reviewId, gameTitle, reviewerTag, c).catch(() => {});
+  sendClassificationWebhook(reviewId, gameTitle, reviewerTag, c).catch(() => {});
+}
 
 export async function POST(req: NextRequest) {
-  const { reviewId, headline, body, pros, cons, reviewerTag } = await req.json();
+  const { reviewId, headline, body, pros, cons, reviewerTag, gameTitle } = await req.json();
 
   if (!reviewId || !headline || !body) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -17,6 +31,7 @@ export async function POST(req: NextRequest) {
   if (!process.env.OPENAI_API_KEY) {
     const { classification, reason } = runRuleBased();
     await updateReviewClassification(reviewId, classification, reason);
+    notifyIfFlagged(classification, reviewId, gameTitle ?? '', reviewerTag ?? '');
     return NextResponse.json({ classification, reason, method: 'rule-based' });
   }
 
@@ -70,11 +85,13 @@ Respond with ONLY valid JSON in this exact format:
     }
 
     await updateReviewClassification(reviewId, classification, reason);
+    notifyIfFlagged(classification, reviewId, gameTitle ?? '', reviewerTag ?? '');
     return NextResponse.json({ classification, reason, method: 'ai' });
   } catch (error) {
     console.error('OpenAI classification failed — falling back to rule-based:', error);
     const { classification, reason } = runRuleBased();
     await updateReviewClassification(reviewId, classification, reason);
+    notifyIfFlagged(classification, reviewId, gameTitle ?? '', reviewerTag ?? '');
     return NextResponse.json({ classification, reason, method: 'rule-based-fallback' });
   }
 }
