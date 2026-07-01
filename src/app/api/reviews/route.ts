@@ -5,6 +5,7 @@ import {
   getReviewsByGame,
   addReview,
 } from '@/lib/reviewStore';
+import { checkForBombing } from '@/lib/alertService';
 
 const VALID_PLATFORMS = [
   'PC', 'PlayStation 5', 'PlayStation 4', 'Xbox Series X/S',
@@ -55,6 +56,8 @@ export async function POST(req: NextRequest) {
     if (error) return NextResponse.json({ error }, { status: 400 });
 
     const review = await addReview(body);
+    // fire-and-forget: don't block the response on bombing check
+    checkForBombing(review.gameTitle).catch(() => {});
     return NextResponse.json({ review }, { status: 201 });
   } catch {
     return NextResponse.json({ error: 'Failed to create review' }, { status: 500 });

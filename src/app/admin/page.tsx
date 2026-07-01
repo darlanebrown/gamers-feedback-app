@@ -9,7 +9,10 @@ type AdminUser = {
   role: string; banned: boolean; createdAt: string;
 };
 
-type Alert = { gameTitle: string; negativeCount: number; isBombing: boolean };
+type Alert = {
+  id: string; type: string; gameTitle: string; count: number;
+  detectedAt: string; dismissed: boolean; dismissedAt: string | null;
+};
 
 type Stats = { total: number; helpful: number; spam: number; toxic: number; pending: number; users: number };
 
@@ -78,6 +81,12 @@ export default function AdminPage() {
     });
     if (res.ok) { flash(`✓ User ${action}ned`); loadAll(); }
     else flash('Failed to update user.');
+  };
+
+  const dismissBombAlert = async (id: string) => {
+    const res = await fetch(`/api/admin/alerts/${id}`, { method: 'PATCH' });
+    if (res.ok) { flash('✓ Alert dismissed'); loadAll(); }
+    else flash('Failed to dismiss alert.');
   };
 
   if (authorized === null) return <div className={styles.center}><div className={styles.spinner} /></div>;
@@ -199,15 +208,34 @@ export default function AdminPage() {
           {tab === 'alerts' && (
             <div>
               {alerts.length === 0 ? (
-                <p className={styles.empty}>No review bombing detected right now.</p>
+                <p className={styles.empty}>No active review bombing alerts.</p>
               ) : (
                 <div className={styles.alertList}>
                   {alerts.map((a) => (
-                    <div key={a.gameTitle} className={styles.alertCard}>
+                    <div key={a.id} className={styles.alertCard}>
                       <span className={styles.alertIcon}>🚨</span>
-                      <div>
+                      <div style={{ flex: 1 }}>
                         <p className={styles.alertGame}>{a.gameTitle}</p>
-                        <p className={styles.alertMeta}>{a.negativeCount} negative reviews in the last 2 hours</p>
+                        <p className={styles.alertMeta}>
+                          {a.count} low-rated reviews (&le;3) in the last hour &mdash; detected{' '}
+                          {new Date(a.detectedAt).toLocaleString()}
+                        </p>
+                      </div>
+                      <div className={styles.actions}>
+                        <a
+                          href={`/?search=${encodeURIComponent(a.gameTitle)}`}
+                          className={styles.actionBtn}
+                          style={{ borderColor: 'var(--yellow)', color: 'var(--yellow)' }}
+                        >
+                          View reviews
+                        </a>
+                        <button
+                          className={styles.actionBtn}
+                          style={{ borderColor: 'var(--text-dim)', color: 'var(--text-dim)' }}
+                          onClick={() => dismissBombAlert(a.id)}
+                        >
+                          Dismiss
+                        </button>
                       </div>
                     </div>
                   ))}

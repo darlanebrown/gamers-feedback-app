@@ -70,3 +70,13 @@ model Follow {
 
   @@unique([followerTag, followingTag])
 }
+
+model Alert {
+  id          String    @id @default(cuid())
+  type        String
+  gameTitle   String
+  count       Int
+  detectedAt  DateTime  @default(now())
+  dismissed   Boolean   @default(false)
+  dismissedAt DateTime?
+}
