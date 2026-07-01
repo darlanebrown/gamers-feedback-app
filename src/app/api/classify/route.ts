@@ -4,6 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { updateReviewClassification } from '@/lib/reviewStore';
+import { classifyByRules } from '@/lib/classify';
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,24 +14,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // If no OpenAI key, use rule-based fallback classification
     if (!process.env.OPENAI_API_KEY) {
-      const text = `${headline} ${body} ${pros} ${cons}`.toLowerCase();
-      let classification: 'helpful' | 'spam' | 'toxic' = 'helpful';
-      let reason = 'Rule-based classification (no AI key configured)';
-
-      const spamSignals = ['discount', 'code', 'click', 'free v-bucks', 'subscribe', 'link in bio', 'giveaway'];
-      const toxicSignals = ['stupid', 'trash', 'garbage', 'idiot', 'worst game ever', 'devs are idiots'];
-
-      if (spamSignals.some((s) => text.includes(s))) {
-        classification = 'spam';
-        reason = 'Detected promotional/spam language';
-      } else if (toxicSignals.some((s) => text.includes(s))) {
-        classification = 'toxic';
-        reason = 'Detected toxic language';
-      }
-
-      updateReviewClassification(reviewId, classification, reason);
+      const text = `${headline} ${body} ${pros ?? ''} ${cons ?? ''}`;
+      const { classification, reason } = classifyByRules(text);
+      await updateReviewClassification(reviewId, classification, reason);
       return NextResponse.json({ classification, reason, method: 'rule-based' });
     }
 
@@ -83,7 +70,7 @@ Respond with ONLY valid JSON in this exact format:
       reason = 'AI classification (raw parse)';
     }
 
-    updateReviewClassification(reviewId, classification, reason);
+    await updateReviewClassification(reviewId, classification, reason);
     return NextResponse.json({ classification, reason, method: 'ai' });
   } catch (error) {
     console.error('Classification error:', error);

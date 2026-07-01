@@ -3,6 +3,6 @@ import { NextResponse } from 'next/server';
 import { getStats } from '@/lib/reviewStore';
 
 export async function GET() {
-  const stats = getStats();
+  const stats = await getStats();
   return NextResponse.json(stats);
 }
