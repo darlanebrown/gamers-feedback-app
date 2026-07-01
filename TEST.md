@@ -77,7 +77,9 @@ npx jest --no-coverage # skip coverage report (faster)
 | `lib/feedCount` | `lib/feedCount.test.ts` | 3 |
 | `api/notifications-pagination-route` | `api/notifications-pagination-route.test.ts` | 4 |
 | `lib/notificationsCount` | `lib/notificationsCount.test.ts` | 2 |
-| **Total** | **55 suites** | **322** |
+| `lib/reviewsByGameSort` | `lib/reviewsByGameSort.test.ts` | 4 |
+| `api/game-reviews-sort-route` | `api/game-reviews-sort-route.test.ts` | 4 |
+| **Total** | **57 suites** | **330** |
 
 ## Test File Structure
 
@@ -729,6 +731,26 @@ Mocks `@/lib/reviewStore` and `@/lib/auth`. Tests `PATCH` + `DELETE /api/reviews
 - 401 when not authenticated
 - 403 when the authenticated user doesn't own the review and is not admin
 - 200 with `{ ok: true }` when owner deletes their review
+
+---
+
+### `lib/reviewsByGameSort.test.ts` — 4 tests
+Mocks `@/lib/prisma`. Tests `getReviewsByGame` sort behaviour in `src/lib/reviewStore.ts`.
+
+- No sort arg defaults to `orderBy: { createdAt: 'desc' }` (newest)
+- `sort='newest'` uses `createdAt: 'desc'`
+- `sort='highest'` uses `orderBy: { rating: 'desc' }`
+- `sort='lowest'` uses `orderBy: { rating: 'asc' }`
+
+---
+
+### `api/game-reviews-sort-route.test.ts` — 4 tests
+Mocks `@/lib/reviewStore`. Tests sort param handling in `GET /api/games/[title]/reviews`.
+
+- No `?sort` param defaults to `'newest'`
+- `?sort=highest` passes `'highest'` to the store
+- `?sort=lowest` passes `'lowest'` to the store
+- Unrecognised sort value falls back to `'newest'`
 
 ---
 

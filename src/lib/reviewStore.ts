@@ -37,13 +37,21 @@ export async function getHelpfulReviews(): Promise<Review[]> {
   return rows.map(toReview);
 }
 
-export async function getReviewsByGame(title: string): Promise<Review[]> {
+export type GameReviewSort = 'newest' | 'highest' | 'lowest';
+
+const GAME_ORDER: Record<GameReviewSort, object> = {
+  newest:  { createdAt: 'desc' },
+  highest: { rating: 'desc' },
+  lowest:  { rating: 'asc' },
+};
+
+export async function getReviewsByGame(title: string, sort: GameReviewSort = 'newest'): Promise<Review[]> {
   const rows = await prisma.review.findMany({
     where: {
       gameTitle: { contains: title, mode: 'insensitive' },
       classification: 'helpful',
     },
-    orderBy: { createdAt: 'desc' },
+    orderBy: GAME_ORDER[sort] ?? GAME_ORDER.newest,
   });
   return rows.map(toReview);
 }

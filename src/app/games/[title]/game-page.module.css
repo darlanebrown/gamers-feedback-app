@@ -266,6 +266,40 @@
 }
 
 /* ── Review list ── */
+.reviewListHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.sortTabs {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+}
+
+.sortTab {
+  padding: 4px 12px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: var(--font-display);
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.sortTab:hover { border-color: var(--neon); color: var(--neon); }
+
+.sortTabActive {
+  background: rgba(0, 255, 135, 0.1);
+  border-color: var(--neon) !important;
+  color: var(--neon) !important;
+}
+
 .reviewList { display: flex; flex-direction: column; gap: 12px; }
 
 .reviewItem {
