@@ -281,3 +281,71 @@
   .proscons { grid-template-columns: 1fr; }
   .ratingTrack { width: 70px; }
 }
+
+/* ── Similar Reviews ── */
+.similar {
+  max-width: 700px;
+  margin: 32px auto 0;
+  padding: 0 24px 48px;
+}
+
+.similarLabel {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+}
+
+.similarList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.similarCard {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  text-decoration: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+.similarCard:hover {
+  border-color: var(--neon);
+  background: var(--card-hover);
+}
+
+.similarTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 4px;
+}
+
+.similarGame {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.similarRating {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.similarHeadline {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.similarMeta {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}

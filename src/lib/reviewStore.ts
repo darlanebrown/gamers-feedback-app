@@ -220,3 +220,17 @@ export async function findSimilarReviews(embedding: number[], limit: number): Pr
   `;
   return rows.map((row) => toReview({ ...row, rating: Number(row.rating) }));
 }
+
+export async function findSimilarReviewsById(reviewId: string, limit: number): Promise<Review[]> {
+  const rows = await prisma.$queryRaw<any[]>`
+    SELECT id, "gameTitle", platform, rating, headline, body, pros, cons, playtime,
+           "reviewerTag", classification, "classificationReason", "createdAt"
+    FROM "Review"
+    WHERE classification = 'helpful'
+      AND embedding IS NOT NULL
+      AND id != ${reviewId}
+    ORDER BY embedding <=> (SELECT embedding FROM "Review" WHERE id = ${reviewId})
+    LIMIT ${limit}
+  `;
+  return rows.map((row) => toReview({ ...row, rating: Number(row.rating) }));
+}

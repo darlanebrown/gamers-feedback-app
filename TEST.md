@@ -63,7 +63,8 @@ npx jest --no-coverage # skip coverage report (faster)
 | `api/recommendations-route` | `api/recommendations-route.test.ts` | 4 |
 | `lib/reviewedGames` | `lib/reviewedGames.test.ts` | 5 |
 | `api/games-index-route` | `api/games-index-route.test.ts` | 4 |
-| **Total** | **41 suites** | **270** |
+| `lib/similarReviews` | `lib/similarReviews.test.ts` | 4 |
+| **Total** | **42 suites** | **274** |
 
 ## Test File Structure
 
@@ -87,7 +88,8 @@ src/__tests__/
 │   ├── gameAnalytics.test.ts     — getGameAnalytics + ratingTrend sparkline data (11 tests)
 │   ├── trendingService.test.ts   — getTrendingGames rolling-window groupBy (5 tests)
 │   ├── recommendationsService.test.ts — collaborative-filtering recommendations (6 tests)
-│   └── reviewedGames.test.ts         — getReviewedGames groupBy + sort + pagination (5 tests)
+│   ├── reviewedGames.test.ts         — getReviewedGames groupBy + sort + pagination (5 tests)
+│   └── similarReviews.test.ts        — findSimilarReviewsById subquery via pgvector (4 tests)
 └── api/
     ├── reviews.test.ts           — GET + POST /api/reviews (16 tests)
     ├── classify.test.ts          — POST /api/classify (7 tests)
@@ -662,6 +664,16 @@ Mocks `@/lib/gameAnalytics`. Tests `GET /api/games` (index route).
 - Passes `sort`, `limit`, and `offset` from query params
 - Defaults to `sort: 'reviews'`, `limit: 24`, `offset: 0`
 - Returns 500 when `getReviewedGames` throws
+
+---
+
+### `lib/similarReviews.test.ts` — 4 tests
+Mocks `@/lib/prisma`. Tests `findSimilarReviewsById` in `src/lib/reviewStore.ts`.
+
+- Returns empty array when no similar reviews exist
+- Calls `$queryRaw` exactly once (single subquery, no round-trip for embedding)
+- Maps raw rows to full `Review` objects
+- Converts numeric `rating` field from raw DB string to number
 
 ---
 

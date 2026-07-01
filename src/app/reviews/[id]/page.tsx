@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getReviewById } from '@/lib/reviewStore';
+import { getReviewById, findSimilarReviewsById } from '@/lib/reviewStore';
 import { getOrFetchGame } from '@/lib/gameService';
 import styles from './review-page.module.css';
 import ShareButton from './ShareButton';
@@ -48,7 +48,10 @@ export default async function ReviewPage({ params }: Props) {
   const review = await getReviewById(params.id);
   if (!review) notFound();
 
-  const game = await getOrFetchGame(review.gameTitle).catch(() => null);
+  const [game, similar] = await Promise.all([
+    getOrFetchGame(review.gameTitle).catch(() => null),
+    findSimilarReviewsById(params.id, 3).catch(() => []),
+  ]);
   const cls = CLASS_MAP[review.classification] ?? CLASS_MAP.pending;
   const ratingColor = review.rating >= 8 ? 'var(--neon)' : review.rating >= 5 ? 'var(--yellow)' : 'var(--red)';
 
@@ -146,6 +149,27 @@ export default async function ReviewPage({ params }: Props) {
           <ShareButton reviewId={review.id} />
         </footer>
       </article>
+
+      {similar.length > 0 && (
+        <section className={styles.similar}>
+          <p className={styles.similarLabel}>Similar Reviews</p>
+          <div className={styles.similarList}>
+            {similar.map((s) => {
+              const c = s.rating >= 8 ? 'var(--neon)' : s.rating >= 5 ? 'var(--yellow)' : 'var(--red)';
+              return (
+                <a key={s.id} href={`/reviews/${s.id}`} className={styles.similarCard}>
+                  <div className={styles.similarTop}>
+                    <span className={styles.similarGame}>{s.gameTitle}</span>
+                    <span className={styles.similarRating} style={{ color: c }}>{s.rating}/10</span>
+                  </div>
+                  <p className={styles.similarHeadline}>"{s.headline}"</p>
+                  <p className={styles.similarMeta}>{s.reviewerTag} · {s.platform}</p>
+                </a>
+              );
+            })}
+          </div>
+        </section>
+      )}
     </main>
   );
 }
