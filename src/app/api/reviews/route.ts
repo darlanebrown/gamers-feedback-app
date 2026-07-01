@@ -4,8 +4,12 @@ import {
   getHelpfulReviews,
   getReviewsByGame,
   addReview,
+  getRecentReviewCountByTag,
 } from '@/lib/reviewStore';
 import { checkForBombing } from '@/lib/alertService';
+
+const RATE_LIMIT = 3;
+const RATE_WINDOW_MS = 60 * 60 * 1000; // 1 hour
 
 const VALID_PLATFORMS = [
   'PC', 'PlayStation 5', 'PlayStation 4', 'Xbox Series X/S',
@@ -54,6 +58,15 @@ export async function POST(req: NextRequest) {
 
     const error = validate(body);
     if (error) return NextResponse.json({ error }, { status: 400 });
+
+    const since = new Date(Date.now() - RATE_WINDOW_MS);
+    const recentCount = await getRecentReviewCountByTag(body.reviewerTag as string, since);
+    if (recentCount >= RATE_LIMIT) {
+      return NextResponse.json(
+        { error: 'Rate limit exceeded. Max 3 reviews per hour.', retryAfter: 3600 },
+        { status: 429 },
+      );
+    }
 
     const review = await addReview(body);
     // fire-and-forget: don't block the response on bombing check
