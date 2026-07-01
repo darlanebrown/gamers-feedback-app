@@ -23,6 +23,98 @@ type Recommendation = {
   reviewCount: number;
 };
 
+type SessionUser = { id: string; email: string; gamerTag: string };
+
+// ── Auth Modal ────────────────────────────────────────────────────────────────
+function AuthModal({ onClose, onSuccess }: {
+  onClose: () => void;
+  onSuccess: (user: SessionUser) => void;
+}) {
+  const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [form, setForm] = useState({ email: '', password: '', gamerTag: '' });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setForm((prev) => ({ ...prev, [field]: e.target.value }));
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    try {
+      const endpoint = mode === 'login' ? '/api/auth/login' : '/api/auth/register';
+      const body = mode === 'login'
+        ? { email: form.email, password: form.password }
+        : { email: form.email, password: form.password, gamerTag: form.gamerTag };
+
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Something went wrong');
+      onSuccess(data.user);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className={styles.modalOverlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className={styles.modal} style={{ maxWidth: 420 }}>
+        <div className={styles.modalHeader}>
+          <h2 className={styles.modalTitle}>{mode === 'login' ? 'Sign In' : 'Create Account'}</h2>
+          <button className={styles.closeBtn} onClick={onClose}>✕</button>
+        </div>
+
+        {/* Tab switcher */}
+        <div style={{ display: 'flex', gap: 4, marginBottom: 24, background: 'var(--black)', padding: 4, borderRadius: 6, border: '1px solid var(--border)' }}>
+          {(['login', 'register'] as const).map((m) => (
+            <button
+              key={m}
+              onClick={() => { setMode(m); setError(''); }}
+              style={{
+                flex: 1, padding: '7px 0', border: 'none', borderRadius: 4, cursor: 'pointer',
+                fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700,
+                background: mode === m ? 'var(--neon)' : 'transparent',
+                color: mode === m ? 'var(--black)' : 'var(--text-muted)',
+                transition: 'all 0.15s',
+              }}
+            >
+              {m === 'login' ? 'Sign In' : 'Register'}
+            </button>
+          ))}
+        </div>
+
+        <form onSubmit={handleSubmit} className={styles.form}>
+          <div className={styles.field}>
+            <label className={styles.label}>Email</label>
+            <input className={styles.input} type="email" value={form.email} onChange={set('email')} placeholder="you@example.com" required />
+          </div>
+          {mode === 'register' && (
+            <div className={styles.field}>
+              <label className={styles.label}>Gamer Tag</label>
+              <input className={styles.input} value={form.gamerTag} onChange={set('gamerTag')} placeholder="YourTag#1234" required minLength={2} maxLength={50} />
+            </div>
+          )}
+          <div className={styles.field}>
+            <label className={styles.label}>Password {mode === 'register' && <span style={{ fontWeight: 400, textTransform: 'none' }}>(min 8 chars)</span>}</label>
+            <input className={styles.input} type="password" value={form.password} onChange={set('password')} placeholder="••••••••" required minLength={mode === 'register' ? 8 : 1} />
+          </div>
+          {error && <p className={styles.error}>{error}</p>}
+          <button type="submit" className={styles.submitBtn} disabled={loading}>
+            {loading ? <span className={styles.spinner} /> : mode === 'login' ? 'Sign In' : 'Create Account'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 // ── Rating display ─────────────────────────────────────────────────────────────
 function RatingBar({ rating }: { rating: number }) {
   const color =
@@ -288,7 +380,13 @@ function ReviewCard({ review, onClassify, onAnalytics }: {
             <span className={styles.dot}>·</span>
             <span className={styles.playtime}>{review.playtime} played</span>
             <span className={styles.dot}>·</span>
-            <span className={styles.reviewer}>{review.reviewerTag}</span>
+            <a
+              href={`/profile/${encodeURIComponent(review.reviewerTag)}`}
+              className={styles.reviewerLink}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {review.reviewerTag}
+            </a>
           </div>
         </div>
         <div className={styles.cardRight}>
@@ -337,13 +435,14 @@ function ReviewCard({ review, onClassify, onAnalytics }: {
 }
 
 // ── Submit review modal ────────────────────────────────────────────────────────
-function SubmitModal({ onClose, onSuccess }: {
+function SubmitModal({ onClose, onSuccess, defaultTag }: {
   onClose: () => void;
   onSuccess: (classification: string) => void;
+  defaultTag?: string;
 }) {
   const [form, setForm] = useState({
     gameTitle: '', platform: '', rating: 7, headline: '',
-    body: '', pros: '', cons: '', playtime: '', reviewerTag: '',
+    body: '', pros: '', cons: '', playtime: '', reviewerTag: defaultTag ?? '',
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -601,8 +700,23 @@ export default function Home() {
   const [search, setSearch] = useState('');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'warn' | 'error' } | null>(null);
   const [analyticsGame, setAnalyticsGame] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<SessionUser | null>(null);
+  const [showAuth, setShowAuth] = useState(false);
 
   const fastapiUrl = process.env.NEXT_PUBLIC_FASTAPI_URL ?? '';
+
+  // Load session on mount
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => d && setCurrentUser(d.user))
+      .catch(() => {});
+  }, []);
+
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    setCurrentUser(null);
+  };
 
   const fetchReviews = useCallback(async () => {
     setLoading(true);
@@ -651,6 +765,20 @@ export default function Home() {
 
   return (
     <main className={styles.main}>
+      {/* ── Auth header bar ── */}
+      <div className={styles.authBar}>
+        {currentUser ? (
+          <div className={styles.authUser}>
+            <a href={`/profile/${encodeURIComponent(currentUser.gamerTag)}`} className={styles.authTag}>
+              {currentUser.gamerTag}
+            </a>
+            <button className={styles.authLink} onClick={handleLogout}>Sign out</button>
+          </div>
+        ) : (
+          <button className={styles.authLink} onClick={() => setShowAuth(true)}>Sign in / Register</button>
+        )}
+      </div>
+
       {/* ── Hero ── */}
       <section className={styles.hero}>
         <div className={styles.heroGlow} />
@@ -664,8 +792,11 @@ export default function Home() {
             No sponsored posts. No review bombs. No paid placements.<br />
             Just real opinions from players who actually played.
           </p>
-          <button className={styles.heroBtn} onClick={() => setShowModal(true)}>
-            Write a Review
+          <button
+            className={styles.heroBtn}
+            onClick={() => currentUser ? setShowModal(true) : setShowAuth(true)}
+          >
+            {currentUser ? 'Write a Review' : 'Sign In to Review'}
           </button>
         </div>
 
@@ -764,9 +895,18 @@ export default function Home() {
         />
       )}
 
+      {/* ── Auth modal ── */}
+      {showAuth && (
+        <AuthModal
+          onClose={() => setShowAuth(false)}
+          onSuccess={(user) => { setCurrentUser(user); setShowAuth(false); }}
+        />
+      )}
+
       {showModal && (
         <SubmitModal
           onClose={() => setShowModal(false)}
+          defaultTag={currentUser?.gamerTag}
           onSuccess={(classification) => {
             setShowModal(false);
             if (classification === 'helpful') {

@@ -442,6 +442,48 @@ async def get_recommendations(reviewerTag: str = Query(...)):
     }
 
 
+@app.get("/api/profile/{tag}")
+async def get_profile(tag: str):
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """SELECT id, "gameTitle", platform, rating, headline, body,
+                      pros, cons, playtime, "reviewerTag", classification,
+                      "classificationReason", "createdAt"
+               FROM "Review"
+               WHERE "reviewerTag" = $1
+               ORDER BY "createdAt" DESC""",
+            tag,
+        )
+
+    reviews = [row_to_review(r) for r in rows]
+    helpful = [r for r in reviews if r["classification"] == "helpful"]
+    spam    = [r for r in reviews if r["classification"] == "spam"]
+    toxic   = [r for r in reviews if r["classification"] == "toxic"]
+
+    total = len(reviews)
+    score = round((len(helpful) / total) * 100) if total > 0 else 0
+    badge = None
+    if total > 0:
+        badge = "Gold" if score >= 80 else "Silver" if score >= 50 else "Bronze"
+
+    avg_rating = (
+        sum(r["rating"] for r in helpful) / len(helpful) if helpful else 0.0
+    )
+
+    return {
+        "gamerTag": tag,
+        "reviews": reviews,
+        "reputation": {"score": score, "badge": badge},
+        "stats": {
+            "total": total,
+            "helpful": len(helpful),
+            "spam": len(spam),
+            "toxic": len(toxic),
+            "avgRating": avg_rating,
+        },
+    }
+
+
 def _extract_themes(rows: list, field: str) -> list[str]:
     all_text = ", ".join(r[field] or "" for r in rows if r.get(field))
     items = [t.strip() for t in all_text.split(",") if t.strip()]
