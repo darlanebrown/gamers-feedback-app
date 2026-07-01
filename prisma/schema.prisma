@@ -21,6 +21,18 @@ model User {
   createdAt    DateTime @default(now())
 }
 
+model Game {
+  slug        String   @id
+  title       String   @unique
+  coverUrl    String?
+  genres      String?
+  releaseDate String?
+  developer   String?
+  metacritic  Int?
+  description String?
+  fetchedAt   DateTime @default(now())
+}
+
 model Review {
   id                   String   @id @default(cuid())
   gameTitle            String
