@@ -21,6 +21,15 @@ export async function getReviewFlags(reviewId: string) {
   });
 }
 
+export async function dismissFlags(reviewId: string): Promise<number> {
+  const { count } = await prisma.reviewFlag.deleteMany({ where: { reviewId } });
+  return count;
+}
+
+export async function countFlags(reviewId: string): Promise<number> {
+  return prisma.reviewFlag.count({ where: { reviewId } });
+}
+
 export async function getFlaggedReviews(): Promise<FlaggedReview[]> {
   const groups = await prisma.reviewFlag.groupBy({
     by:      ['reviewId'],

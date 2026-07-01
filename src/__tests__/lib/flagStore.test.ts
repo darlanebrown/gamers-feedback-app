@@ -1,9 +1,11 @@
 jest.mock('@/lib/prisma', () => ({
   prisma: {
     reviewFlag: {
-      create:   jest.fn(),
-      findMany: jest.fn(),
-      groupBy:  jest.fn(),
+      create:      jest.fn(),
+      findMany:    jest.fn(),
+      groupBy:     jest.fn(),
+      deleteMany:  jest.fn(),
+      count:       jest.fn(),
     },
     review: {
       findMany: jest.fn(),
@@ -11,12 +13,14 @@ jest.mock('@/lib/prisma', () => ({
   },
 }));
 
-import { createFlag, getReviewFlags, getFlaggedReviews } from '@/lib/flagStore';
+import { createFlag, getReviewFlags, getFlaggedReviews, dismissFlags, countFlags } from '@/lib/flagStore';
 import { prisma } from '@/lib/prisma';
 
-const mockCreate   = (prisma.reviewFlag as any).create   as jest.Mock;
-const mockFindMany = (prisma.reviewFlag as any).findMany as jest.Mock;
-const mockGroupBy  = (prisma.reviewFlag as any).groupBy  as jest.Mock;
+const mockCreate      = (prisma.reviewFlag as any).create      as jest.Mock;
+const mockFindMany    = (prisma.reviewFlag as any).findMany    as jest.Mock;
+const mockGroupBy     = (prisma.reviewFlag as any).groupBy     as jest.Mock;
+const mockDeleteMany  = (prisma.reviewFlag as any).deleteMany  as jest.Mock;
+const mockCount       = (prisma.reviewFlag as any).count       as jest.Mock;
 const mockReviewFindMany = (prisma.review as any).findMany as jest.Mock;
 
 beforeEach(() => {
@@ -81,5 +85,35 @@ describe('getFlaggedReviews', () => {
     const result = await getFlaggedReviews();
 
     expect(result).toEqual([]);
+  });
+});
+
+describe('dismissFlags', () => {
+  it('deletes all flags for a review and returns the count removed', async () => {
+    mockDeleteMany.mockResolvedValue({ count: 3 });
+
+    const removed = await dismissFlags('r1');
+
+    expect(mockDeleteMany).toHaveBeenCalledWith({ where: { reviewId: 'r1' } });
+    expect(removed).toBe(3);
+  });
+
+  it('returns 0 when there are no flags to dismiss', async () => {
+    mockDeleteMany.mockResolvedValue({ count: 0 });
+
+    const removed = await dismissFlags('r1');
+
+    expect(removed).toBe(0);
+  });
+});
+
+describe('countFlags', () => {
+  it('returns the number of flags for a review', async () => {
+    mockCount.mockResolvedValue(4);
+
+    const result = await countFlags('r1');
+
+    expect(mockCount).toHaveBeenCalledWith({ where: { reviewId: 'r1' } });
+    expect(result).toBe(4);
   });
 });
