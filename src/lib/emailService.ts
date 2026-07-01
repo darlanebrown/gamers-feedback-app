@@ -116,6 +116,26 @@ export async function sendDigestEmail(
   });
 }
 
+export async function sendCommentEmail(
+  toEmail: string,
+  commenterTag: string,
+  gameTitle: string,
+  reviewId: string,
+): Promise<void> {
+  if (!ready()) return;
+  await client().emails.send({
+    from:    'Gamers Feedback <notifications@gamersfeedback.app>',
+    to:      toEmail,
+    subject: `💬 ${commenterTag} commented on your review of ${gameTitle}`,
+    html: `
+      <h2>New Comment on Your Review</h2>
+      <p><strong>${commenterTag}</strong> left a comment on your review of
+      <strong>${gameTitle}</strong>.</p>
+      <p><a href="${baseUrl()}/reviews/${reviewId}">Read the comment →</a></p>
+    `,
+  });
+}
+
 export async function sendFlagEmail(
   reviewId: string,
   gameTitle: string,
