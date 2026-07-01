@@ -108,6 +108,49 @@ export default async function GamePage({ params }: Props) {
         )}
       </div>
 
+      {/* ── Rating trend sparkline ── */}
+      {analytics.ratingTrend.length >= 2 && (() => {
+        const pts = analytics.ratingTrend;
+        const W = Math.max(pts.length * 56, 320);
+        const H = 72;
+        const PAD = { top: 12, bottom: 20, left: 4, right: 4 };
+        const minR = Math.min(...pts.map((p) => p.avgRating));
+        const maxR = Math.max(...pts.map((p) => p.avgRating));
+        const rangeR = maxR - minR || 1;
+        const cx = (i: number) => PAD.left + (i / (pts.length - 1)) * (W - PAD.left - PAD.right);
+        const cy = (r: number) => PAD.top + (1 - (r - minR) / rangeR) * (H - PAD.top - PAD.bottom);
+        const d = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${cx(i).toFixed(1)},${cy(p.avgRating).toFixed(1)}`).join(' ');
+        return (
+          <div className={styles.section}>
+            <p className={styles.sectionTitle}>Rating Trend</p>
+            <div className={styles.sparklineWrap}>
+              <svg
+                className={styles.sparklineSvg}
+                viewBox={`0 0 ${W} ${H}`}
+                height={H}
+                preserveAspectRatio="none"
+              >
+                <path d={d} fill="none" stroke="var(--neon)" strokeWidth="2" strokeLinejoin="round" />
+                {pts.map((p, i) => (
+                  <circle key={p.week} cx={cx(i)} cy={cy(p.avgRating)} r={3} fill="var(--neon)" />
+                ))}
+                {pts.map((p, i) => (
+                  <text
+                    key={`lbl-${p.week}`}
+                    x={cx(i)}
+                    y={H - 4}
+                    textAnchor="middle"
+                    className={styles.sparklineAxisLabel}
+                  >
+                    {p.week.slice(5)}
+                  </text>
+                ))}
+              </svg>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* ── Platform breakdown ── */}
       {analytics.platformBreakdown.length > 0 && (
         <div className={styles.section}>
