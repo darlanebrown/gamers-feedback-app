@@ -49,3 +49,22 @@ model Review {
   createdAt            DateTime @default(now())
   embedding            Unsupported("vector(1536)")?
 }
+
+model ReviewVote {
+  id          String   @id @default(cuid())
+  reviewId    String
+  voterTag    String
+  type        String
+  createdAt   DateTime @default(now())
+
+  @@unique([reviewId, voterTag])
+}
+
+model Follow {
+  id           String   @id @default(cuid())
+  followerTag  String
+  followingTag String
+  createdAt    DateTime @default(now())
+
+  @@unique([followerTag, followingTag])
+}

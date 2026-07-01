@@ -104,6 +104,15 @@ export async function getRecentNegativeReviewCounts(
   return result.map((r) => ({ gameTitle: r.gameTitle, count: r._count.id }));
 }
 
+export async function getReviewsByTags(reviewerTags: string[]): Promise<Review[]> {
+  if (reviewerTags.length === 0) return [];
+  const rows = await prisma.review.findMany({
+    where: { reviewerTag: { in: reviewerTags } },
+    orderBy: { createdAt: 'desc' },
+  });
+  return rows.map(toReview);
+}
+
 export async function getReviewsByTag(reviewerTag: string): Promise<Review[]> {
   const rows = await prisma.review.findMany({
     where: { reviewerTag },
