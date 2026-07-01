@@ -75,7 +75,9 @@ npx jest --no-coverage # skip coverage report (faster)
 | `api/notification-count-route` | `api/notification-count-route.test.ts` | 3 |
 | `api/feed-pagination-route` | `api/feed-pagination-route.test.ts` | 4 |
 | `lib/feedCount` | `lib/feedCount.test.ts` | 3 |
-| **Total** | **53 suites** | **316** |
+| `api/notifications-pagination-route` | `api/notifications-pagination-route.test.ts` | 4 |
+| `lib/notificationsCount` | `lib/notificationsCount.test.ts` | 2 |
+| **Total** | **55 suites** | **322** |
 
 ## Test File Structure
 
@@ -727,6 +729,25 @@ Mocks `@/lib/reviewStore` and `@/lib/auth`. Tests `PATCH` + `DELETE /api/reviews
 - 401 when not authenticated
 - 403 when the authenticated user doesn't own the review and is not admin
 - 200 with `{ ok: true }` when owner deletes their review
+
+---
+
+### `api/notifications-pagination-route.test.ts` — 4 tests
+Mocks `@/lib/notificationStore` and `@/lib/auth`.
+Tests pagination behaviour of `GET /api/notifications`.
+
+- Defaults to page 1, limit 20 (calls `getNotifications` with `{ skip: 0, take: 20 }`)
+- Page 2 with limit 5 produces `{ skip: 5, take: 5 }`
+- Response includes `total` from `countNotifications`
+- Response includes `page` and `limit` echo
+
+---
+
+### `lib/notificationsCount.test.ts` — 2 tests
+Mocks `@/lib/prisma`. Tests `countNotifications` in `src/lib/notificationStore.ts`.
+
+- Calls `prisma.notification.count` with `{ where: { userTag } }`
+- Returns the count value from the DB
 
 ---
 

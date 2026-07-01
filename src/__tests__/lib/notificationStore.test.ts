@@ -45,13 +45,14 @@ describe('createNotification', () => {
 });
 
 describe('getNotifications', () => {
-  it('returns up to 30 notifications ordered newest first', async () => {
+  it('returns notifications ordered newest first with default skip/take', async () => {
     mockFindMany.mockResolvedValue([NOTIF]);
     const result = await getNotifications('Darla#1');
     expect(mockFindMany).toHaveBeenCalledWith({
       where: { userTag: 'Darla#1' },
       orderBy: { createdAt: 'desc' },
-      take: 30,
+      skip: 0,
+      take: 20,
     });
     expect(result).toHaveLength(1);
   });

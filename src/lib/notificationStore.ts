@@ -25,12 +25,20 @@ export async function createNotification(
   }) as Promise<Notification>;
 }
 
-export async function getNotifications(userTag: string): Promise<Notification[]> {
+export async function getNotifications(
+  userTag: string,
+  { skip = 0, take = 20 }: { skip?: number; take?: number } = {},
+): Promise<Notification[]> {
   return prisma.notification.findMany({
     where: { userTag },
     orderBy: { createdAt: 'desc' },
-    take: 30,
+    skip,
+    take,
   }) as Promise<Notification[]>;
+}
+
+export async function countNotifications(userTag: string): Promise<number> {
+  return prisma.notification.count({ where: { userTag } });
 }
 
 export async function getUnreadCount(userTag: string): Promise<number> {
