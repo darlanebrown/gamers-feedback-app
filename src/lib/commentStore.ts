@@ -52,3 +52,10 @@ export async function deleteComment(id: string, requesterTag: string): Promise<b
 export async function countComments(reviewId: string): Promise<number> {
   return prisma.reviewComment.count({ where: { reviewId } });
 }
+
+export async function deleteCommentAsAdmin(id: string): Promise<boolean> {
+  const comment = await prisma.reviewComment.findUnique({ where: { id } });
+  if (!comment) return false;
+  await prisma.reviewComment.delete({ where: { id } });
+  return true;
+}
