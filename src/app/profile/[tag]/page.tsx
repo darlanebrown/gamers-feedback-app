@@ -109,9 +109,13 @@ export default function ProfilePage({ params }: { params: { tag: string } }) {
                 )}
               </div>
               <div className={styles.socialCounts}>
-                <span><strong>{social.followers}</strong> followers</span>
+                <a href={`/profile/${encodeURIComponent(tag)}/followers`} className={styles.socialLink}>
+                  <strong>{social.followers}</strong> followers
+                </a>
                 <span className={styles.dot}>·</span>
-                <span><strong>{social.following}</strong> following</span>
+                <a href={`/profile/${encodeURIComponent(tag)}/following`} className={styles.socialLink}>
+                  <strong>{social.following}</strong> following
+                </a>
               </div>
               {reputation.badge && (
                 <span

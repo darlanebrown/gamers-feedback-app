@@ -19,10 +19,18 @@ export async function isFollowing(followerTag: string, followingTag: string): Pr
 
 export async function getFollowedTags(followerTag: string): Promise<string[]> {
   const rows = await prisma.follow.findMany({
-    where: { followerTag },
+    where:  { followerTag },
     select: { followingTag: true },
   });
   return rows.map((r) => r.followingTag);
+}
+
+export async function getFollowers(followingTag: string): Promise<string[]> {
+  const rows = await prisma.follow.findMany({
+    where:  { followingTag },
+    select: { followerTag: true },
+  });
+  return rows.map((r) => r.followerTag);
 }
 
 export async function getFollowerCount(followingTag: string): Promise<number> {
