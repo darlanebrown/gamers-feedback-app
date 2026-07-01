@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Review } from '@/types';
 import styles from './profile.module.css';
 import mainStyles from '@/app/page.module.css';
+import NotificationBell from '@/app/components/NotificationBell';
 
 type Reputation = { score: number; badge: 'Gold' | 'Silver' | 'Bronze' | null };
 type Stats = { total: number; helpful: number; spam: number; toxic: number; avgRating: number };
@@ -66,7 +67,10 @@ export default function ProfilePage({ params }: { params: { tag: string } }) {
 
   return (
     <main className={styles.page}>
-      <a href="/" className={styles.back}>← Back to reviews</a>
+      <div className={styles.topBar}>
+        <a href="/" className={styles.back}>← Back to reviews</a>
+        <NotificationBell />
+      </div>
 
       {loading ? (
         <div className={styles.loading}>

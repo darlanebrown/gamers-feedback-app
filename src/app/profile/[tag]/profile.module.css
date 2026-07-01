@@ -6,12 +6,17 @@
   padding: 32px 24px 80px;
 }
 
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32px;
+}
+
 .back {
-  display: inline-block;
   color: var(--text-dim);
   font-size: 0.85rem;
   text-decoration: none;
-  margin-bottom: 32px;
   transition: color 0.15s;
 }
 .back:hover { color: var(--neon); }

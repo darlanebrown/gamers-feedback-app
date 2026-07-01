@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import styles from './games.module.css';
+import NotificationBell from '@/app/components/NotificationBell';
 
 type ReviewedGame = { gameTitle: string; avgRating: number; reviewCount: number };
 
@@ -64,7 +65,10 @@ export default function GamesPage() {
 
   return (
     <main className={styles.page}>
-      <a href="/" className={styles.backLink}>← Back to Reviews</a>
+      <div className={styles.topBar}>
+        <a href="/" className={styles.backLink}>← Back to Reviews</a>
+        <NotificationBell />
+      </div>
 
       <div className={styles.header}>
         <p className={styles.eyebrow}>Gamers' Feedback · Community Reviewed</p>

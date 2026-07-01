@@ -7,9 +7,15 @@
 .breadcrumb {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
   margin-bottom: 32px;
   font-size: 0.85rem;
+}
+
+.breadcrumbLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .navLink {
