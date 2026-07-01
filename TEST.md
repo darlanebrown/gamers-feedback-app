@@ -23,7 +23,7 @@ npx jest --no-coverage # skip coverage report (faster)
 | Suite | File | Tests |
 |-------|------|-------|
 | `lib/classify` | `lib/classify.test.ts` | 17 |
-| `lib/reviewStore` | `lib/reviewStore.test.ts` | 14 |
+| `lib/reviewStore` | `lib/reviewStore.test.ts` | 16 |
 | `lib/auth` | `lib/auth.test.ts` | 5 |
 | `lib/adminMiddleware` | `lib/adminMiddleware.test.ts` | 4 |
 | `lib/gameService` | `lib/gameService.test.ts` | 6 |
@@ -31,12 +31,12 @@ npx jest --no-coverage # skip coverage report (faster)
 | `lib/followStore` | `lib/followStore.test.ts` | 8 |
 | `lib/alertService` | `lib/alertService.test.ts` | 5 |
 | `lib/notificationStore` | `lib/notificationStore.test.ts` | 5 |
-| `lib/draftStore` | `lib/draftStore.test.ts` | 4 |
+| `lib/draftStore` | `lib/draftStore.test.ts` | 6 |
 | `lib/leaderboardStore` | `lib/leaderboardStore.test.ts` | 6 |
 | `lib/embeddingService` | `lib/embeddingService.test.ts` | 5 |
 | `lib/reviewEmbeddings` | `lib/reviewEmbeddings.test.ts` | 6 |
 | `lib/askService` | `lib/askService.test.ts` | 5 |
-| `api/reviews` | `api/reviews.test.ts` | 13 |
+| `api/reviews` | `api/reviews.test.ts` | 16 |
 | `api/classify` | `api/classify.test.ts` | 7 |
 | `api/auth` | `api/auth.test.ts` | 11 |
 | `api/profile-route` | `api/profile-route.test.ts` | 7 |
@@ -52,7 +52,7 @@ npx jest --no-coverage # skip coverage report (faster)
 | `api/review-by-id-route` | `api/review-by-id-route.test.ts` | 3 |
 | `api/settings-route` | `api/settings-route.test.ts` | 8 |
 | `api/notifications-route` | `api/notifications-route.test.ts` | 5 |
-| `api/drafts-route` | `api/drafts-route.test.ts` | 9 |
+| `api/drafts-route` | `api/drafts-route.test.ts` | 7 |
 | `api/leaderboard-route` | `api/leaderboard-route.test.ts` | 5 |
 | `api/ask-route` | `api/ask-route.test.ts` | 5 |
 | **Total** | **33 suites** | **227** |
@@ -63,7 +63,7 @@ npx jest --no-coverage # skip coverage report (faster)
 src/__tests__/
 ├── lib/
 │   ├── classify.test.ts          — pure classification logic (17 tests)
-│   ├── reviewStore.test.ts       — Prisma-backed store with mocked DB (14 tests)
+│   ├── reviewStore.test.ts       — Prisma-backed store with mocked DB (16 tests)
 │   ├── auth.test.ts              — JWT sign/verify round-trips (5 tests)
 │   ├── adminMiddleware.test.ts   — requireAdmin() guard (4 tests)
 │   ├── gameService.test.ts       — RAWG fetch + 7-day cache logic (6 tests)
@@ -71,13 +71,13 @@ src/__tests__/
 │   ├── followStore.test.ts       — follow/unfollow/isFollowing (8 tests)
 │   ├── alertService.test.ts      — review bombing detection logic (5 tests)
 │   ├── notificationStore.test.ts — notification CRUD (5 tests)
-│   ├── draftStore.test.ts        — draft upsert/delete (4 tests)
+│   ├── draftStore.test.ts        — draft upsert/delete (6 tests)
 │   ├── leaderboardStore.test.ts  — top reviewers + top games queries (6 tests)
 │   ├── embeddingService.test.ts  — buildReviewText + generateEmbedding + embedAndStore (5 tests)
 │   ├── reviewEmbeddings.test.ts  — storeEmbedding + findSimilarReviews raw SQL (6 tests)
 │   └── askService.test.ts        — askQuestion RAG flow (5 tests)
 └── api/
-    ├── reviews.test.ts           — GET + POST /api/reviews (13 tests)
+    ├── reviews.test.ts           — GET + POST /api/reviews (16 tests)
     ├── classify.test.ts          — POST /api/classify (7 tests)
     ├── auth.test.ts              — register/login/logout/me routes (11 tests)
     ├── profile-route.test.ts     — GET /api/profile/[tag] (7 tests)
@@ -93,7 +93,7 @@ src/__tests__/
     ├── review-by-id-route.test.ts — GET /api/reviews/[id] (3 tests)
     ├── settings-route.test.ts    — PATCH + DELETE /api/auth/me (8 tests)
     ├── notifications-route.test.ts — GET + PATCH /api/notifications (5 tests)
-    ├── drafts-route.test.ts      — GET + PUT + DELETE /api/drafts (9 tests)
+    ├── drafts-route.test.ts      — GET + PUT + DELETE /api/drafts (7 tests)
     ├── leaderboard-route.test.ts — GET /api/leaderboard (5 tests)
     └── ask-route.test.ts         — GET /api/ask?q= (5 tests)
 ```
@@ -125,15 +125,16 @@ Tests the pure `classifyByRules(text)` function in `src/lib/classify.ts`. No DB,
 
 ---
 
-### `lib/reviewStore.test.ts` — 14 tests
+### `lib/reviewStore.test.ts` — 16 tests
 Mocks `@/lib/prisma` and tests each store function in isolation.
 
-- `getAllReviews` — ordered `createdAt desc`, maps `null` reason to `undefined`
+- `getAllReviews` — ordered `createdAt desc`, maps `null` reason to `undefined` (3 tests)
 - `getHelpfulReviews` — passes correct `where` clause
 - `getReviewsByGame` — case-insensitive contains, helpful-only
-- `addReview` — always stores `classification: 'pending'`; callers cannot override
-- `updateReviewClassification` — writes correct fields; omits reason when not provided
-- `getStats` — correct counts, `avgRating` from helpful only, uniqueGames deduped, **single DB query** (regression guard)
+- `addReview` — always stores `classification: 'pending'`; callers cannot override (2 tests)
+- `updateReviewClassification` — writes correct fields; omits reason when not provided (2 tests)
+- `getStats` — correct counts, `avgRating` from helpful only, uniqueGames deduped, **single DB query** (regression guard) (5 tests)
+- `getRecentReviewCountByTag` — queries by `reviewerTag` + `createdAt >= since`; returns 0 when no matches (2 tests)
 
 ---
 
@@ -221,16 +222,16 @@ Tests notification CRUD in `src/lib/notificationStore.ts`. Mocks `prisma.notific
 
 ---
 
-### `api/reviews.test.ts` — 13 tests
-Mocks `@/lib/reviewStore` and `@/lib/alertService`. Tests `GET` + `POST /api/reviews`.
+### `api/reviews.test.ts` — 16 tests
+Mocks `@/lib/reviewStore`, `@/lib/alertService`, and `@/lib/embeddingService`. Tests `GET` + `POST /api/reviews`.
 
-**GET**
+**GET** (4 tests)
 - No params → calls `getAllReviews`
 - `?filter=helpful` → calls `getHelpfulReviews`
 - `?game=Hades` → calls `getReviewsByGame('Hades')`
 - Game param takes priority over filter param
 
-**POST validation** (rejects invalid input before hitting the store)
+**POST validation** (7 tests — rejects invalid input before hitting the store)
 - Rating below 1 → 400
 - Rating above 10 → 400
 - Headline < 5 chars → 400
@@ -239,9 +240,14 @@ Mocks `@/lib/reviewStore` and `@/lib/alertService`. Tests `GET` + `POST /api/rev
 - Invalid platform → 400
 - Game title < 2 chars → 400
 
-**POST happy path**
+**POST happy path** (2 tests)
 - Valid body → 201 + review in response
 - Store throws → 500 + `{ error: 'Failed to create review' }`
+
+**POST rate limiting** (3 tests)
+- Reviewer at limit (3 reviews/hour) → 429 with `retryAfter` field
+- `retryAfter` is a number ≤ 3600 seconds
+- Reviewer under the limit → 201 as normal
 
 ---
 
@@ -467,22 +473,30 @@ Tests `GET` + `PATCH /api/notifications`.
 
 ---
 
-### `lib/draftStore.test.ts` — 4 tests
+### `lib/draftStore.test.ts` — 6 tests
 Mocks `@/lib/prisma`. Tests draft CRUD in `src/lib/draftStore.ts`.
 
-- `getDraft` — queries by `reviewerTag`; returns `null` when none exists
-- `upsertDraft` — creates or updates draft with provided fields
-- `deleteDraft` — uses `deleteMany` (no-op when missing)
+- `getDraft` — queries by `reviewerTag`; returns `null` when none exists (2 tests)
+- `upsertDraft` — creates draft when none exists; updates headline on existing draft (2 tests)
+- `deleteDraft` — calls `deleteMany` with `reviewerTag`; no-op (count 0) does not throw (2 tests)
 
 ---
 
-### `api/drafts-route.test.ts` — 9 tests
+### `api/drafts-route.test.ts` — 7 tests
 Mocks `@/lib/draftStore` and `@/lib/auth`. Tests `GET` + `PUT` + `DELETE /api/drafts`.
 
-- 401 on all three verbs when not authenticated
-- GET returns draft for authenticated user; returns `{ draft: null }` when none exists
-- PUT calls `upsertDraft` with provided fields and returns saved draft
-- DELETE calls `deleteDraft` and returns `{ ok: true }`
+**GET** (3 tests)
+- 401 when not authenticated
+- Returns draft for the authenticated user
+- Returns `{ draft: null }` when no draft exists
+
+**PUT** (2 tests)
+- 401 when not authenticated
+- Calls `upsertDraft(gamerTag, fields)` and returns saved draft
+
+**DELETE** (2 tests)
+- 401 when not authenticated
+- Calls `deleteDraft(gamerTag)` and returns `{ ok: true }`
 
 ---
 
