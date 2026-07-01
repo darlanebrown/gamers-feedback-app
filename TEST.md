@@ -66,7 +66,8 @@ npx jest --no-coverage # skip coverage report (faster)
 | `lib/similarReviews` | `lib/similarReviews.test.ts` | 4 |
 | `lib/reviewMutations` | `lib/reviewMutations.test.ts` | 4 |
 | `api/review-mutation-route` | `api/review-mutation-route.test.ts` | 6 |
-| **Total** | **44 suites** | **284** |
+| `api/vote-get-route` | `api/vote-get-route.test.ts` | 3 |
+| **Total** | **45 suites** | **287** |
 
 ## Test File Structure
 
@@ -116,7 +117,8 @@ src/__tests__/
     ├── trending-route.test.ts    — GET /api/trending (4 tests)
     ├── recommendations-route.test.ts — GET /api/recommendations (4 tests)
     ├── games-index-route.test.ts    — GET /api/games index (4 tests)
-    └── review-mutation-route.test.ts — PATCH + DELETE /api/reviews/[id] (6 tests)
+    ├── review-mutation-route.test.ts — PATCH + DELETE /api/reviews/[id] (6 tests)
+    └── vote-get-route.test.ts        — GET /api/reviews/[id]/vote (3 tests)
 ```
 
 ---
@@ -702,6 +704,15 @@ Mocks `@/lib/reviewStore` and `@/lib/auth`. Tests `PATCH` + `DELETE /api/reviews
 - 401 when not authenticated
 - 403 when the authenticated user doesn't own the review and is not admin
 - 200 with `{ ok: true }` when owner deletes their review
+
+---
+
+### `api/vote-get-route.test.ts` — 3 tests
+Mocks `@/lib/auth` and `@/lib/voteStore`. Tests `GET /api/reviews/[id]/vote`.
+
+- Returns votes and `null` userVote when not authenticated; never calls `getUserVote`
+- Returns votes and `userVote` when authenticated; calls `getUserVote` with correct args
+- Returns zero counts when no votes exist for the review
 
 ---
 

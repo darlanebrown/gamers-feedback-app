@@ -7,6 +7,7 @@ import { verifyToken, SESSION_COOKIE } from '@/lib/auth';
 import styles from './review-page.module.css';
 import ShareButton from './ShareButton';
 import ReviewActions from './ReviewActions';
+import VoteBar from './VoteBar';
 
 type Props = { params: { id: string } };
 
@@ -156,6 +157,8 @@ export default async function ReviewPage({ params }: Props) {
           </time>
           <ShareButton reviewId={review.id} />
         </footer>
+
+        <VoteBar reviewId={review.id} isLoggedIn={!!session} />
 
         {(isOwner || isAdmin) && (
           <ReviewActions

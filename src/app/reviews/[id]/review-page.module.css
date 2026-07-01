@@ -484,3 +484,41 @@
   color: var(--red);
   font-size: 0.82rem;
 }
+
+/* ── Vote Bar ── */
+.voteBar {
+  display: flex;
+  gap: 6px;
+  padding: 14px 0 0;
+  margin-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.voteBarBtn {
+  padding: 5px 12px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--font-display);
+}
+.voteBarBtn:hover:not(:disabled) { border-color: var(--neon); color: var(--neon); }
+.voteBarBtn:disabled { opacity: 0.4; cursor: default; }
+
+.voteBarBtnUp {
+  border-color: var(--neon) !important;
+  color: var(--neon) !important;
+  background: rgba(0, 255, 135, 0.08) !important;
+}
+
+.voteBarBtnDownBase:hover:not(:disabled) { border-color: var(--red); color: var(--red); }
+
+.voteBarBtnDown {
+  border-color: var(--red) !important;
+  color: var(--red) !important;
+  background: rgba(255, 71, 87, 0.08) !important;
+}
