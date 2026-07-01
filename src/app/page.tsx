@@ -367,7 +367,7 @@ function TrendingSection() {
 }
 
 // ── Recommendations Section ────────────────────────────────────────────────────
-function RecommendationsSection({ apiUrl }: { apiUrl: string }) {
+function RecommendationsSection() {
   const [tag, setTag] = useState('');
   const [recs, setRecs] = useState<Recommendation[]>([]);
   const [loading, setLoading] = useState(false);
@@ -382,13 +382,13 @@ function RecommendationsSection({ apiUrl }: { apiUrl: string }) {
     setSearched(true);
     try {
       const res = await fetch(
-        `${apiUrl}/api/recommendations?reviewerTag=${encodeURIComponent(tag.trim())}`,
+        `/api/recommendations?reviewerTag=${encodeURIComponent(tag.trim())}`,
       );
       if (!res.ok) throw new Error('Request failed');
       const data = await res.json();
       setRecs(data.recommendations);
     } catch {
-      setError('Could not load recommendations. Make sure the Python backend is running.');
+      setError('Could not load recommendations. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -421,7 +421,12 @@ function RecommendationsSection({ apiUrl }: { apiUrl: string }) {
       {recs.length > 0 && (
         <div className={styles.recGrid}>
           {recs.map((rec, i) => (
-            <div key={rec.gameTitle} className={styles.recCard}>
+            <a
+              key={rec.gameTitle}
+              href={`/games/${encodeURIComponent(rec.gameTitle)}`}
+              className={styles.recCard}
+              style={{ textDecoration: 'none' }}
+            >
               <div className={styles.recRank}>#{i + 1}</div>
               <div className={styles.recInfo}>
                 <p className={styles.recTitle}>{rec.gameTitle}</p>
@@ -430,7 +435,7 @@ function RecommendationsSection({ apiUrl }: { apiUrl: string }) {
                   {' '}· {rec.reviewCount} {rec.reviewCount === 1 ? 'review' : 'reviews'}
                 </p>
               </div>
-            </div>
+            </a>
           ))}
         </div>
       )}
@@ -929,8 +934,6 @@ export default function Home() {
   const [searchLoading, setSearchLoading]   = useState(false);
   const [searchActive, setSearchActive]     = useState(false);
 
-  const fastapiUrl = process.env.NEXT_PUBLIC_FASTAPI_URL ?? '';
-
   // Notifications
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifs, setNotifs] = useState<{ id: string; type: string; actorTag: string | null; gameTitle: string | null; read: boolean; createdAt: string }[]>([]);
@@ -1357,7 +1360,7 @@ export default function Home() {
       </section>
 
       {/* ── Recommendations ── */}
-      {fastapiUrl && <RecommendationsSection apiUrl={fastapiUrl} />}
+      <RecommendationsSection />
 
       {/* ── Submit modal ── */}
       {toast && (

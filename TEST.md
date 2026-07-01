@@ -59,7 +59,9 @@ npx jest --no-coverage # skip coverage report (faster)
 | `api/game-analytics-route` | `api/game-analytics-route.test.ts` | 4 |
 | `lib/trendingService` | `lib/trendingService.test.ts` | 5 |
 | `api/trending-route` | `api/trending-route.test.ts` | 4 |
-| **Total** | **37 suites** | **251** |
+| `lib/recommendationsService` | `lib/recommendationsService.test.ts` | 6 |
+| `api/recommendations-route` | `api/recommendations-route.test.ts` | 4 |
+| **Total** | **39 suites** | **261** |
 
 ## Test File Structure
 
@@ -81,7 +83,8 @@ src/__tests__/
 │   ├── reviewEmbeddings.test.ts  — storeEmbedding + findSimilarReviews raw SQL (6 tests)
 │   ├── askService.test.ts        — askQuestion RAG flow (5 tests)
 │   ├── gameAnalytics.test.ts     — getGameAnalytics + ratingTrend sparkline data (11 tests)
-│   └── trendingService.test.ts   — getTrendingGames rolling-window groupBy (5 tests)
+│   ├── trendingService.test.ts   — getTrendingGames rolling-window groupBy (5 tests)
+│   └── recommendationsService.test.ts — collaborative-filtering recommendations (6 tests)
 └── api/
     ├── reviews.test.ts           — GET + POST /api/reviews (16 tests)
     ├── classify.test.ts          — POST /api/classify (7 tests)
@@ -103,7 +106,8 @@ src/__tests__/
     ├── leaderboard-route.test.ts — GET /api/leaderboard (5 tests)
     ├── ask-route.test.ts         — GET /api/ask?q= (5 tests)
     ├── game-analytics-route.test.ts — GET /api/games/[title]/analytics (4 tests)
-    └── trending-route.test.ts    — GET /api/trending (4 tests)
+    ├── trending-route.test.ts    — GET /api/trending (4 tests)
+    └── recommendations-route.test.ts — GET /api/recommendations (4 tests)
 ```
 
 ---
@@ -611,6 +615,28 @@ Mocks `@/lib/trendingService`. Tests `GET /api/trending`.
 - Calls `getTrendingGames` with `limit: 6` and `days: 7`
 - Each trending item contains `gameTitle`, `reviewCount`, and `avgRating`
 - Returns 500 when `getTrendingGames` throws
+
+---
+
+### `lib/recommendationsService.test.ts` — 6 tests
+Mocks `@/lib/prisma`. Tests `getRecommendations` in `src/lib/recommendationsService.ts`.
+
+- Returns empty array when the reviewer has no reviews
+- Returns empty array when no other reviewer shares the same game
+- Recommends games reviewed by similar reviewers that the target has not reviewed
+- Does not recommend games the target reviewer has already reviewed
+- Only recommends helpful-classified reviews (excludes spam/toxic)
+- Result items have `gameTitle`, `avgRating`, and `reviewCount` fields
+
+---
+
+### `api/recommendations-route.test.ts` — 4 tests
+Mocks `@/lib/recommendationsService`. Tests `GET /api/recommendations`.
+
+- Returns 400 when `reviewerTag` param is missing
+- Returns 200 with `{ recommendations }` array
+- Calls `getRecommendations` with decoded tag and `limit: 6`
+- Returns 500 when `getRecommendations` throws
 
 ---
 
