@@ -413,6 +413,7 @@ function ReviewCard({ review, onClassify, onAnalytics, gameCover, currentUserTag
   const [votes, setVotes] = useState<{ up: number; down: number } | null>(null);
   const [userVote, setUserVote] = useState<'up' | 'down' | null>(null);
   const [voteLoading, setVoteLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     fetch(`/api/reviews/${review.id}/vote`)
@@ -528,26 +529,39 @@ function ReviewCard({ review, onClassify, onAnalytics, gameCover, currentUserTag
             month: 'short', day: 'numeric', year: 'numeric',
           })}
         </time>
-        {votes !== null && (
-          <div className={styles.voteRow}>
-            <button
-              className={`${styles.voteBtn} ${userVote === 'up' ? styles.voteBtnActive : ''}`}
-              onClick={() => handleVote('up')}
-              disabled={voteLoading || !currentUserTag}
-              title={currentUserTag ? 'Helpful' : 'Sign in to vote'}
-            >
-              ▲ {votes.up}
-            </button>
-            <button
-              className={`${styles.voteBtn} ${styles.voteBtnDown} ${userVote === 'down' ? styles.voteBtnDownActive : ''}`}
-              onClick={() => handleVote('down')}
-              disabled={voteLoading || !currentUserTag}
-              title={currentUserTag ? 'Not helpful' : 'Sign in to vote'}
-            >
-              ▼ {votes.down}
-            </button>
-          </div>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {votes !== null && (
+            <div className={styles.voteRow}>
+              <button
+                className={`${styles.voteBtn} ${userVote === 'up' ? styles.voteBtnActive : ''}`}
+                onClick={() => handleVote('up')}
+                disabled={voteLoading || !currentUserTag}
+                title={currentUserTag ? 'Helpful' : 'Sign in to vote'}
+              >
+                ▲ {votes.up}
+              </button>
+              <button
+                className={`${styles.voteBtn} ${styles.voteBtnDown} ${userVote === 'down' ? styles.voteBtnDownActive : ''}`}
+                onClick={() => handleVote('down')}
+                disabled={voteLoading || !currentUserTag}
+                title={currentUserTag ? 'Not helpful' : 'Sign in to vote'}
+              >
+                ▼ {votes.down}
+              </button>
+            </div>
+          )}
+          <button
+            className={styles.copyLinkBtn}
+            onClick={async () => {
+              await navigator.clipboard.writeText(`${window.location.origin}/reviews/${review.id}`);
+              setCopied(true);
+              setTimeout(() => setCopied(false), 2000);
+            }}
+            title="Copy permalink"
+          >
+            {copied ? 'Copied!' : '⎘'}
+          </button>
+        </div>
       </div>
     </article>
   );
