@@ -10,11 +10,10 @@ type AnalyticsData = {
   helpfulCount: number;
   spamCount: number;
   toxicCount: number;
-  sentimentScore: number | null;
+  avgRating: number;
+  platformBreakdown: { platform: string; count: number }[];
   topPros: string[];
   topCons: string[];
-  bombAlert: boolean;
-  trend: 'improving' | 'declining' | 'stable';
 };
 
 type Recommendation = {
@@ -158,30 +157,29 @@ function ClassBadge({ classification }: { classification: string }) {
 }
 
 // ── Game Analytics Modal ───────────────────────────────────────────────────────
-function GameAnalyticsModal({ gameTitle, apiUrl, onClose }: {
+function GameAnalyticsModal({ gameTitle, onClose }: {
   gameTitle: string;
-  apiUrl: string;
   onClose: () => void;
 }) {
-  const [data, setData]       = useState<AnalyticsData | null>(null);
+  const [data, setData]         = useState<AnalyticsData | null>(null);
   const [gameMeta, setGameMeta] = useState<GameMeta | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading]   = useState(true);
 
   useEffect(() => {
+    const enc = encodeURIComponent(gameTitle);
     Promise.all([
-      fetch(`${apiUrl}/api/analytics/${encodeURIComponent(gameTitle)}`).then((r) => r.json()).catch(() => null),
-      fetch(`/api/games/${encodeURIComponent(gameTitle)}`).then((r) => r.ok ? r.json() : null).catch(() => null),
-    ]).then(([analytics, gameMeta]) => {
-      setData(analytics);
+      fetch(`/api/games/${enc}/analytics`).then((r) => r.ok ? r.json() : null).catch(() => null),
+      fetch(`/api/games/${enc}`).then((r) => r.ok ? r.json() : null).catch(() => null),
+    ]).then(([analyticsRes, gameMeta]) => {
+      setData(analyticsRes?.analytics ?? null);
       setGameMeta(gameMeta?.game ?? null);
       setLoading(false);
     });
-  }, [gameTitle, apiUrl]);
+  }, [gameTitle]);
 
-  const trendColor = data?.trend === 'improving'
-    ? 'var(--neon)' : data?.trend === 'declining'
-    ? 'var(--red)' : 'var(--yellow)';
-  const trendIcon = data?.trend === 'improving' ? '↑' : data?.trend === 'declining' ? '↓' : '→';
+  const ratingColor = data
+    ? data.avgRating >= 8 ? 'var(--neon)' : data.avgRating >= 5 ? 'var(--yellow)' : 'var(--red)'
+    : 'var(--text-dim)';
 
   return (
     <div className={styles.modalOverlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
@@ -244,45 +242,26 @@ function GameAnalyticsModal({ gameTitle, apiUrl, onClose }: {
             <p>Loading analytics…</p>
           </div>
         ) : !data ? (
-          <p style={{ color: 'var(--text-muted)' }}>Could not load analytics. Is the Python backend running?</p>
+          <p style={{ color: 'var(--text-muted)' }}>No analytics available for this game yet.</p>
         ) : (
           <>
-            {data.bombAlert && (
-              <div className={styles.bombBanner}>
-                <span className={styles.bombIcon}>⚠</span>
-                <span>Review bombing detected — {data.totalReviews}+ negative reviews in the last 2 hours.</span>
-              </div>
-            )}
-
             <div className={styles.analyticsGrid}>
-              {/* Sentiment score */}
               <div className={styles.analyticsCard}>
-                <p className={styles.analyticsLabel}>Sentiment Score</p>
-                <p className={styles.analyticsScore} style={{
-                  color: data.sentimentScore !== null
-                    ? data.sentimentScore >= 8 ? 'var(--neon)' : data.sentimentScore >= 5 ? 'var(--yellow)' : 'var(--red)'
-                    : 'var(--text-dim)'
-                }}>
-                  {data.sentimentScore !== null ? `${data.sentimentScore}/10` : 'N/A'}
+                <p className={styles.analyticsLabel}>Avg Rating</p>
+                <p className={styles.analyticsScore} style={{ color: ratingColor }}>
+                  {data.helpfulCount > 0 ? `${data.avgRating.toFixed(1)}/10` : 'N/A'}
                 </p>
               </div>
-
-              {/* Trend */}
               <div className={styles.analyticsCard}>
-                <p className={styles.analyticsLabel}>Trend</p>
-                <p className={styles.analyticsTrend} style={{ color: trendColor }}>
-                  {trendIcon} {data.trend.charAt(0).toUpperCase() + data.trend.slice(1)}
-                </p>
+                <p className={styles.analyticsLabel}>Verified</p>
+                <p className={styles.analyticsScore} style={{ color: 'var(--neon)' }}>{data.helpfulCount}</p>
               </div>
-
-              {/* Counts */}
               <div className={styles.analyticsCard}>
-                <p className={styles.analyticsLabel}>Total Reviews</p>
+                <p className={styles.analyticsLabel}>Total</p>
                 <p className={styles.analyticsScore} style={{ color: 'var(--text)' }}>{data.totalReviews}</p>
               </div>
             </div>
 
-            {/* Breakdown */}
             <div className={styles.analyticsBreakdown}>
               <div className={styles.breakdownItem} style={{ color: 'var(--neon)' }}>
                 <span className={styles.breakdownNum}>{data.helpfulCount}</span>
@@ -298,7 +277,6 @@ function GameAnalyticsModal({ gameTitle, apiUrl, onClose }: {
               </div>
             </div>
 
-            {/* Pros & Cons themes */}
             {(data.topPros.length > 0 || data.topCons.length > 0) && (
               <div className={styles.analyticsThemes}>
                 {data.topPros.length > 0 && (
@@ -323,6 +301,15 @@ function GameAnalyticsModal({ gameTitle, apiUrl, onClose }: {
                 )}
               </div>
             )}
+
+            <div style={{ marginTop: 16 }}>
+              <a
+                href={`/games/${encodeURIComponent(gameTitle)}`}
+                style={{ color: 'var(--neon)', fontSize: '0.85rem', textDecoration: 'none' }}
+              >
+                View full game page →
+              </a>
+            </div>
           </>
         )}
       </div>
@@ -1257,7 +1244,7 @@ export default function Home() {
                 <ReviewCard
                   key={review.id}
                   review={review}
-                  onAnalytics={fastapiUrl ? setAnalyticsGame : undefined}
+                  onAnalytics={setAnalyticsGame}
                   gameCover={gameCovers[review.gameTitle]}
                   currentUserTag={currentUser?.gamerTag}
                 />
@@ -1280,7 +1267,7 @@ export default function Home() {
                 <ReviewCard
                   key={review.id}
                   review={review}
-                  onAnalytics={fastapiUrl ? setAnalyticsGame : undefined}
+                  onAnalytics={setAnalyticsGame}
                   gameCover={gameCovers[review.gameTitle]}
                   currentUserTag={currentUser?.gamerTag}
                 />
@@ -1308,7 +1295,7 @@ export default function Home() {
                 key={review.id}
                 review={review}
                 onClassify={handleClassify}
-                onAnalytics={fastapiUrl ? setAnalyticsGame : undefined}
+                onAnalytics={setAnalyticsGame}
                 gameCover={gameCovers[review.gameTitle]}
                 currentUserTag={currentUser?.gamerTag}
               />
@@ -1329,10 +1316,9 @@ export default function Home() {
       )}
 
       {/* ── Game Analytics Modal ── */}
-      {analyticsGame && fastapiUrl && (
+      {analyticsGame && (
         <GameAnalyticsModal
           gameTitle={analyticsGame}
-          apiUrl={fastapiUrl}
           onClose={() => setAnalyticsGame(null)}
         />
       )}
