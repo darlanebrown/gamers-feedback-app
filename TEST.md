@@ -72,7 +72,8 @@ npx jest --no-coverage # skip coverage report (faster)
 | `lib/searchCount` | `lib/searchCount.test.ts` | 4 |
 | `api/leaderboard-period-route` | `api/leaderboard-period-route.test.ts` | 4 |
 | `api/profile-user-info` | `api/profile-user-info.test.ts` | 4 |
-| **Total** | **50 suites** | **306** |
+| `api/notification-count-route` | `api/notification-count-route.test.ts` | 3 |
+| **Total** | **51 suites** | **309** |
 
 ## Test File Structure
 
@@ -724,6 +725,16 @@ Mocks `@/lib/reviewStore` and `@/lib/auth`. Tests `PATCH` + `DELETE /api/reviews
 - 401 when not authenticated
 - 403 when the authenticated user doesn't own the review and is not admin
 - 200 with `{ ok: true }` when owner deletes their review
+
+---
+
+### `api/notification-count-route.test.ts` — 3 tests
+Mocks `@/lib/notificationStore` and `@/lib/auth`.
+Tests `GET /api/notifications/count`.
+
+- Returns 401 when not authenticated
+- Returns `{ unreadCount }` for the authenticated user; calls `getUnreadCount` with the session's `gamerTag`
+- Returns `unreadCount: 0` when no unread notifications exist
 
 ---
 

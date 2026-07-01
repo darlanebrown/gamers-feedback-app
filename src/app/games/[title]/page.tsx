@@ -4,6 +4,7 @@ import { getGameAnalytics } from '@/lib/gameAnalytics';
 import { getReviewsByGame } from '@/lib/reviewStore';
 import styles from './game-page.module.css';
 import WriteReviewButton from './WriteReviewButton';
+import NotificationBell from '@/app/components/NotificationBell';
 
 type Props = { params: { title: string } };
 
@@ -34,11 +35,14 @@ export default async function GamePage({ params }: Props) {
   return (
     <main className={styles.page}>
       <nav className={styles.breadcrumb}>
-        <a href="/" className={styles.navLink}>← Reviews</a>
-        <span className={styles.sep}>/</span>
-        <a href="/games" className={styles.navLink}>Games</a>
-        <span className={styles.sep}>/</span>
-        <span style={{ color: 'var(--text-muted)' }}>{title}</span>
+        <div className={styles.breadcrumbLeft}>
+          <a href="/" className={styles.navLink}>← Reviews</a>
+          <span className={styles.sep}>/</span>
+          <a href="/games" className={styles.navLink}>Games</a>
+          <span className={styles.sep}>/</span>
+          <span style={{ color: 'var(--text-muted)' }}>{title}</span>
+        </div>
+        <NotificationBell />
       </nav>
 
       {/* ── Hero ── */}

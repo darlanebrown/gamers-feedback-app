@@ -8,6 +8,7 @@ import styles from './review-page.module.css';
 import ShareButton from './ShareButton';
 import ReviewActions from './ReviewActions';
 import VoteBar from './VoteBar';
+import NotificationBell from '@/app/components/NotificationBell';
 
 type Props = { params: { id: string } };
 
@@ -67,11 +68,14 @@ export default async function ReviewPage({ params }: Props) {
   return (
     <main className={styles.page}>
       <nav className={styles.breadcrumb}>
-        <a href="/" className={styles.navLink}>← All Reviews</a>
-        <span className={styles.sep}>/</span>
-        <a href={`/profile/${encodeURIComponent(review.reviewerTag)}`} className={styles.navLink}>
-          {review.reviewerTag}
-        </a>
+        <div className={styles.breadcrumbLeft}>
+          <a href="/" className={styles.navLink}>← All Reviews</a>
+          <span className={styles.sep}>/</span>
+          <a href={`/profile/${encodeURIComponent(review.reviewerTag)}`} className={styles.navLink}>
+            {review.reviewerTag}
+          </a>
+        </div>
+        <NotificationBell />
       </nav>
 
       <article className={styles.card}>

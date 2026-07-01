@@ -159,11 +159,16 @@
   color: var(--text-muted);
 }
 
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
 .backLink {
   color: var(--neon);
   text-decoration: none;
   font-size: 0.85rem;
-  display: inline-block;
-  margin-bottom: 24px;
 }
 .backLink:hover { text-decoration: underline; }

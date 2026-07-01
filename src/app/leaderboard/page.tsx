@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import styles from './leaderboard.module.css';
+import NotificationBell from '@/app/components/NotificationBell';
 
 type TopReviewer = { reviewerTag: string; reviewCount: number; reputation: number };
 type TopGame     = { gameTitle: string; avgRating: number; reviewCount: number };
@@ -35,6 +36,7 @@ export default function LeaderboardPage() {
     <div className={styles.page}>
       <nav className={styles.breadcrumb}>
         <a href="/" className={styles.navLink}>← Reviews</a>
+        <NotificationBell />
       </nav>
 
       <div className={styles.header}>

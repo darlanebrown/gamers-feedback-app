@@ -10,9 +10,15 @@
 .breadcrumb {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
   margin-bottom: 28px;
   font-size: 13px;
+}
+
+.breadcrumbLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .navLink {

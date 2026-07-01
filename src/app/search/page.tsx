@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Review } from '@/types';
 import styles from './search.module.css';
+import NotificationBell from '@/app/components/NotificationBell';
 
 const PLATFORMS = ['', 'PC', 'PlayStation 5', 'PlayStation 4', 'Xbox Series X/S', 'Xbox One', 'Nintendo Switch', 'Steam Deck', 'Mobile'];
 const SORTS = [
@@ -69,9 +70,12 @@ export default function SearchPage() {
   return (
     <main className={styles.page}>
       <nav className={styles.breadcrumb}>
-        <a href="/" className={styles.navLink}>← Reviews</a>
-        <span className={styles.sep}>/</span>
-        <span style={{ color: 'var(--text-muted)' }}>Search</span>
+        <div className={styles.breadcrumbLeft}>
+          <a href="/" className={styles.navLink}>← Reviews</a>
+          <span className={styles.sep}>/</span>
+          <span style={{ color: 'var(--text-muted)' }}>Search</span>
+        </div>
+        <NotificationBell />
       </nav>
 
       <h1 className={styles.title}>Search Reviews</h1>
