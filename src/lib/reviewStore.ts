@@ -50,7 +50,7 @@ export async function getReviewsByGame(title: string): Promise<Review[]> {
 
 export async function getUniqueGameTitles(): Promise<string[]> {
   const helpful = await getHelpfulReviews();
-  return [...new Set(helpful.map((r) => r.gameTitle))].sort();
+  return Array.from(new Set(helpful.map((r) => r.gameTitle))).sort();
 }
 
 export async function addReview(

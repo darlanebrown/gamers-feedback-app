@@ -116,7 +116,7 @@ function ReviewCard({ review, onClassify }: {
 // ── Submit review modal ────────────────────────────────────────────────────────
 function SubmitModal({ onClose, onSuccess }: {
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (classification: string) => void;
 }) {
   const [form, setForm] = useState({
     gameTitle: '', platform: '', rating: 7, headline: '',
@@ -148,8 +148,7 @@ function SubmitModal({ onClose, onSuccess }: {
 
       const { review } = await res.json();
 
-      // Automatically classify the new review
-      await fetch('/api/classify', {
+      const classifyRes = await fetch('/api/classify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -161,8 +160,9 @@ function SubmitModal({ onClose, onSuccess }: {
           reviewerTag: form.reviewerTag,
         }),
       });
+      const { classification } = await classifyRes.json();
 
-      onSuccess();
+      onSuccess(classification ?? 'pending');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
@@ -305,6 +305,7 @@ export default function Home() {
   const [showModal, setShowModal] = useState(false);
   const [filter, setFilter] = useState<'all' | 'helpful' | 'spam' | 'toxic'>('helpful');
   const [search, setSearch] = useState('');
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'warn' | 'error' } | null>(null);
 
   const fetchReviews = useCallback(async () => {
     setLoading(true);
@@ -443,10 +444,33 @@ export default function Home() {
       </section>
 
       {/* ── Submit modal ── */}
+      {toast && (
+        <div className={styles.toast} data-type={toast.type}>
+          {toast.message}
+          <button className={styles.toastClose} onClick={() => setToast(null)}>✕</button>
+        </div>
+      )}
+
       {showModal && (
         <SubmitModal
           onClose={() => setShowModal(false)}
-          onSuccess={() => { setShowModal(false); fetchReviews(); }}
+          onSuccess={(classification) => {
+            setShowModal(false);
+            if (classification === 'helpful') {
+              setFilter('helpful');
+              setToast({ message: '✓ Your review is live in the Verified feed!', type: 'success' });
+            } else if (classification === 'spam') {
+              setFilter('spam');
+              setToast({ message: '⚠ Your review was flagged as spam by our AI and moved to the Spam tab.', type: 'warn' });
+            } else if (classification === 'toxic') {
+              setFilter('toxic');
+              setToast({ message: '⚠ Your review was flagged as toxic content and moved to the Toxic tab.', type: 'warn' });
+            } else {
+              setToast({ message: 'Review submitted — classification pending.', type: 'warn' });
+            }
+            setTimeout(() => setToast(null), 6000);
+            fetchReviews();
+          }}
         />
       )}
     </main>

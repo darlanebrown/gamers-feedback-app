@@ -1,5 +1,41 @@
 /* src/app/page.module.css */
 
+/* ── Toast notification ── */
+.toast {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 500;
+  z-index: 1000;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
+}
+
+.toast[data-type='success'] { border-color: var(--neon); color: var(--neon); }
+.toast[data-type='warn']    { border-color: var(--yellow); color: var(--yellow); }
+.toast[data-type='error']   { border-color: var(--red); color: var(--red); }
+
+.toastClose {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: 0.85rem;
+  opacity: 0.7;
+  padding: 0;
+}
+.toastClose:hover { opacity: 1; }
+
 /* ── Layout ── */
 .main {
   min-height: 100vh;
