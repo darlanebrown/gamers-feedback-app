@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/adminMiddleware';
 import { getReviewById, updateReviewClassification } from '@/lib/reviewStore';
+import { createNotification } from '@/lib/notificationStore';
 
 const VALID = new Set(['helpful', 'spam', 'toxic', 'pending']);
 
@@ -23,5 +24,12 @@ export async function PATCH(
   if (!review) return NextResponse.json({ error: 'Review not found' }, { status: 404 });
 
   await updateReviewClassification(params.id, classification, reason ?? 'Admin override');
+  createNotification(
+    review.reviewerTag,
+    'reclassify',
+    undefined,
+    params.id,
+    review.gameTitle,
+  ).catch(() => {});
   return NextResponse.json({ ok: true, id: params.id, classification });
 }

@@ -4,6 +4,9 @@ jest.mock('@/lib/reviewStore', () => ({
   getReviewById: jest.fn(),
   updateReviewClassification: jest.fn(),
 }));
+jest.mock('@/lib/notificationStore', () => ({
+  createNotification: jest.fn(),
+}));
 
 import { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
@@ -11,11 +14,13 @@ import { GET  } from '@/app/api/admin/reviews/route';
 import { PATCH } from '@/app/api/admin/reviews/[id]/route';
 import { requireAdmin } from '@/lib/adminMiddleware';
 import { getAllReviews, getReviewById, updateReviewClassification } from '@/lib/reviewStore';
+import { createNotification } from '@/lib/notificationStore';
 
-const mockGuard  = requireAdmin              as jest.Mock;
-const mockGetAll = getAllReviews             as jest.Mock;
-const mockGetOne = getReviewById            as jest.Mock;
+const mockGuard  = requireAdmin               as jest.Mock;
+const mockGetAll = getAllReviews              as jest.Mock;
+const mockGetOne = getReviewById             as jest.Mock;
 const mockUpdate = updateReviewClassification as jest.Mock;
+const mockNotify = createNotification         as jest.Mock;
 
 function makeReview(overrides = {}) {
   return {
@@ -32,7 +37,10 @@ const ADMIN_PASS  = null; // requireAdmin returns null → passes
 const UNAUTH_FAIL = NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 const FORBID_FAIL = NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-beforeEach(() => jest.resetAllMocks());
+beforeEach(() => {
+  jest.resetAllMocks();
+  mockNotify.mockResolvedValue(undefined);
+});
 
 // ── GET /api/admin/reviews ────────────────────────────────────────────────────
 

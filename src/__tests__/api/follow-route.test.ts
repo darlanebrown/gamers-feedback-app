@@ -9,6 +9,10 @@ jest.mock('@/lib/followStore', () => ({
   isFollowing:  jest.fn(),
 }));
 
+jest.mock('@/lib/notificationStore', () => ({
+  createNotification: jest.fn(),
+}));
+
 jest.mock('@/lib/userStore', () => ({
   findUserByTag: jest.fn(),
 }));
@@ -18,17 +22,22 @@ import { POST, DELETE } from '@/app/api/profile/[tag]/follow/route';
 import { getSession } from '@/lib/auth';
 import { followUser, unfollowUser, isFollowing } from '@/lib/followStore';
 import { findUserByTag } from '@/lib/userStore';
+import { createNotification } from '@/lib/notificationStore';
 
-const mockSession    = getSession    as jest.Mock;
-const mockFollow     = followUser    as jest.Mock;
-const mockUnfollow   = unfollowUser  as jest.Mock;
-const mockIsFollowing = isFollowing  as jest.Mock;
-const mockFindTag    = findUserByTag as jest.Mock;
+const mockSession    = getSession       as jest.Mock;
+const mockFollow     = followUser       as jest.Mock;
+const mockUnfollow   = unfollowUser     as jest.Mock;
+const mockIsFollowing = isFollowing     as jest.Mock;
+const mockFindTag    = findUserByTag    as jest.Mock;
+const mockNotify     = createNotification as jest.Mock;
 
 const SESSION = { id: 'u1', email: 'darla@test.com', gamerTag: 'Darla#1' };
 const TARGET  = { id: 'u2', email: 'player@test.com', gamerTag: 'Player#99' };
 
-beforeEach(() => jest.resetAllMocks());
+beforeEach(() => {
+  jest.resetAllMocks();
+  mockNotify.mockResolvedValue(undefined);
+});
 
 function makeReq(method: string) {
   return new NextRequest('http://localhost/api/profile/Player%2399/follow', { method });

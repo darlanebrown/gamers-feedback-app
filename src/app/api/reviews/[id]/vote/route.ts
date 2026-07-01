@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { upsertVote, removeVote, getVoteCounts, getUserVote, VoteType } from '@/lib/voteStore';
 import { getReviewById } from '@/lib/reviewStore';
+import { createNotification } from '@/lib/notificationStore';
 
 export async function GET(
   req: NextRequest,
@@ -31,6 +32,16 @@ export async function POST(
 
   await upsertVote(params.id, session.gamerTag, type as VoteType);
   const votes = await getVoteCounts(params.id);
+  // notify the review author (skip if they voted on their own review)
+  if (review.reviewerTag !== session.gamerTag) {
+    createNotification(
+      review.reviewerTag,
+      type === 'up' ? 'vote_up' : 'vote_down',
+      session.gamerTag,
+      params.id,
+      review.gameTitle,
+    ).catch(() => {});
+  }
   return NextResponse.json({ ok: true, votes });
 }
 

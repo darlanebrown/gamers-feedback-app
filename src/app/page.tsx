@@ -854,11 +854,34 @@ export default function Home() {
 
   const fastapiUrl = process.env.NEXT_PUBLIC_FASTAPI_URL ?? '';
 
+  // Notifications
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [notifs, setNotifs] = useState<{ id: string; type: string; actorTag: string | null; gameTitle: string | null; read: boolean; createdAt: string }[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const fetchNotifs = () => {
+    fetch('/api/notifications')
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => { if (d) { setNotifs(d.notifications); setUnreadCount(d.unreadCount); } })
+      .catch(() => {});
+  };
+
+  const markAllRead = async () => {
+    await fetch('/api/notifications', { method: 'PATCH' }).catch(() => {});
+    setUnreadCount(0);
+    setNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
+  };
+
   // Load session on mount
   useEffect(() => {
     fetch('/api/auth/me')
       .then((r) => r.ok ? r.json() : null)
-      .then((d) => d && setCurrentUser(d.user))
+      .then((d) => {
+        if (d) {
+          setCurrentUser(d.user);
+          fetchNotifs();
+        }
+      })
       .catch(() => {});
   }, []);
 
@@ -995,6 +1018,38 @@ export default function Home() {
             <a href={`/profile/${encodeURIComponent(currentUser.gamerTag)}`} className={styles.authTag}>
               {currentUser.gamerTag}
             </a>
+            <div style={{ position: 'relative' }}>
+              <button
+                className={styles.bellBtn}
+                onClick={() => { setNotifOpen((o) => !o); if (!notifOpen) fetchNotifs(); }}
+                aria-label="Notifications"
+              >
+                🔔{unreadCount > 0 && <span className={styles.unreadBadge}>{unreadCount > 9 ? '9+' : unreadCount}</span>}
+              </button>
+              {notifOpen && (
+                <div className={styles.notifPanel}>
+                  <div className={styles.notifHeader}>
+                    <span>Notifications</span>
+                    {unreadCount > 0 && <button className={styles.markReadBtn} onClick={markAllRead}>Mark all read</button>}
+                  </div>
+                  {notifs.length === 0 ? (
+                    <p className={styles.notifEmpty}>No notifications yet.</p>
+                  ) : (
+                    notifs.map((n) => (
+                      <div key={n.id} className={`${styles.notifItem} ${n.read ? styles.notifRead : ''}`}>
+                        <span className={styles.notifText}>
+                          {n.type === 'follow' && `${n.actorTag} started following you`}
+                          {n.type === 'vote_up' && `${n.actorTag} liked your review of ${n.gameTitle}`}
+                          {n.type === 'vote_down' && `${n.actorTag} disliked your review of ${n.gameTitle}`}
+                          {n.type === 'reclassify' && `Your review of ${n.gameTitle} was reclassified`}
+                        </span>
+                        {!n.read && <span className={styles.notifDot} />}
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
             <a href="/settings" className={styles.authLink}>Settings</a>
             <button className={styles.authLink} onClick={handleLogout}>Sign out</button>
           </div>
