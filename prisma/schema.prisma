@@ -92,6 +92,15 @@ model Notification {
   createdAt DateTime @default(now())
 }
 
+model ReviewBookmark {
+  id            String   @id @default(cuid())
+  reviewId      String
+  bookmarkerTag String
+  createdAt     DateTime @default(now())
+
+  @@unique([reviewId, bookmarkerTag])
+}
+
 model ReviewComment {
   id        String   @id @default(cuid())
   reviewId  String
