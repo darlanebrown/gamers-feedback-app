@@ -16,6 +16,8 @@ model User {
   email        String   @unique
   passwordHash String
   gamerTag     String   @unique
+  role         String   @default("user")
+  banned       Boolean  @default(false)
   createdAt    DateTime @default(now())
 }
 

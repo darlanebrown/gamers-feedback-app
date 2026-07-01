@@ -2,6 +2,7 @@ jest.mock('@/lib/userStore', () => ({
   createUser: jest.fn(),
   findUserByEmail: jest.fn(),
   findUserByTag: jest.fn(),
+  countUsers: jest.fn(),
 }));
 
 jest.mock('bcryptjs', () => ({
@@ -23,13 +24,14 @@ import { POST as register } from '@/app/api/auth/register/route';
 import { POST as login }    from '@/app/api/auth/login/route';
 import { POST as logout }   from '@/app/api/auth/logout/route';
 import { GET  as me }       from '@/app/api/auth/me/route';
-import { createUser, findUserByEmail, findUserByTag } from '@/lib/userStore';
+import { createUser, findUserByEmail, findUserByTag, countUsers } from '@/lib/userStore';
 import bcrypt from 'bcryptjs';
 import { signToken, getSession, clearSessionCookie } from '@/lib/auth';
 
 const mockCreate       = createUser       as jest.Mock;
 const mockFindEmail    = findUserByEmail  as jest.Mock;
 const mockFindTag      = findUserByTag    as jest.Mock;
+const mockCountUsers   = countUsers       as jest.Mock;
 const mockHash         = bcrypt.hash      as jest.Mock;
 const mockCompare      = bcrypt.compare   as jest.Mock;
 const mockSign          = signToken         as jest.Mock;
@@ -38,7 +40,7 @@ const mockClearSession  = clearSessionCookie as jest.Mock;
 
 const VALID_USER = { id: 'u1', email: 'darla@test.com', gamerTag: 'Darla#1', passwordHash: '$hashed', createdAt: new Date() };
 
-beforeEach(() => jest.resetAllMocks());
+beforeEach(() => { jest.resetAllMocks(); mockCountUsers.mockResolvedValue(1); });
 
 // ── Register ─────────────────────────────────────────────────────────────────
 

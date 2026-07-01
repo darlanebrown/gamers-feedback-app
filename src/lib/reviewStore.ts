@@ -84,6 +84,26 @@ export async function updateReviewClassification(
   });
 }
 
+export async function getReviewById(id: string): Promise<Review | null> {
+  const row = await prisma.review.findUnique({ where: { id } });
+  return row ? toReview(row) : null;
+}
+
+export async function getRecentNegativeReviewCounts(
+  windowHours: number,
+): Promise<{ gameTitle: string; count: number }[]> {
+  const since = new Date(Date.now() - windowHours * 60 * 60 * 1000);
+  const result = await prisma.review.groupBy({
+    by: ['gameTitle'],
+    where: {
+      createdAt: { gte: since },
+      OR: [{ rating: { lte: 4 } }, { classification: 'toxic' }],
+    },
+    _count: { id: true },
+  });
+  return result.map((r) => ({ gameTitle: r.gameTitle, count: r._count.id }));
+}
+
 export async function getReviewsByTag(reviewerTag: string): Promise<Review[]> {
   const rows = await prisma.review.findMany({
     where: { reviewerTag },

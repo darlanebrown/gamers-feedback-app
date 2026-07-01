@@ -5,15 +5,20 @@ export type User = {
   email: string;
   passwordHash: string;
   gamerTag: string;
+  role: string;
+  banned: boolean;
   createdAt: Date;
 };
+
+export type PublicUser = Omit<User, 'passwordHash'>;
 
 export async function createUser(
   email: string,
   passwordHash: string,
   gamerTag: string,
+  role: string = 'user',
 ): Promise<User> {
-  return prisma.user.create({ data: { email, passwordHash, gamerTag } }) as Promise<User>;
+  return prisma.user.create({ data: { email, passwordHash, gamerTag, role } }) as Promise<User>;
 }
 
 export async function findUserByEmail(email: string): Promise<User | null> {
@@ -22,4 +27,26 @@ export async function findUserByEmail(email: string): Promise<User | null> {
 
 export async function findUserByTag(gamerTag: string): Promise<User | null> {
   return prisma.user.findUnique({ where: { gamerTag } }) as Promise<User | null>;
+}
+
+export async function getAllUsers(): Promise<PublicUser[]> {
+  const users = await prisma.user.findMany({ orderBy: { createdAt: 'desc' } });
+  return users.map(({ passwordHash: _, ...u }) => u) as PublicUser[];
+}
+
+export async function getUserById(id: string): Promise<User | null> {
+  return prisma.user.findUnique({ where: { id } }) as Promise<User | null>;
+}
+
+export async function updateUserById(
+  id: string,
+  data: Partial<Pick<User, 'role' | 'banned'>>,
+): Promise<PublicUser> {
+  const updated = await prisma.user.update({ where: { id }, data });
+  const { passwordHash: _, ...rest } = updated as unknown as User;
+  return rest as PublicUser;
+}
+
+export async function countUsers(): Promise<number> {
+  return prisma.user.count();
 }

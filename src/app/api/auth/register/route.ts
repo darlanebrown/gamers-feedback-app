@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { createUser, findUserByEmail, findUserByTag } from '@/lib/userStore';
+import { createUser, findUserByEmail, findUserByTag, countUsers } from '@/lib/userStore';
 import { signToken, setSessionCookie } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
@@ -20,11 +20,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'That gamer tag is already taken' }, { status: 409 });
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const user = await createUser(email, passwordHash, gamerTag);
-    const token = await signToken({ id: user.id, email: user.email, gamerTag: user.gamerTag });
+    // First user to register automatically becomes admin
+    const role = (await countUsers()) === 0 ? 'admin' : 'user';
+    const user = await createUser(email, passwordHash, gamerTag, role);
+    const token = await signToken({ id: user.id, email: user.email, gamerTag: user.gamerTag, role: user.role });
 
     const res = NextResponse.json(
-      { user: { id: user.id, email: user.email, gamerTag: user.gamerTag } },
+      { user: { id: user.id, email: user.email, gamerTag: user.gamerTag, role: user.role } },
       { status: 201 },
     );
     setSessionCookie(res, token);

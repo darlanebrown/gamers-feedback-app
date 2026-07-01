@@ -23,7 +23,7 @@ type Recommendation = {
   reviewCount: number;
 };
 
-type SessionUser = { id: string; email: string; gamerTag: string };
+type SessionUser = { id: string; email: string; gamerTag: string; role?: string };
 
 // ── Auth Modal ────────────────────────────────────────────────────────────────
 function AuthModal({ onClose, onSuccess }: {
@@ -769,6 +769,9 @@ export default function Home() {
       <div className={styles.authBar}>
         {currentUser ? (
           <div className={styles.authUser}>
+            {currentUser.role === 'admin' && (
+              <a href="/admin" className={styles.adminLink}>Admin</a>
+            )}
             <a href={`/profile/${encodeURIComponent(currentUser.gamerTag)}`} className={styles.authTag}>
               {currentUser.gamerTag}
             </a>
