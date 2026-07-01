@@ -227,6 +227,14 @@ export async function deleteReview(id: string, reviewerTag: string): Promise<boo
   return true;
 }
 
+export async function getGamesByReviewer(reviewerTag: string): Promise<string[]> {
+  const rows = await prisma.review.findMany({
+    where: { reviewerTag, classification: 'helpful' },
+    select: { gameTitle: true },
+  });
+  return Array.from(new Set(rows.map((r) => r.gameTitle))).sort();
+}
+
 export async function storeEmbedding(id: string, embedding: number[]): Promise<void> {
   const vec = `[${embedding.join(',')}]`;
   await prisma.$executeRaw`UPDATE "Review" SET embedding = ${vec}::vector WHERE id = ${id}`;
