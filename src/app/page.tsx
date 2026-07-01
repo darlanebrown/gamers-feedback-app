@@ -579,6 +579,49 @@ function SubmitModal({ onClose, onSuccess, defaultTag }: {
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [draftStatus, setDraftStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [draftLoaded, setDraftLoaded] = useState(false);
+
+  // Restore draft on mount
+  useEffect(() => {
+    fetch('/api/drafts')
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => {
+        if (d?.draft) {
+          const dr = d.draft;
+          setForm((prev) => ({
+            gameTitle:   dr.gameTitle   ?? prev.gameTitle,
+            platform:    dr.platform    ?? prev.platform,
+            rating:      dr.rating      ?? prev.rating,
+            headline:    dr.headline    ?? prev.headline,
+            body:        dr.body        ?? prev.body,
+            pros:        dr.pros        ?? prev.pros,
+            cons:        dr.cons        ?? prev.cons,
+            playtime:    dr.playtime    ?? prev.playtime,
+            reviewerTag: dr.reviewerTag ?? prev.reviewerTag,
+          }));
+        }
+        setDraftLoaded(true);
+      })
+      .catch(() => setDraftLoaded(true));
+  }, []);
+
+  // Debounced autosave — only after draft has been loaded to avoid overwriting with defaults
+  useEffect(() => {
+    if (!draftLoaded) return;
+    setDraftStatus('saving');
+    const timer = setTimeout(() => {
+      const { reviewerTag, ...fields } = form;
+      fetch('/api/drafts', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...fields, rating: Number(form.rating) }),
+      })
+        .then(() => setDraftStatus('saved'))
+        .catch(() => setDraftStatus('idle'));
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [form, draftLoaded]);
 
   const set = (field: string) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -602,6 +645,9 @@ function SubmitModal({ onClose, onSuccess, defaultTag }: {
       }
 
       const { review } = await res.json();
+
+      // Delete draft after successful submission (fire-and-forget)
+      fetch('/api/drafts', { method: 'DELETE' }).catch(() => {});
 
       const classifyRes = await fetch('/api/classify', {
         method: 'POST',
@@ -739,13 +785,15 @@ function SubmitModal({ onClose, onSuccess, defaultTag }: {
 
           {error && <p className={styles.error}>{error}</p>}
 
-          <button type="submit" className={styles.submitBtn} disabled={submitting}>
-            {submitting ? (
-              <span className={styles.spinner} />
-            ) : (
-              'Submit Review'
-            )}
-          </button>
+          <div className={styles.formFooter}>
+            <span className={styles.draftStatus}>
+              {draftStatus === 'saving' && '⏳ Saving draft…'}
+              {draftStatus === 'saved'  && '✓ Draft saved'}
+            </span>
+            <button type="submit" className={styles.submitBtn} disabled={submitting}>
+              {submitting ? <span className={styles.spinner} /> : 'Submit Review'}
+            </button>
+          </div>
         </form>
       </div>
     </div>
