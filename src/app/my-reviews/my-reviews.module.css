@@ -1,0 +1,267 @@
+.page {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 32px 24px 80px;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+  font-size: 0.85rem;
+}
+
+.navLink { color: var(--neon); text-decoration: none; }
+.navLink:hover { text-decoration: underline; }
+
+/* ── Header ── */
+.header { margin-bottom: 24px; }
+
+.eyebrow {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--neon);
+  margin-bottom: 6px;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.subtitle { font-size: 0.88rem; color: var(--text-muted); }
+
+/* ── Filter tabs ── */
+.filterRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.filterTab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--text-muted);
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.filterTab:hover { border-color: var(--neon); color: var(--neon); }
+
+.filterTabActive {
+  background: rgba(0, 255, 135, 0.1);
+  border-color: var(--neon) !important;
+  color: var(--neon) !important;
+}
+
+.filterCount {
+  font-size: 0.7rem;
+  background: rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 1px 6px;
+}
+
+/* ── Card list ── */
+.list { display: flex; flex-direction: column; gap: 14px; }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px 22px;
+  transition: border-color 0.15s;
+}
+.card:hover { border-color: rgba(0,255,135,0.2); }
+
+.cardTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.gameTitle {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+  text-decoration: none;
+}
+.gameTitle:hover { color: var(--neon); }
+
+.cardMeta { font-size: 0.75rem; color: var(--text-dim); margin-top: 2px; }
+
+.cardRight { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+
+.rating { font-size: 1.1rem; font-weight: 700; }
+.ratingDenom { font-size: 11px; color: var(--text-dim); }
+
+.classBadge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  font-family: var(--font-display);
+  border: 1px solid;
+  border-radius: 4px;
+  padding: 2px 7px;
+  white-space: nowrap;
+}
+
+.headline {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  text-decoration: none;
+  font-style: italic;
+  margin-bottom: 6px;
+}
+.headline:hover { color: var(--neon); }
+
+.body {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 12px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.time { font-size: 0.75rem; color: var(--text-dim); }
+
+.actions { display: flex; gap: 8px; }
+
+/* ── Buttons ── */
+.editBtn {
+  padding: 4px 12px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-muted);
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.editBtn:hover { border-color: var(--neon); color: var(--neon); }
+
+.deleteBtn {
+  padding: 4px 12px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-muted);
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.deleteBtn:hover { border-color: var(--red); color: var(--red); }
+.deleteBtn:disabled { opacity: 0.5; cursor: default; }
+
+.saveBtn {
+  padding: 6px 18px;
+  background: var(--neon);
+  border: none;
+  border-radius: 4px;
+  color: #000;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.saveBtn:disabled { opacity: 0.6; cursor: default; }
+
+.cancelBtn {
+  padding: 6px 14px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-muted);
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.cancelBtn:hover { border-color: var(--text-muted); }
+
+/* ── Edit form ── */
+.editForm { display: flex; flex-direction: column; gap: 12px; margin-top: 10px; }
+
+.editRow { display: flex; flex-direction: column; gap: 4px; }
+
+.editCols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.editLabel { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; }
+
+.editInput, .editTextarea {
+  background: var(--input-bg, rgba(255,255,255,0.06));
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: var(--text);
+  font-size: 0.88rem;
+  font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+}
+.editInput:focus, .editTextarea:focus {
+  outline: none;
+  border-color: var(--neon);
+}
+
+.editSlider { width: 100%; accent-color: var(--neon); }
+
+.editActions { display: flex; gap: 8px; margin-top: 4px; }
+
+/* ── Delete confirm ── */
+.deleteConfirm { margin-top: 10px; }
+.deleteWarning {
+  font-size: 0.88rem;
+  color: var(--red);
+  margin-bottom: 12px;
+}
+
+.error { font-size: 0.82rem; color: var(--red); margin-top: 4px; }
+
+/* ── States ── */
+.loading, .empty {
+  text-align: center;
+  padding: 60px 0;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.8;
+}
+
+.cta {
+  display: inline-block;
+  margin-top: 10px;
+  color: var(--neon);
+  text-decoration: none;
+  font-weight: 600;
+}
+.cta:hover { text-decoration: underline; }
