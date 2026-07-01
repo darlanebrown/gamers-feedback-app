@@ -31,6 +31,11 @@ npx jest --no-coverage # skip coverage report (faster)
 | `lib/followStore` | `lib/followStore.test.ts` | 8 |
 | `lib/alertService` | `lib/alertService.test.ts` | 5 |
 | `lib/notificationStore` | `lib/notificationStore.test.ts` | 5 |
+| `lib/draftStore` | `lib/draftStore.test.ts` | 4 |
+| `lib/leaderboardStore` | `lib/leaderboardStore.test.ts` | 6 |
+| `lib/embeddingService` | `lib/embeddingService.test.ts` | 5 |
+| `lib/reviewEmbeddings` | `lib/reviewEmbeddings.test.ts` | 6 |
+| `lib/askService` | `lib/askService.test.ts` | 5 |
 | `api/reviews` | `api/reviews.test.ts` | 13 |
 | `api/classify` | `api/classify.test.ts` | 7 |
 | `api/auth` | `api/auth.test.ts` | 11 |
@@ -47,7 +52,10 @@ npx jest --no-coverage # skip coverage report (faster)
 | `api/review-by-id-route` | `api/review-by-id-route.test.ts` | 3 |
 | `api/settings-route` | `api/settings-route.test.ts` | 8 |
 | `api/notifications-route` | `api/notifications-route.test.ts` | 5 |
-| **Total** | **25 suites** | **177** |
+| `api/drafts-route` | `api/drafts-route.test.ts` | 9 |
+| `api/leaderboard-route` | `api/leaderboard-route.test.ts` | 5 |
+| `api/ask-route` | `api/ask-route.test.ts` | 5 |
+| **Total** | **33 suites** | **227** |
 
 ## Test File Structure
 
@@ -62,7 +70,12 @@ src/__tests__/
 │   ├── voteStore.test.ts         — upvote/downvote upsert & counts (5 tests)
 │   ├── followStore.test.ts       — follow/unfollow/isFollowing (8 tests)
 │   ├── alertService.test.ts      — review bombing detection logic (5 tests)
-│   └── notificationStore.test.ts — notification CRUD (5 tests)
+│   ├── notificationStore.test.ts — notification CRUD (5 tests)
+│   ├── draftStore.test.ts        — draft upsert/delete (4 tests)
+│   ├── leaderboardStore.test.ts  — top reviewers + top games queries (6 tests)
+│   ├── embeddingService.test.ts  — buildReviewText + generateEmbedding + embedAndStore (5 tests)
+│   ├── reviewEmbeddings.test.ts  — storeEmbedding + findSimilarReviews raw SQL (6 tests)
+│   └── askService.test.ts        — askQuestion RAG flow (5 tests)
 └── api/
     ├── reviews.test.ts           — GET + POST /api/reviews (13 tests)
     ├── classify.test.ts          — POST /api/classify (7 tests)
@@ -79,7 +92,10 @@ src/__tests__/
     ├── search-route.test.ts      — GET /api/search (9 tests)
     ├── review-by-id-route.test.ts — GET /api/reviews/[id] (3 tests)
     ├── settings-route.test.ts    — PATCH + DELETE /api/auth/me (8 tests)
-    └── notifications-route.test.ts — GET + PATCH /api/notifications (5 tests)
+    ├── notifications-route.test.ts — GET + PATCH /api/notifications (5 tests)
+    ├── drafts-route.test.ts      — GET + PUT + DELETE /api/drafts (9 tests)
+    ├── leaderboard-route.test.ts — GET /api/leaderboard (5 tests)
+    └── ask-route.test.ts         — GET /api/ask?q= (5 tests)
 ```
 
 ---
@@ -448,6 +464,83 @@ Tests `GET` + `PATCH /api/notifications`.
 - 401 when not authenticated
 - Calls `markAllRead(gamerTag)` when no `id` is provided in the body
 - Calls `markRead(id)` when a specific `id` is provided
+
+---
+
+### `lib/draftStore.test.ts` — 4 tests
+Mocks `@/lib/prisma`. Tests draft CRUD in `src/lib/draftStore.ts`.
+
+- `getDraft` — queries by `reviewerTag`; returns `null` when none exists
+- `upsertDraft` — creates or updates draft with provided fields
+- `deleteDraft` — uses `deleteMany` (no-op when missing)
+
+---
+
+### `api/drafts-route.test.ts` — 9 tests
+Mocks `@/lib/draftStore` and `@/lib/auth`. Tests `GET` + `PUT` + `DELETE /api/drafts`.
+
+- 401 on all three verbs when not authenticated
+- GET returns draft for authenticated user; returns `{ draft: null }` when none exists
+- PUT calls `upsertDraft` with provided fields and returns saved draft
+- DELETE calls `deleteDraft` and returns `{ ok: true }`
+
+---
+
+### `lib/leaderboardStore.test.ts` — 6 tests
+Mocks `@/lib/prisma`. Tests `getTopReviewers` and `getTopGames`.
+
+- `getTopReviewers` — calls `$queryRaw`; converts BigInt fields to numbers; returns empty array when no data
+- `getTopGames` — groups helpful reviews by `gameTitle`; rounds `avgRating` to 1 decimal; returns empty array when no data
+
+---
+
+### `api/leaderboard-route.test.ts` — 5 tests
+Mocks `@/lib/leaderboardStore`. Tests `GET /api/leaderboard`.
+
+- Returns 200 with `topReviewers` and `topGames` arrays
+- Includes correct reviewer fields (`reviewerTag`, `reputation`, `reviewCount`)
+- Includes correct game fields (`gameTitle`, `avgRating`, `reviewCount`)
+- Calls both store functions with `limit: 10`
+- Returns empty arrays when no data
+
+---
+
+### `lib/embeddingService.test.ts` — 5 tests
+Mocks `openai` and `@/lib/reviewStore`. Tests `buildReviewText`, `generateEmbedding`, `embedAndStore`.
+
+- `buildReviewText` — concatenates gameTitle, headline, body, pros, cons; handles empty strings
+- `generateEmbedding` — calls `openai.embeddings.create` with `text-embedding-3-small`; returns number array
+- `embedAndStore` — builds text, generates embedding, calls `storeEmbedding(id, embedding)`
+
+---
+
+### `lib/reviewEmbeddings.test.ts` — 6 tests
+Mocks `@/lib/prisma`. Tests `storeEmbedding` and `findSimilarReviews` in `src/lib/reviewStore.ts`.
+
+- `storeEmbedding` — calls `$executeRaw` once; formats embedding as `[x,y,z]` vector string (second template arg)
+- `findSimilarReviews` — calls `$queryRaw` with `<=>` cosine distance operator; maps raw rows to `Review` objects; converts numeric fields; returns empty array when no results
+
+---
+
+### `lib/askService.test.ts` — 5 tests
+Mocks `openai`, `@/lib/embeddingService`, `@/lib/reviewStore`. Tests `askQuestion`.
+
+- Returns fallback message when `OPENAI_API_KEY` is not set; skips embedding call
+- Embeds question and calls `findSimilarReviews` with the embedding and limit 5
+- Returns no-results message and skips synthesis when no similar reviews found
+- Calls GPT-4o-mini for synthesis
+- Returns `{ answer, sources }` with the synthesized text and source reviews
+
+---
+
+### `api/ask-route.test.ts` — 5 tests
+Mocks `@/lib/askService`. Tests `GET /api/ask`.
+
+- Returns 400 when `?q=` param is missing
+- Returns 400 when `?q=` is empty string
+- Calls `askQuestion` with the decoded query string; returns 200
+- Response body contains `answer` and `sources`
+- Returns 500 when `askQuestion` throws
 
 ---
 
