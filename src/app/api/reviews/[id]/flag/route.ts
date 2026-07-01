@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { getReviewById } from '@/lib/reviewStore';
+import { createFlag } from '@/lib/flagStore';
 import { sendFlagEmail } from '@/lib/emailService';
 import { sendFlagWebhook } from '@/lib/webhookService';
 
@@ -16,6 +17,15 @@ export async function POST(
 
   if (review.reviewerTag === session.gamerTag) {
     return NextResponse.json({ error: 'Cannot flag your own review' }, { status: 400 });
+  }
+
+  try {
+    await createFlag(params.id, session.gamerTag);
+  } catch (err: any) {
+    if (err?.code === 'P2002') {
+      return NextResponse.json({ error: 'You have already flagged this review' }, { status: 409 });
+    }
+    throw err;
   }
 
   sendFlagEmail(params.id, review.gameTitle, review.reviewerTag, session.gamerTag).catch(() => {});

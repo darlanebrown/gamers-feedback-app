@@ -92,6 +92,15 @@ model Notification {
   createdAt DateTime @default(now())
 }
 
+model ReviewFlag {
+  id          String   @id @default(cuid())
+  reviewId    String
+  reporterTag String
+  createdAt   DateTime @default(now())
+
+  @@unique([reviewId, reporterTag])
+}
+
 model Draft {
   id          String   @id @default(cuid())
   reviewerTag String   @unique

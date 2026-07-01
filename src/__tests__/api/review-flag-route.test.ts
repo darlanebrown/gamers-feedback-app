@@ -15,17 +15,23 @@ jest.mock('@/lib/webhookService', () => ({
   sendFlagWebhook: jest.fn().mockResolvedValue(undefined),
 }));
 
+jest.mock('@/lib/flagStore', () => ({
+  createFlag: jest.fn(),
+}));
+
 import { NextRequest } from 'next/server';
 import { POST } from '@/app/api/reviews/[id]/flag/route';
 import { getSession } from '@/lib/auth';
 import { getReviewById } from '@/lib/reviewStore';
 import { sendFlagEmail } from '@/lib/emailService';
 import { sendFlagWebhook } from '@/lib/webhookService';
+import { createFlag } from '@/lib/flagStore';
 
-const mockSession    = getSession    as jest.Mock;
-const mockGetReview  = getReviewById as jest.Mock;
-const mockFlagEmail  = sendFlagEmail  as jest.Mock;
+const mockSession     = getSession      as jest.Mock;
+const mockGetReview   = getReviewById   as jest.Mock;
+const mockFlagEmail   = sendFlagEmail   as jest.Mock;
 const mockFlagWebhook = sendFlagWebhook as jest.Mock;
+const mockCreateFlag  = createFlag      as jest.Mock;
 
 const SESSION = { id: 'u1', email: 'darla@test.com', gamerTag: 'Darla#1' };
 const REVIEW  = { id: 'r1', gameTitle: 'Elden Ring', reviewerTag: 'Player#99' };
@@ -40,6 +46,8 @@ beforeEach(() => {
     .sendFlagEmail.mockResolvedValue(undefined);
   (jest.requireMock('@/lib/webhookService') as { sendFlagWebhook: jest.Mock })
     .sendFlagWebhook.mockResolvedValue(undefined);
+  (jest.requireMock('@/lib/flagStore') as { createFlag: jest.Mock })
+    .createFlag.mockResolvedValue({ id: 'f1' });
 });
 
 describe('POST /api/reviews/[id]/flag', () => {
@@ -63,6 +71,27 @@ describe('POST /api/reviews/[id]/flag', () => {
     expect(res.status).toBe(400);
     const body = await res.json();
     expect(body.error).toMatch(/own/i);
+  });
+
+  it('persists the flag via createFlag', async () => {
+    mockSession.mockResolvedValue(SESSION);
+    mockGetReview.mockResolvedValue(REVIEW);
+
+    await POST(makeReq(), { params: { id: 'r1' } });
+
+    expect(mockCreateFlag).toHaveBeenCalledWith('r1', 'Darla#1');
+  });
+
+  it('returns 409 when the user has already flagged this review', async () => {
+    mockSession.mockResolvedValue(SESSION);
+    mockGetReview.mockResolvedValue(REVIEW);
+    const dupError = Object.assign(new Error('Unique constraint'), { code: 'P2002' });
+    mockCreateFlag.mockRejectedValue(dupError);
+
+    const res = await POST(makeReq(), { params: { id: 'r1' } });
+    expect(res.status).toBe(409);
+    const body = await res.json();
+    expect(body.error).toMatch(/already/i);
   });
 
   it('fires email and webhook alerts on successful flag', async () => {
