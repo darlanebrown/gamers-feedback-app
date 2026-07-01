@@ -455,6 +455,8 @@ function ReviewCard({ review, onClassify, onAnalytics, gameCover, currentUserTag
   const [userVote, setUserVote] = useState<'up' | 'down' | null>(null);
   const [voteLoading, setVoteLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [flagged, setFlagged] = useState(false);
+  const [flagging, setFlagging] = useState(false);
 
   useEffect(() => {
     fetch(`/api/reviews/${review.id}/vote`)
@@ -464,6 +466,17 @@ function ReviewCard({ review, onClassify, onAnalytics, gameCover, currentUserTag
       })
       .catch(() => {});
   }, [review.id]);
+
+  const handleFlag = async () => {
+    if (!currentUserTag || flagged || flagging) return;
+    setFlagging(true);
+    try {
+      const res = await fetch(`/api/reviews/${review.id}/flag`, { method: 'POST' });
+      if (res.ok) setFlagged(true);
+    } finally {
+      setFlagging(false);
+    }
+  };
 
   const handleVote = async (type: 'up' | 'down') => {
     if (!currentUserTag) return;
@@ -607,6 +620,16 @@ function ReviewCard({ review, onClassify, onAnalytics, gameCover, currentUserTag
           >
             {copied ? 'Copied!' : '⎘'}
           </button>
+          {currentUserTag && currentUserTag !== review.reviewerTag && (
+            <button
+              className={styles.flagBtn}
+              onClick={handleFlag}
+              disabled={flagging || flagged}
+              title={flagged ? 'Reported' : 'Report this review'}
+            >
+              {flagged ? '🚩 Reported' : '🚩 Report'}
+            </button>
+          )}
         </div>
       </div>
     </article>

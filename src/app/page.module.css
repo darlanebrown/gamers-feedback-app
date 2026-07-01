@@ -1308,6 +1308,20 @@
 }
 .copyLinkBtn:hover { border-color: var(--neon); color: var(--neon); }
 
+.flagBtn {
+  padding: 4px 8px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-dim);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--font-display);
+}
+.flagBtn:hover:not(:disabled) { border-color: var(--red); color: var(--red); }
+.flagBtn:disabled { opacity: 0.6; cursor: default; }
+
 /* ── Game metadata banner (in analytics modal) ── */
 .gameMetaBanner {
   display: flex;

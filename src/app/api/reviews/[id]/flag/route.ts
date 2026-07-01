@@ -1,0 +1,25 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getSession } from '@/lib/auth';
+import { getReviewById } from '@/lib/reviewStore';
+import { sendFlagEmail } from '@/lib/emailService';
+import { sendFlagWebhook } from '@/lib/webhookService';
+
+export async function POST(
+  req: NextRequest,
+  { params }: { params: { id: string } },
+): Promise<NextResponse> {
+  const session = await getSession(req);
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const review = await getReviewById(params.id);
+  if (!review) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+  if (review.reviewerTag === session.gamerTag) {
+    return NextResponse.json({ error: 'Cannot flag your own review' }, { status: 400 });
+  }
+
+  sendFlagEmail(params.id, review.gameTitle, review.reviewerTag, session.gamerTag).catch(() => {});
+  sendFlagWebhook(params.id, review.gameTitle, review.reviewerTag, session.gamerTag).catch(() => {});
+
+  return NextResponse.json({ ok: true });
+}
