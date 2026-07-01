@@ -29,45 +29,57 @@ npx jest --no-coverage # skip coverage report (faster)
 | `lib/gameService` | `lib/gameService.test.ts` | 6 |
 | `lib/voteStore` | `lib/voteStore.test.ts` | 5 |
 | `lib/followStore` | `lib/followStore.test.ts` | 8 |
+| `lib/alertService` | `lib/alertService.test.ts` | 5 |
+| `lib/notificationStore` | `lib/notificationStore.test.ts` | 5 |
 | `api/reviews` | `api/reviews.test.ts` | 13 |
 | `api/classify` | `api/classify.test.ts` | 7 |
 | `api/auth` | `api/auth.test.ts` | 11 |
 | `api/profile-route` | `api/profile-route.test.ts` | 7 |
 | `api/admin-reviews` | `api/admin-reviews.test.ts` | 8 |
 | `api/admin-users` | `api/admin-users.test.ts` | 10 |
-| `api/admin-alerts` | `api/admin-alerts.test.ts` | 5 |
+| `api/admin-alerts` | `api/admin-alerts.test.ts` | 4 |
+| `api/admin-alerts-route` | `api/admin-alerts-route.test.ts` | 4 |
 | `api/game-route` | `api/game-route.test.ts` | 3 |
 | `api/vote-route` | `api/vote-route.test.ts` | 6 |
 | `api/follow-route` | `api/follow-route.test.ts` | 6 |
 | `api/feed-route` | `api/feed-route.test.ts` | 4 |
 | `api/search-route` | `api/search-route.test.ts` | 9 |
-| **Total** | **19 suites** | **148** |
+| `api/review-by-id-route` | `api/review-by-id-route.test.ts` | 3 |
+| `api/settings-route` | `api/settings-route.test.ts` | 8 |
+| `api/notifications-route` | `api/notifications-route.test.ts` | 5 |
+| **Total** | **25 suites** | **177** |
 
 ## Test File Structure
 
 ```
 src/__tests__/
 ├── lib/
-│   ├── classify.test.ts        — pure classification logic (17 tests)
-│   ├── reviewStore.test.ts     — Prisma-backed store with mocked DB (14 tests)
-│   ├── auth.test.ts            — JWT sign/verify round-trips (5 tests)
-│   ├── adminMiddleware.test.ts — requireAdmin() guard (4 tests)
-│   ├── gameService.test.ts     — RAWG fetch + 7-day cache logic (6 tests)
-│   ├── voteStore.test.ts       — upvote/downvote upsert & counts (5 tests)
-│   └── followStore.test.ts     — follow/unfollow/isFollowing (8 tests)
+│   ├── classify.test.ts          — pure classification logic (17 tests)
+│   ├── reviewStore.test.ts       — Prisma-backed store with mocked DB (14 tests)
+│   ├── auth.test.ts              — JWT sign/verify round-trips (5 tests)
+│   ├── adminMiddleware.test.ts   — requireAdmin() guard (4 tests)
+│   ├── gameService.test.ts       — RAWG fetch + 7-day cache logic (6 tests)
+│   ├── voteStore.test.ts         — upvote/downvote upsert & counts (5 tests)
+│   ├── followStore.test.ts       — follow/unfollow/isFollowing (8 tests)
+│   ├── alertService.test.ts      — review bombing detection logic (5 tests)
+│   └── notificationStore.test.ts — notification CRUD (5 tests)
 └── api/
-    ├── reviews.test.ts         — GET + POST /api/reviews (13 tests)
-    ├── classify.test.ts        — POST /api/classify (7 tests)
-    ├── auth.test.ts            — register/login/logout/me routes (11 tests)
-    ├── profile-route.test.ts   — GET /api/profile/[tag] (7 tests)
-    ├── admin-reviews.test.ts   — GET + PATCH /api/admin/reviews (8 tests)
-    ├── admin-users.test.ts     — GET + PATCH /api/admin/users (10 tests)
-    ├── admin-alerts.test.ts    — GET /api/admin/alerts (5 tests)
-    ├── game-route.test.ts      — GET /api/games/[title] (3 tests)
-    ├── vote-route.test.ts      — POST + DELETE /api/reviews/[id]/vote (6 tests)
-    ├── follow-route.test.ts    — POST + DELETE /api/profile/[tag]/follow (6 tests)
-    ├── feed-route.test.ts      — GET /api/feed (4 tests)
-    └── search-route.test.ts    — GET /api/search (9 tests)
+    ├── reviews.test.ts           — GET + POST /api/reviews (13 tests)
+    ├── classify.test.ts          — POST /api/classify (7 tests)
+    ├── auth.test.ts              — register/login/logout/me routes (11 tests)
+    ├── profile-route.test.ts     — GET /api/profile/[tag] (7 tests)
+    ├── admin-reviews.test.ts     — GET + PATCH /api/admin/reviews (8 tests)
+    ├── admin-users.test.ts       — GET + PATCH /api/admin/users (10 tests)
+    ├── admin-alerts.test.ts      — GET /api/admin/alerts (4 tests)
+    ├── admin-alerts-route.test.ts — GET + PATCH /api/admin/alerts/[id] (4 tests)
+    ├── game-route.test.ts        — GET /api/games/[title] (3 tests)
+    ├── vote-route.test.ts        — POST + DELETE /api/reviews/[id]/vote (6 tests)
+    ├── follow-route.test.ts      — POST + DELETE /api/profile/[tag]/follow (6 tests)
+    ├── feed-route.test.ts        — GET /api/feed (4 tests)
+    ├── search-route.test.ts      — GET /api/search (9 tests)
+    ├── review-by-id-route.test.ts — GET /api/reviews/[id] (3 tests)
+    ├── settings-route.test.ts    — PATCH + DELETE /api/auth/me (8 tests)
+    └── notifications-route.test.ts — GET + PATCH /api/notifications (5 tests)
 ```
 
 ---
@@ -166,8 +178,35 @@ Tests follow/unfollow logic in `src/lib/followStore.ts`. Mocks `prisma.follow`.
 
 ---
 
+### `lib/alertService.test.ts` — 5 tests
+Tests review bombing detection in `src/lib/alertService.ts`. Mocks `prisma.review` and `prisma.alert`.
+
+**`checkForBombing`**
+- Creates an `Alert` record when ≥ 5 low-rated reviews (≤ 3) exist within the last hour and no open alert exists
+- Does **not** create an alert when the count is below the threshold (< 5)
+- Does **not** create a duplicate when an undismissed alert for the same game already exists
+
+**`getActiveAlerts`**
+- Returns only undismissed alerts, ordered by `detectedAt` desc
+
+**`dismissAlert`**
+- Marks the alert `dismissed: true` and sets `dismissedAt` to the current time
+
+---
+
+### `lib/notificationStore.test.ts` — 5 tests
+Tests notification CRUD in `src/lib/notificationStore.ts`. Mocks `prisma.notification`.
+
+- `createNotification` — calls `prisma.notification.create` with all provided fields
+- `getNotifications` — queries with `take: 30`, ordered `createdAt desc`
+- `getUnreadCount` — counts only `read: false` records for the given `userTag`
+- `markAllRead` — calls `updateMany` with `{ userTag, read: false }` → `{ read: true }`
+- `markRead` — calls `update` on a single notification by `id`
+
+---
+
 ### `api/reviews.test.ts` — 13 tests
-Mocks `@/lib/reviewStore` and tests `GET` + `POST /api/reviews`.
+Mocks `@/lib/reviewStore` and `@/lib/alertService`. Tests `GET` + `POST /api/reviews`.
 
 **GET**
 - No params → calls `getAllReviews`
@@ -242,7 +281,8 @@ Tests `GET /api/profile/[tag]`.
 ---
 
 ### `api/admin-reviews.test.ts` — 8 tests
-Mocks `@/lib/adminMiddleware`, `@/lib/reviewStore`. Tests admin review routes.
+Mocks `@/lib/adminMiddleware`, `@/lib/reviewStore`, `@/lib/notificationStore`.
+Tests admin review routes.
 
 **GET /api/admin/reviews**
 - 401 when not authenticated
@@ -253,7 +293,7 @@ Mocks `@/lib/adminMiddleware`, `@/lib/reviewStore`. Tests admin review routes.
 **PATCH /api/admin/reviews/[id]**
 - 401 when not authenticated
 - 404 when review not found
-- Overrides classification and returns updated review
+- Overrides classification, fires reclassify notification, returns updated review
 - 400 for invalid classification value
 
 ---
@@ -277,14 +317,28 @@ Mocks `@/lib/adminMiddleware`, `@/lib/userStore`. Tests admin user routes.
 
 ---
 
-### `api/admin-alerts.test.ts` — 5 tests
-Mocks `@/lib/adminMiddleware` and `@/lib/reviewStore`. Tests `GET /api/admin/alerts`.
+### `api/admin-alerts.test.ts` — 4 tests
+Mocks `@/lib/adminMiddleware` and `@/lib/alertService`.
+Tests `GET /api/admin/alerts` (persistent alert approach).
 
 - 401 when not authenticated
 - 403 when not admin
-- Filters games that meet the bomb threshold
-- Returns empty list when no games are being bombed
-- Response shape includes `negativeCount` and `isBombing` fields
+- Returns active (undismissed) alerts for admin
+- Returns empty list when no active alerts
+
+---
+
+### `api/admin-alerts-route.test.ts` — 4 tests
+Mocks `@/lib/adminMiddleware` and `@/lib/alertService`.
+Tests `GET /api/admin/alerts` and `PATCH /api/admin/alerts/[id]`.
+
+**GET**
+- Returns 401 when `requireAdmin` blocks the request
+- Returns active alerts with game title and count
+
+**PATCH** (dismiss)
+- Returns 401 when `requireAdmin` blocks the request
+- Calls `dismissAlert(id)` and returns the updated alert record
 
 ---
 
@@ -298,7 +352,7 @@ Mocks `@/lib/gameService`. Tests `GET /api/games/[title]`.
 ---
 
 ### `api/vote-route.test.ts` — 6 tests
-Mocks `@/lib/auth`, `@/lib/voteStore`, `@/lib/reviewStore`.
+Mocks `@/lib/auth`, `@/lib/voteStore`, `@/lib/reviewStore`, `@/lib/notificationStore`.
 Tests `POST` + `DELETE /api/reviews/[id]/vote`.
 
 **POST** (cast or change vote)
@@ -314,7 +368,7 @@ Tests `POST` + `DELETE /api/reviews/[id]/vote`.
 ---
 
 ### `api/follow-route.test.ts` — 6 tests
-Mocks `@/lib/auth`, `@/lib/followStore`, `@/lib/userStore`.
+Mocks `@/lib/auth`, `@/lib/followStore`, `@/lib/userStore`, `@/lib/notificationStore`.
 Tests `POST` + `DELETE /api/profile/[tag]/follow`.
 
 **POST** (follow)
@@ -355,6 +409,48 @@ Mocks `@/lib/reviewStore.searchReviews`. Tests `GET /api/search`.
 
 ---
 
+### `api/review-by-id-route.test.ts` — 3 tests
+Mocks `@/lib/reviewStore`. Tests `GET /api/reviews/[id]`.
+
+- Returns 200 with the full review object when found
+- Returns 404 with `{ error: 'Review not found' }` when `getReviewById` returns null
+- Calls `getReviewById` with the correct `id` param
+
+---
+
+### `api/settings-route.test.ts` — 8 tests
+Mocks `@/lib/userStore`, `@/lib/auth`, `bcryptjs`.
+Tests `PATCH` + `DELETE /api/auth/me`.
+
+**PATCH** (update profile or password)
+- 401 when not authenticated
+- Updates `displayName` and `bio` when provided
+- 400 when `newPassword` is provided without `currentPassword`
+- 401 when `currentPassword` does not match the stored hash
+- Hashes and saves the new password when `currentPassword` is correct
+- 400 when `newPassword` is shorter than 8 characters
+
+**DELETE** (delete account)
+- 401 when not authenticated
+- Calls `anonymizeUser(id)` and returns 200
+
+---
+
+### `api/notifications-route.test.ts` — 5 tests
+Mocks `@/lib/notificationStore` and `@/lib/auth`.
+Tests `GET` + `PATCH /api/notifications`.
+
+**GET**
+- 401 when not authenticated
+- Returns `{ notifications, unreadCount }` for the authenticated user; calls both store functions with the session's `gamerTag`
+
+**PATCH** (mark read)
+- 401 when not authenticated
+- Calls `markAllRead(gamerTag)` when no `id` is provided in the body
+- Calls `markRead(id)` when a specific `id` is provided
+
+---
+
 ## Mocking Strategy
 
 **Prisma** (`lib/` tests): `jest.mock('@/lib/prisma', ...)` replaces the client with
@@ -373,8 +469,12 @@ module.exports = async () => {
 };
 ```
 
-**`jest.resetAllMocks()`** in `beforeEach` — flushes `mockResolvedValueOnce` queues
-between tests and prevents mock values from leaking across cases.
+**`jest.resetAllMocks()` + fire-and-forget imports**: Routes that call
+`someAsyncFn(...).catch(() => {})` fire-and-forget require the mock to return a
+Promise after `resetAllMocks()` clears it. Pattern: declare the mock ref, then
+restore `mockResolvedValue(undefined)` in `beforeEach` alongside `resetAllMocks()`.
+Failing to do this causes a `TypeError: Cannot read properties of undefined (reading 'catch')`
+inside the route handler, surfacing as an unexpected 500.
 
 ---
 
@@ -402,3 +502,13 @@ and `auth`. Existing tests failed 500 until those imports were mocked.
 ### 5. TypeScript `Set` spread error
 `[...new Set(...)]` fails at the TS target used by Next.js. All occurrences replaced
 with `Array.from(new Set(...))`.
+
+### 6. `resetAllMocks()` wipes fire-and-forget mock implementations
+Phase 12 added `checkForBombing(review.gameTitle).catch(() => {})` to the reviews
+POST route. Tests that called `jest.resetAllMocks()` in `beforeEach` wiped the
+`mockResolvedValue(undefined)` set in the `jest.mock(...)` factory, causing
+`checkForBombing` to return `undefined` synchronously. Calling `.catch()` on
+`undefined` threw a `TypeError` inside the route, producing an unexpected 500.
+Fix: import the mock reference explicitly and call `mockCheckBombing.mockResolvedValue(undefined)`
+inside `beforeEach` after `resetAllMocks()`. Same fix applied in Phase 13 for
+`createNotification` in follow, vote, and admin-reviews tests.
