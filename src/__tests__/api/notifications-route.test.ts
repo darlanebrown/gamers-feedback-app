@@ -1,8 +1,9 @@
 jest.mock('@/lib/notificationStore', () => ({
-  getNotifications: jest.fn(),
-  getUnreadCount: jest.fn(),
-  markAllRead: jest.fn(),
-  markRead: jest.fn(),
+  getNotifications:   jest.fn(),
+  getUnreadCount:     jest.fn(),
+  countNotifications: jest.fn().mockResolvedValue(0),
+  markAllRead:        jest.fn(),
+  markRead:           jest.fn(),
 }));
 
 jest.mock('@/lib/auth', () => ({
@@ -47,7 +48,7 @@ describe('GET /api/notifications', () => {
     expect(res.status).toBe(200);
     expect(body.notifications).toHaveLength(1);
     expect(body.unreadCount).toBe(1);
-    expect(mockGetNotifications).toHaveBeenCalledWith('Darla#1');
+    expect(mockGetNotifications).toHaveBeenCalledWith('Darla#1', { skip: 0, take: 20 });
     expect(mockGetUnreadCount).toHaveBeenCalledWith('Darla#1');
   });
 });
