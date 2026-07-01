@@ -18,17 +18,29 @@ type ReviewerRow = {
   reputation: bigint;
 };
 
-export async function getTopReviewers(limit: number): Promise<TopReviewer[]> {
-  const rows = await prisma.$queryRaw<ReviewerRow[]>`
-    SELECT r."reviewerTag",
-      COUNT(DISTINCT r.id)::bigint AS "reviewCount",
-      COALESCE(SUM(CASE WHEN rv.type = 'up' THEN 1 ELSE -1 END), 0)::bigint AS "reputation"
-    FROM "Review" r
-    LEFT JOIN "ReviewVote" rv ON rv."reviewId" = r.id
-    GROUP BY r."reviewerTag"
-    ORDER BY "reputation" DESC
-    LIMIT ${limit}
-  `;
+export async function getTopReviewers(limit: number, since?: Date): Promise<TopReviewer[]> {
+  const rows = since
+    ? await prisma.$queryRaw<ReviewerRow[]>`
+        SELECT r."reviewerTag",
+          COUNT(DISTINCT r.id)::bigint AS "reviewCount",
+          COALESCE(SUM(CASE WHEN rv.type = 'up' THEN 1 ELSE -1 END), 0)::bigint AS "reputation"
+        FROM "Review" r
+        LEFT JOIN "ReviewVote" rv ON rv."reviewId" = r.id
+        WHERE r."createdAt" >= ${since}
+        GROUP BY r."reviewerTag"
+        ORDER BY "reputation" DESC
+        LIMIT ${limit}
+      `
+    : await prisma.$queryRaw<ReviewerRow[]>`
+        SELECT r."reviewerTag",
+          COUNT(DISTINCT r.id)::bigint AS "reviewCount",
+          COALESCE(SUM(CASE WHEN rv.type = 'up' THEN 1 ELSE -1 END), 0)::bigint AS "reputation"
+        FROM "Review" r
+        LEFT JOIN "ReviewVote" rv ON rv."reviewId" = r.id
+        GROUP BY r."reviewerTag"
+        ORDER BY "reputation" DESC
+        LIMIT ${limit}
+      `;
   return rows.map((r) => ({
     reviewerTag: r.reviewerTag,
     reviewCount: Number(r.reviewCount),
@@ -36,10 +48,13 @@ export async function getTopReviewers(limit: number): Promise<TopReviewer[]> {
   }));
 }
 
-export async function getTopGames(limit: number): Promise<TopGame[]> {
+export async function getTopGames(limit: number, since?: Date): Promise<TopGame[]> {
   const groups = await prisma.review.groupBy({
     by: ['gameTitle'],
-    where: { classification: 'helpful' },
+    where: {
+      classification: 'helpful',
+      ...(since ? { createdAt: { gte: since } } : {}),
+    },
     _avg: { rating: true },
     _count: { id: true },
     orderBy: { _avg: { rating: 'desc' } },
