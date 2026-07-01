@@ -5,14 +5,20 @@ jest.mock('@/lib/reviewStore', () => ({
   addReview:        jest.fn(),
 }));
 
+jest.mock('@/lib/alertService', () => ({
+  checkForBombing: jest.fn(),
+}));
+
 import { NextRequest } from 'next/server';
 import { GET, POST } from '@/app/api/reviews/route';
 import { getAllReviews, getHelpfulReviews, getReviewsByGame, addReview } from '@/lib/reviewStore';
+import { checkForBombing } from '@/lib/alertService';
 
 const mockGetAll     = getAllReviews     as jest.Mock;
 const mockGetHelp    = getHelpfulReviews as jest.Mock;
 const mockGetByGame  = getReviewsByGame  as jest.Mock;
 const mockAdd        = addReview         as jest.Mock;
+const mockCheckBombing = checkForBombing as jest.Mock;
 
 function makeReview(overrides = {}) {
   return {
@@ -32,7 +38,10 @@ function makeReview(overrides = {}) {
   };
 }
 
-beforeEach(() => jest.resetAllMocks());
+beforeEach(() => {
+  jest.resetAllMocks();
+  mockCheckBombing.mockResolvedValue(undefined);
+});
 
 describe('GET /api/reviews', () => {
   it('returns all reviews when no query params', async () => {
