@@ -13,17 +13,35 @@ jest.mock('@/lib/commentStore', () => ({
   deleteComment: jest.fn(),
 }));
 
+jest.mock('@/lib/emailService', () => ({
+  sendCommentEmail: jest.fn().mockResolvedValue(undefined),
+}));
+
+jest.mock('@/lib/notificationStore', () => ({
+  createNotification: jest.fn().mockResolvedValue(undefined),
+}));
+
+jest.mock('@/lib/userStore', () => ({
+  findUserByTag: jest.fn(),
+}));
+
 import { NextRequest } from 'next/server';
 import { GET, POST, DELETE } from '@/app/api/reviews/[id]/comments/route';
 import { getSession } from '@/lib/auth';
 import { getReviewById } from '@/lib/reviewStore';
 import { createComment, getComments, deleteComment } from '@/lib/commentStore';
+import { sendCommentEmail } from '@/lib/emailService';
+import { createNotification } from '@/lib/notificationStore';
+import { findUserByTag } from '@/lib/userStore';
 
-const mockSession       = getSession     as jest.Mock;
-const mockGetReview     = getReviewById  as jest.Mock;
-const mockCreateComment = createComment  as jest.Mock;
-const mockGetComments   = getComments    as jest.Mock;
-const mockDeleteComment = deleteComment  as jest.Mock;
+const mockSession          = getSession          as jest.Mock;
+const mockGetReview        = getReviewById       as jest.Mock;
+const mockCreateComment    = createComment       as jest.Mock;
+const mockGetComments      = getComments         as jest.Mock;
+const mockDeleteComment    = deleteComment       as jest.Mock;
+const mockSendCommentEmail = sendCommentEmail    as jest.Mock;
+const mockCreateNotif      = createNotification  as jest.Mock;
+const mockFindUserByTag    = findUserByTag       as jest.Mock;
 
 const SESSION = { id: 'u1', email: 'darla@test.com', gamerTag: 'Darla#1' };
 const REVIEW  = { id: 'r1', gameTitle: 'Elden Ring', reviewerTag: 'Player#99' };
@@ -36,10 +54,15 @@ beforeEach(() => {
   jest.resetAllMocks();
   mockGetComments.mockResolvedValue([COMMENT]);
   mockGetReview.mockResolvedValue(REVIEW);
+  mockFindUserByTag.mockResolvedValue({ email: 'player99@test.com', gamerTag: 'Player#99' });
   (jest.requireMock('@/lib/commentStore') as { createComment: jest.Mock })
     .createComment.mockResolvedValue(COMMENT);
   (jest.requireMock('@/lib/commentStore') as { deleteComment: jest.Mock })
     .deleteComment.mockResolvedValue(true);
+  (jest.requireMock('@/lib/emailService') as { sendCommentEmail: jest.Mock })
+    .sendCommentEmail.mockResolvedValue(undefined);
+  (jest.requireMock('@/lib/notificationStore') as { createNotification: jest.Mock })
+    .createNotification.mockResolvedValue(undefined);
 });
 
 function makeGetReq() {
@@ -117,6 +140,33 @@ describe('POST /api/reviews/[id]/comments', () => {
     const data = await res.json();
     expect(data.comment.body).toBe('Great review!');
     expect(mockCreateComment).toHaveBeenCalledWith('r1', 'Darla#1', 'Great review!');
+  });
+
+  it('fires a comment email to the review author', async () => {
+    mockSession.mockResolvedValue(SESSION);
+    await POST(makePostReq({ body: 'Great review!' }), { params: { id: 'r1' } });
+    // allow fire-and-forget
+    await Promise.resolve();
+    expect(mockSendCommentEmail).toHaveBeenCalledWith(
+      'player99@test.com', 'Darla#1', 'Elden Ring', 'r1',
+    );
+  });
+
+  it('creates an in-app notification for the review author', async () => {
+    mockSession.mockResolvedValue(SESSION);
+    await POST(makePostReq({ body: 'Great review!' }), { params: { id: 'r1' } });
+    await Promise.resolve();
+    expect(mockCreateNotif).toHaveBeenCalledWith(
+      'Player#99', 'comment', 'Darla#1', 'r1', 'Elden Ring',
+    );
+  });
+
+  it('does not notify when the commenter is the review author', async () => {
+    mockSession.mockResolvedValue({ ...SESSION, gamerTag: 'Player#99' });
+    await POST(makePostReq({ body: 'My own review!' }), { params: { id: 'r1' } });
+    await Promise.resolve();
+    expect(mockSendCommentEmail).not.toHaveBeenCalled();
+    expect(mockCreateNotif).not.toHaveBeenCalled();
   });
 });
 

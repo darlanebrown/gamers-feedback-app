@@ -6,7 +6,7 @@ jest.mock('resend', () => ({
   })),
 }));
 
-import { sendBombingEmail, sendClassificationEmail, sendFollowEmail, sendVoteEmail, sendReclassifyEmail, sendDigestEmail, sendFlagEmail } from '@/lib/emailService';
+import { sendBombingEmail, sendClassificationEmail, sendFollowEmail, sendVoteEmail, sendReclassifyEmail, sendDigestEmail, sendFlagEmail, sendCommentEmail } from '@/lib/emailService';
 
 beforeEach(() => {
   jest.resetAllMocks();
@@ -233,6 +233,39 @@ describe('sendFlagEmail', () => {
     delete process.env.RESEND_API_KEY;
 
     await sendFlagEmail('r1', 'Elden Ring', 'Player#99', 'Darla#1');
+
+    expect(mockSend).not.toHaveBeenCalled();
+  });
+});
+
+describe('sendCommentEmail', () => {
+  it('sends a comment notification to the review author', async () => {
+    mockSend.mockResolvedValue({ id: 'email-11' });
+
+    await sendCommentEmail('author@test.com', 'Darla#1', 'Elden Ring', 'r1');
+
+    expect(mockSend).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to:      'author@test.com',
+        subject: expect.stringMatching(/comment/i),
+        html:    expect.stringContaining('Elden Ring'),
+      }),
+    );
+  });
+
+  it('includes commenter tag in the email body', async () => {
+    mockSend.mockResolvedValue({ id: 'email-12' });
+
+    await sendCommentEmail('author@test.com', 'Darla#1', 'Elden Ring', 'r1');
+
+    const call = mockSend.mock.calls[0][0];
+    expect(call.html).toContain('Darla#1');
+  });
+
+  it('does nothing when RESEND_API_KEY is not set', async () => {
+    delete process.env.RESEND_API_KEY;
+
+    await sendCommentEmail('author@test.com', 'Darla#1', 'Elden Ring', 'r1');
 
     expect(mockSend).not.toHaveBeenCalled();
   });

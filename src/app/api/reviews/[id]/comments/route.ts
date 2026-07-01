@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { getReviewById } from '@/lib/reviewStore';
 import { createComment, getComments, deleteComment } from '@/lib/commentStore';
+import { sendCommentEmail } from '@/lib/emailService';
+import { createNotification } from '@/lib/notificationStore';
+import { findUserByTag } from '@/lib/userStore';
 
 export async function GET(
   req: NextRequest,
@@ -33,6 +36,19 @@ export async function POST(
   }
 
   const comment = await createComment(params.id, session.gamerTag, body.trim());
+
+  if (session.gamerTag !== review.reviewerTag) {
+    findUserByTag(review.reviewerTag)
+      .then((author) => {
+        if (author) {
+          sendCommentEmail(author.email, session.gamerTag, review.gameTitle, params.id).catch(() => {});
+        }
+      })
+      .catch(() => {});
+    createNotification(review.reviewerTag, 'comment', session.gamerTag, params.id, review.gameTitle)
+      .catch(() => {});
+  }
+
   return NextResponse.json({ comment }, { status: 201 });
 }
 
