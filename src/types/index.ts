@@ -15,6 +15,7 @@ export interface Review {
   reviewerTag: string;
   classification: ReviewClassification;
   classificationReason?: string;
+  hasSpoilers: boolean;
   createdAt: string;
 }
 

@@ -18,6 +18,7 @@ function toReview(row: any): Review {
     reviewerTag: row.reviewerTag,
     classification: row.classification as ReviewClassification,
     classificationReason: row.classificationReason ?? undefined,
+    hasSpoilers: row.hasSpoilers ?? false,
     createdAt: row.createdAt.toISOString(),
   };
 }
@@ -91,6 +92,7 @@ export async function addReview(
       cons: review.cons,
       playtime: review.playtime,
       reviewerTag: review.reviewerTag,
+      hasSpoilers: review.hasSpoilers ?? false,
       classification: 'pending',
     },
   });

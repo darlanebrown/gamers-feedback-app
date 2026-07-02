@@ -46,18 +46,22 @@ export async function GET(req: NextRequest) {
   const limit  = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') ?? '20', 10)));
   const skip   = (page - 1) * limit;
 
+  const hideSpoilers = searchParams.get('hideSpoilers') === 'true';
+
   // Game filter bypasses pagination (game pages handle their own sorting/display)
   if (game) {
     const all = await getReviewsByGame(game);
-    const reviews = all.filter((r) => r.classification === 'helpful');
+    let reviews = all.filter((r) => r.classification === 'helpful');
+    if (hideSpoilers) reviews = reviews.filter((r) => !r.hasSpoilers);
     return NextResponse.json({ reviews });
   }
 
   // Default and filter=helpful both show only moderation-approved reviews
-  const [reviews, total] = await Promise.all([
+  let [reviews, total] = await Promise.all([
     getHelpfulReviews({ skip, take: limit }),
     countHelpfulReviews(),
   ]);
+  if (hideSpoilers) reviews = reviews.filter((r) => !r.hasSpoilers);
   return NextResponse.json({ reviews, total, page, limit });
 }
 
