@@ -6,6 +6,7 @@ import { findUserByTag } from '@/lib/userStore';
 import { sendReclassifyEmail } from '@/lib/emailService';
 import { getSession } from '@/lib/auth';
 import { logSecurityEvent } from '@/lib/securityLogger';
+import { createAuditEntry } from '@/lib/auditLogStore';
 
 const VALID = new Set(['helpful', 'spam', 'toxic', 'pending']);
 
@@ -56,12 +57,10 @@ export async function DELETE(
   await deleteReviewById(params.id);
 
   const session = await getSession(req);
-  logSecurityEvent(
-    'admin_review_delete',
-    session?.gamerTag ?? 'unknown',
-    params.id,
-    `deleted review by ${review.reviewerTag}`,
-  );
+  const actor   = session?.gamerTag ?? 'unknown';
+  const detail  = `deleted review by ${review.reviewerTag}`;
+  logSecurityEvent('admin_review_delete', actor, params.id, detail);
+  createAuditEntry('admin_review_delete', actor, params.id, detail).catch(() => {});
 
   return NextResponse.json({ ok: true });
 }

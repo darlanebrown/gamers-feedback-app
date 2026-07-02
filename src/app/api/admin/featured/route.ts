@@ -3,6 +3,7 @@ import { getSession } from '@/lib/auth';
 import { getReviewById } from '@/lib/reviewStore';
 import { setFeaturedReview } from '@/lib/featuredReviewStore';
 import { logSecurityEvent } from '@/lib/securityLogger';
+import { createAuditEntry } from '@/lib/auditLogStore';
 
 export async function POST(req: NextRequest) {
   const session = await getSession(req);
@@ -21,6 +22,7 @@ export async function POST(req: NextRequest) {
 
   await setFeaturedReview(reviewId, session.gamerTag);
   logSecurityEvent('admin_feature_review', { reviewId, setBy: session.gamerTag });
+  createAuditEntry('admin_feature_review', session.gamerTag, reviewId, `featured by ${session.gamerTag}`).catch(() => {});
 
   return NextResponse.json({ ok: true, reviewId });
 }
