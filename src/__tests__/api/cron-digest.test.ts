@@ -8,17 +8,21 @@ import { runWeeklyDigest } from '@/lib/digestService';
 
 const mockRunDigest = runWeeklyDigest as jest.Mock;
 
-function makeReq(secret?: string) {
+const SECRET = 'test-cron-secret';
+
+function makeReq(authHeader?: string) {
+  const headers: Record<string, string> = {};
+  if (authHeader !== undefined) headers['authorization'] = authHeader;
   return new NextRequest('http://localhost/api/cron/digest', {
     method: 'POST',
-    headers: secret ? { Authorization: `Bearer ${secret}` } : {},
+    headers,
   });
 }
 
 beforeEach(() => {
   jest.resetAllMocks();
-  process.env.CRON_SECRET = 'super-secret';
-  mockRunDigest.mockResolvedValue({ sent: 2, skipped: 1 });
+  process.env.CRON_SECRET = SECRET;
+  mockRunDigest.mockResolvedValue({ sent: 3, skipped: 1 });
 });
 
 afterEach(() => {
@@ -32,29 +36,23 @@ describe('POST /api/cron/digest', () => {
   });
 
   it('returns 401 when secret is wrong', async () => {
-    const res = await POST(makeReq('wrong-secret'));
+    const res = await POST(makeReq('Bearer wrong-secret'));
     expect(res.status).toBe(401);
   });
 
-  it('runs the digest and returns sent/skipped counts', async () => {
-    const res = await POST(makeReq('super-secret'));
+  it('returns 200 and runs the digest with correct secret', async () => {
+    const res = await POST(makeReq(`Bearer ${SECRET}`));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.ok).toBe(true);
-    expect(body.sent).toBe(2);
+    expect(body.sent).toBe(3);
     expect(body.skipped).toBe(1);
     expect(mockRunDigest).toHaveBeenCalledTimes(1);
   });
 
   it('returns 401 when CRON_SECRET env var is not set', async () => {
     delete process.env.CRON_SECRET;
-    const res = await POST(makeReq('super-secret'));
-    expect(res.status).toBe(401);
-  });
-
-  it('returns 401 when CRON_SECRET env var is not set (no header)', async () => {
-    delete process.env.CRON_SECRET;
-    const res = await POST(makeReq());
+    const res = await POST(makeReq(`Bearer ${SECRET}`));
     expect(res.status).toBe(401);
   });
 });
