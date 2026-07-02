@@ -161,6 +161,21 @@ describe('POST /api/auth/login', () => {
     const res = await login(req);
     expect(res.status).toBe(401);
   });
+
+  it('returns 403 when the user is banned', async () => {
+    mockFindEmail.mockResolvedValue({ ...VALID_USER, banned: true });
+    mockCompare.mockResolvedValue(true);
+
+    const req = new NextRequest('http://localhost/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'darla@test.com', password: 'password123' }),
+    });
+    const res = await login(req);
+    expect(res.status).toBe(403);
+    const body = await res.json();
+    expect(body.error).toMatch(/banned/i);
+  });
 });
 
 // ── Logout ────────────────────────────────────────────────────────────────────
