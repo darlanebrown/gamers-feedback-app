@@ -1,5 +1,6 @@
 import { prisma } from './prisma';
 import { getFollowedTags } from './followStore';
+import { getBlockedTags } from './blockStore';
 
 export type ActivityItem = {
   type: 'review' | 'comment' | 'vote';
@@ -19,24 +20,29 @@ export async function getActivityFeed({
   skip: number;
   take: number;
 }): Promise<ActivityItem[]> {
-  const followedTags = await getFollowedTags(gamerTag);
-  if (followedTags.length === 0) return [];
+  const [followedTags, blockedTags] = await Promise.all([
+    getFollowedTags(gamerTag),
+    getBlockedTags(gamerTag),
+  ]);
+  const blockedSet   = new Set(blockedTags);
+  const activeTags   = followedTags.filter((t) => !blockedSet.has(t));
+  if (activeTags.length === 0) return [];
 
   const [reviews, comments, votes] = await Promise.all([
     prisma.review.findMany({
-      where:   { reviewerTag: { in: followedTags } },
+      where:   { reviewerTag: { in: activeTags } },
       select:  { id: true, reviewerTag: true, gameTitle: true, createdAt: true },
       orderBy: { createdAt: 'desc' },
       take:    take + skip,
     }),
     prisma.reviewComment.findMany({
-      where:   { authorTag: { in: followedTags } },
+      where:   { authorTag: { in: activeTags } },
       select:  { id: true, authorTag: true, reviewId: true, createdAt: true },
       orderBy: { createdAt: 'desc' },
       take:    take + skip,
     }),
     prisma.reviewVote.findMany({
-      where:   { voterTag: { in: followedTags } },
+      where:   { voterTag: { in: activeTags } },
       select:  { id: true, voterTag: true, reviewId: true, createdAt: true },
       orderBy: { createdAt: 'desc' },
       take:    take + skip,
