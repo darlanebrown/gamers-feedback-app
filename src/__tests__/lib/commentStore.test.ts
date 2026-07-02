@@ -10,7 +10,7 @@ jest.mock('@/lib/prisma', () => ({
   },
 }));
 
-import { createComment, getComments, deleteComment, countComments, deleteCommentAsAdmin, countRecentCommentsByTag } from '@/lib/commentStore';
+import { createComment, getComments, deleteComment, countComments, deleteCommentAsAdmin, countRecentCommentsByTag, updateComment } from '@/lib/commentStore';
 import { prisma } from '@/lib/prisma';
 
 const mockCreate     = (prisma.reviewComment as any).create     as jest.Mock;
@@ -128,6 +128,48 @@ describe('deleteCommentAsAdmin', () => {
 
     expect(mockDelete).not.toHaveBeenCalled();
     expect(result).toBe(false);
+  });
+});
+
+describe('updateComment', () => {
+  it('updates the body and returns the updated comment when requester is the author', async () => {
+    mockFindUnique.mockResolvedValue(COMMENT);
+    const updated = { ...COMMENT, body: 'Edited body' };
+    mockCreate.mockResolvedValue(updated); // reuse mockCreate as a stand-in; actual impl uses update
+    // We'll verify via the real prisma.reviewComment.update call
+    const mockUpdate = jest.fn().mockResolvedValue(updated);
+    (prisma.reviewComment as any).update = mockUpdate;
+
+    const result = await updateComment('c1', 'Darla#1', 'Edited body');
+
+    expect(mockFindUnique).toHaveBeenCalledWith({ where: { id: 'c1' } });
+    expect(mockUpdate).toHaveBeenCalledWith({
+      where: { id: 'c1' },
+      data:  { body: 'Edited body' },
+    });
+    expect(result?.body).toBe('Edited body');
+  });
+
+  it('returns null without updating when requester is not the author', async () => {
+    mockFindUnique.mockResolvedValue(COMMENT);
+    const mockUpdate = jest.fn();
+    (prisma.reviewComment as any).update = mockUpdate;
+
+    const result = await updateComment('c1', 'Other#99', 'Sneaky edit');
+
+    expect(mockUpdate).not.toHaveBeenCalled();
+    expect(result).toBeNull();
+  });
+
+  it('returns null when comment does not exist', async () => {
+    mockFindUnique.mockResolvedValue(null);
+    const mockUpdate = jest.fn();
+    (prisma.reviewComment as any).update = mockUpdate;
+
+    const result = await updateComment('c1', 'Darla#1', 'Edited body');
+
+    expect(mockUpdate).not.toHaveBeenCalled();
+    expect(result).toBeNull();
   });
 });
 

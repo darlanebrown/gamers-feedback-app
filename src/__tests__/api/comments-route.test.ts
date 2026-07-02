@@ -13,6 +13,7 @@ jest.mock('@/lib/commentStore', () => ({
   deleteComment:              jest.fn(),
   countComments:              jest.fn(),
   countRecentCommentsByTag:   jest.fn(),
+  updateComment:              jest.fn(),
 }));
 
 jest.mock('@/lib/emailService', () => ({
@@ -28,10 +29,10 @@ jest.mock('@/lib/userStore', () => ({
 }));
 
 import { NextRequest } from 'next/server';
-import { GET, POST, DELETE } from '@/app/api/reviews/[id]/comments/route';
+import { GET, POST, DELETE, PATCH } from '@/app/api/reviews/[id]/comments/route';
 import { getSession } from '@/lib/auth';
 import { getReviewById } from '@/lib/reviewStore';
-import { createComment, getComments, deleteComment, countComments, countRecentCommentsByTag } from '@/lib/commentStore';
+import { createComment, getComments, deleteComment, countComments, countRecentCommentsByTag, updateComment } from '@/lib/commentStore';
 import { sendCommentEmail } from '@/lib/emailService';
 import { createNotification } from '@/lib/notificationStore';
 import { findUserByTag } from '@/lib/userStore';
@@ -43,6 +44,7 @@ const mockGetComments             = getComments               as jest.Mock;
 const mockDeleteComment           = deleteComment             as jest.Mock;
 const mockCountComments           = countComments             as jest.Mock;
 const mockCountRecentByTag        = countRecentCommentsByTag  as jest.Mock;
+const mockUpdateComment           = updateComment             as jest.Mock;
 const mockSendCommentEmail        = sendCommentEmail          as jest.Mock;
 const mockCreateNotif             = createNotification        as jest.Mock;
 const mockFindUserByTag           = findUserByTag             as jest.Mock;
@@ -64,6 +66,7 @@ beforeEach(() => {
   cs.createComment.mockResolvedValue(COMMENT);
   cs.deleteComment.mockResolvedValue(true);
   cs.countRecentCommentsByTag.mockResolvedValue(0);
+  cs.updateComment.mockResolvedValue({ ...COMMENT, body: 'Edited!' });
   (jest.requireMock('@/lib/emailService') as { sendCommentEmail: jest.Mock })
     .sendCommentEmail.mockResolvedValue(undefined);
   (jest.requireMock('@/lib/notificationStore') as { createNotification: jest.Mock })
@@ -85,6 +88,14 @@ function makePostReq(body: object) {
 function makeDeleteReq(commentId: string) {
   return new NextRequest(`http://localhost/api/reviews/r1/comments?commentId=${commentId}`, {
     method: 'DELETE',
+  });
+}
+
+function makePatchReq(commentId: string, body: object) {
+  return new NextRequest(`http://localhost/api/reviews/r1/comments?commentId=${commentId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
   });
 }
 
@@ -238,5 +249,52 @@ describe('DELETE /api/reviews/[id]/comments', () => {
     const data = await res.json();
     expect(data.ok).toBe(true);
     expect(mockDeleteComment).toHaveBeenCalledWith('c1', 'Darla#1');
+  });
+});
+
+describe('PATCH /api/reviews/[id]/comments', () => {
+  it('returns 401 when not authenticated', async () => {
+    mockSession.mockResolvedValue(null);
+    const res = await PATCH(makePatchReq('c1', { body: 'Edited!' }), { params: { id: 'r1' } });
+    expect(res.status).toBe(401);
+  });
+
+  it('returns 400 when commentId is missing', async () => {
+    mockSession.mockResolvedValue(SESSION);
+    const req = new NextRequest('http://localhost/api/reviews/r1/comments', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ body: 'Edited!' }),
+    });
+    const res = await PATCH(req, { params: { id: 'r1' } });
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 400 when body is empty', async () => {
+    mockSession.mockResolvedValue(SESSION);
+    const res = await PATCH(makePatchReq('c1', { body: '  ' }), { params: { id: 'r1' } });
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 400 when body exceeds 500 characters', async () => {
+    mockSession.mockResolvedValue(SESSION);
+    const res = await PATCH(makePatchReq('c1', { body: 'x'.repeat(501) }), { params: { id: 'r1' } });
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 404 when comment does not belong to user', async () => {
+    mockSession.mockResolvedValue(SESSION);
+    mockUpdateComment.mockResolvedValue(null);
+    const res = await PATCH(makePatchReq('c1', { body: 'Edited!' }), { params: { id: 'r1' } });
+    expect(res.status).toBe(404);
+  });
+
+  it('updates the comment and returns it with 200', async () => {
+    mockSession.mockResolvedValue(SESSION);
+    const res = await PATCH(makePatchReq('c1', { body: 'Edited!' }), { params: { id: 'r1' } });
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.comment.body).toBe('Edited!');
+    expect(mockUpdateComment).toHaveBeenCalledWith('c1', 'Darla#1', 'Edited!');
   });
 });

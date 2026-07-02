@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { getReviewById } from '@/lib/reviewStore';
-import { createComment, getComments, deleteComment, countComments, countRecentCommentsByTag } from '@/lib/commentStore';
+import { createComment, getComments, deleteComment, countComments, countRecentCommentsByTag, updateComment } from '@/lib/commentStore';
 import { sendCommentEmail } from '@/lib/emailService';
 import { createNotification } from '@/lib/notificationStore';
 import { findUserByTag } from '@/lib/userStore';
@@ -71,6 +71,31 @@ export async function POST(
   }
 
   return NextResponse.json({ comment }, { status: 201 });
+}
+
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: { id: string } },
+): Promise<NextResponse> {
+  const session = await getSession(req);
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const { searchParams } = new URL(req.url);
+  const commentId = searchParams.get('commentId');
+  if (!commentId) return NextResponse.json({ error: 'commentId is required' }, { status: 400 });
+
+  const { body } = await req.json();
+  if (!body || typeof body !== 'string' || !body.trim()) {
+    return NextResponse.json({ error: 'Comment body is required' }, { status: 400 });
+  }
+  if (body.length > 500) {
+    return NextResponse.json({ error: 'Comment must be 500 characters or fewer' }, { status: 400 });
+  }
+
+  const comment = await updateComment(commentId, session.gamerTag, body.trim());
+  if (!comment) return NextResponse.json({ error: 'Not found or not your comment' }, { status: 404 });
+
+  return NextResponse.json({ comment });
 }
 
 export async function DELETE(
