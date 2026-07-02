@@ -23,6 +23,10 @@ jest.mock('@/lib/auth', () => ({
   SESSION_COOKIE: 'gf_session',
 }));
 
+jest.mock('@/lib/emailService', () => ({
+  sendWelcomeEmail: jest.fn().mockResolvedValue(undefined),
+}));
+
 import { NextRequest } from 'next/server';
 import { POST as register } from '@/app/api/auth/register/route';
 import { POST as login }    from '@/app/api/auth/login/route';
@@ -47,7 +51,12 @@ const mockClearSession  = clearSessionCookie as jest.Mock;
 
 const VALID_USER = { id: 'u1', email: 'darla@test.com', gamerTag: 'Darla#1', passwordHash: '$hashed', createdAt: new Date() };
 
-beforeEach(() => { jest.resetAllMocks(); mockCountUsers.mockResolvedValue(1); });
+beforeEach(() => {
+  jest.resetAllMocks();
+  mockCountUsers.mockResolvedValue(1);
+  (jest.requireMock('@/lib/emailService') as { sendWelcomeEmail: jest.Mock })
+    .sendWelcomeEmail.mockResolvedValue(undefined);
+});
 
 // ── Register ─────────────────────────────────────────────────────────────────
 

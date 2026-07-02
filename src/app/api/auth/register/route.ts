@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { createUser, findUserByEmail, findUserByTag, countUsers } from '@/lib/userStore';
 import { signToken, setSessionCookie } from '@/lib/auth';
+import { sendWelcomeEmail } from '@/lib/emailService';
 
 export async function POST(req: NextRequest) {
   try {
@@ -30,6 +31,7 @@ export async function POST(req: NextRequest) {
       { status: 201 },
     );
     setSessionCookie(res, token);
+    sendWelcomeEmail(user.email, user.gamerTag).catch(() => {});
     return res;
   } catch {
     return NextResponse.json({ error: 'Registration failed' }, { status: 500 });
