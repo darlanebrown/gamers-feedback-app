@@ -180,7 +180,7 @@ describe('POST /api/reviews/[id]/comments', () => {
     expect(res.status).toBe(201);
     const data = await res.json();
     expect(data.comment.body).toBe('Great review!');
-    expect(mockCreateComment).toHaveBeenCalledWith('r1', 'Darla#1', 'Great review!');
+    expect(mockCreateComment).toHaveBeenCalledWith('r1', 'Darla#1', 'Great review!', undefined);
   });
 
   it('fires a comment email to the review author', async () => {

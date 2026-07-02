@@ -5,6 +5,7 @@ export type ReviewComment = {
   reviewId:  string;
   authorTag: string;
   body:      string;
+  parentId:  string | null;
   createdAt: string;
 };
 
@@ -14,6 +15,7 @@ function toComment(row: any): ReviewComment {
     reviewId:  row.reviewId,
     authorTag: row.authorTag,
     body:      row.body,
+    parentId:  row.parentId ?? null,
     createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : row.createdAt,
   };
 }
@@ -22,9 +24,10 @@ export async function createComment(
   reviewId: string,
   authorTag: string,
   body: string,
+  parentId?: string,
 ): Promise<ReviewComment> {
   const row = await prisma.reviewComment.create({
-    data: { reviewId, authorTag, body },
+    data: { reviewId, authorTag, body, ...(parentId ? { parentId } : {}) },
   });
   return toComment(row);
 }

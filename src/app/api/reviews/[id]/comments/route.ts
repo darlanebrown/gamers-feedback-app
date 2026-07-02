@@ -6,6 +6,7 @@ import { sendCommentEmail } from '@/lib/emailService';
 import { createNotification } from '@/lib/notificationStore';
 import { findUserByTag } from '@/lib/userStore';
 import { notifyMentions } from '@/lib/mentionService';
+import { getCommentById } from '@/lib/commentStore';
 
 export async function GET(
   req: NextRequest,
@@ -49,7 +50,7 @@ export async function POST(
     );
   }
 
-  const { body } = await req.json();
+  const { body, parentId } = await req.json();
   if (!body || typeof body !== 'string' || !body.trim()) {
     return NextResponse.json({ error: 'Comment body is required' }, { status: 400 });
   }
@@ -57,7 +58,15 @@ export async function POST(
     return NextResponse.json({ error: 'Comment must be 500 characters or fewer' }, { status: 400 });
   }
 
-  const comment = await createComment(params.id, session.gamerTag, body.trim());
+  if (parentId) {
+    const parent = await getCommentById(parentId);
+    if (!parent) return NextResponse.json({ error: 'Parent comment not found' }, { status: 404 });
+    if (parent.authorTag !== session.gamerTag) {
+      createNotification(parent.authorTag, 'reply' as any, session.gamerTag, params.id).catch(() => {});
+    }
+  }
+
+  const comment = await createComment(params.id, session.gamerTag, body.trim(), parentId);
 
   notifyMentions(body.trim(), params.id, session.gamerTag).catch(() => {});
 
