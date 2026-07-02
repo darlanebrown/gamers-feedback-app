@@ -187,3 +187,12 @@ model EmailPreference {
 
   @@unique([userId, type])
 }
+
+model Wishlist {
+  id        String   @id @default(cuid())
+  userId    String
+  gameTitle String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, gameTitle])
+}
