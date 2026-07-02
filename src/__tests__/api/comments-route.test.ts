@@ -28,6 +28,10 @@ jest.mock('@/lib/userStore', () => ({
   findUserByTag: jest.fn(),
 }));
 
+jest.mock('@/lib/mentionService', () => ({
+  notifyMentions: jest.fn().mockResolvedValue(undefined),
+}));
+
 import { NextRequest } from 'next/server';
 import { GET, POST, DELETE, PATCH } from '@/app/api/reviews/[id]/comments/route';
 import { getSession } from '@/lib/auth';
@@ -71,6 +75,8 @@ beforeEach(() => {
     .sendCommentEmail.mockResolvedValue(undefined);
   (jest.requireMock('@/lib/notificationStore') as { createNotification: jest.Mock })
     .createNotification.mockResolvedValue(undefined);
+  (jest.requireMock('@/lib/mentionService') as { notifyMentions: jest.Mock })
+    .notifyMentions.mockResolvedValue(undefined);
 });
 
 function makeGetReq() {
