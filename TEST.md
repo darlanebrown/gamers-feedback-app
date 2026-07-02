@@ -180,7 +180,8 @@ npx jest --no-coverage # skip coverage report (faster)
 | `api/tip-leaderboard` | `api/tip-leaderboard.test.ts` | 8 |
 | `api/profile-edit` | `api/profile-edit.test.ts` | 10 |
 | `api/user-stats-route` | `api/user-stats-route.test.ts` | 5 |
-| **Total** | **158 suites** | **1031** |
+| `api/followed-games-detail` | `api/followed-games-detail.test.ts` | 6 |
+| **Total** | **159 suites** | **1037** |
 
 ## Test File Structure
 
