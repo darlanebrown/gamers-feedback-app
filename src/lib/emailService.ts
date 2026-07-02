@@ -175,6 +175,20 @@ export async function sendPasswordResetEmail(toEmail: string, token: string): Pr
   });
 }
 
+export async function sendWelcomeEmail(toEmail: string, gamerTag: string): Promise<void> {
+  if (!ready()) return;
+  await client().emails.send({
+    from:    'Gamers Feedback <noreply@gamersfeedback.app>',
+    to:      toEmail,
+    subject: 'Welcome to Gamers Feedback!',
+    html: `
+      <h2>Welcome, ${gamerTag}!</h2>
+      <p>Your account is ready. Start writing reviews, following other gamers, and building your reputation.</p>
+      <p><a href="${baseUrl()}">Go to Gamers Feedback →</a></p>
+    `,
+  });
+}
+
 export async function sendClassificationEmail(
   reviewId: string,
   gameTitle: string,
