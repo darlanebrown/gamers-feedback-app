@@ -148,6 +148,9 @@ npx jest --no-coverage # skip coverage report (faster)
 | `api/wishlist-bulk` | `api/wishlist-bulk.test.ts` | — |
 | `api/wishlist-route` | `api/wishlist-route.test.ts` | — |
 | `api/activity-feed-route` | `api/activity-feed-route.test.ts` | 6 |
+| `api/admin-reports-route` | `api/admin-reports-route.test.ts` | 7 |
+| `api/admin-resolve-report` | `api/admin-resolve-report.test.ts` | 7 |
+| `api/admin-ban-user` | `api/admin-ban-user.test.ts` | 13 |
 | `lib/activityService` | `lib/activityService.test.ts` | — |
 | `lib/adminStatsService` | `lib/adminStatsService.test.ts` | — |
 | `lib/badgeService` | `lib/badgeService.test.ts` | — |
@@ -165,7 +168,8 @@ npx jest --no-coverage # skip coverage report (faster)
 | `lib/suggestGames` | `lib/suggestGames.test.ts` | — |
 | `lib/trendingReviewsService` | `lib/trendingReviewsService.test.ts` | — |
 | `lib/webhookService` | `lib/webhookService.test.ts` | — |
-| **Total** | **143 suites** | **902** |
+| `lib/banEnforcement` | `lib/banEnforcement.test.ts` | 7 |
+| **Total** | **147 suites** | **936** |
 
 ## Test File Structure
 
