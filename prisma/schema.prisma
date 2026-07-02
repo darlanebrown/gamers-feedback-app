@@ -207,6 +207,13 @@ model CommentFlag {
   @@unique([commentId, reporterTag])
 }
 
+model PinnedReview {
+  id        String   @id @default(cuid())
+  ownerTag  String   @unique
+  reviewId  String
+  updatedAt DateTime @updatedAt
+}
+
 model ReviewRevision {
   id        String   @id @default(cuid())
   reviewId  String
