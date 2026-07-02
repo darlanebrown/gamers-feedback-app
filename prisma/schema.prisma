@@ -37,6 +37,7 @@ model Game {
 
 model Review {
   hasSpoilers Boolean  @default(false)
+  viewCount   Int      @default(0)
   id                   String   @id @default(cuid())
   gameTitle            String
   platform             String

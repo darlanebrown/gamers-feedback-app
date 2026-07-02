@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getReviewById, updateReview, deleteReview } from '@/lib/reviewStore';
+import { getReviewById, updateReview, deleteReview, incrementViewCount } from '@/lib/reviewStore';
 import { getSession } from '@/lib/auth';
 
 type RouteCtx = { params: { id: string } };
@@ -10,6 +10,7 @@ export async function GET(
 ) {
   const review = await getReviewById(params.id);
   if (!review) return NextResponse.json({ error: 'Review not found' }, { status: 404 });
+  incrementViewCount(params.id).catch(() => {});
   return NextResponse.json({ review });
 }
 
