@@ -285,6 +285,10 @@ export async function deleteReview(id: string, reviewerTag: string): Promise<boo
   return true;
 }
 
+export async function deleteReviewById(id: string): Promise<void> {
+  await prisma.review.delete({ where: { id } });
+}
+
 export async function getGamesByReviewer(reviewerTag: string): Promise<string[]> {
   const rows = await prisma.review.findMany({
     where: { reviewerTag, classification: 'helpful' },
