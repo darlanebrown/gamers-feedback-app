@@ -146,11 +146,13 @@ model CommentVote {
 }
 
 model UserReport {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   reporterTag  String
   reportedTag  String
   reason       String
-  createdAt    DateTime @default(now())
+  resolution   String?
+  resolvedAt   DateTime?
+  createdAt    DateTime  @default(now())
 
   @@unique([reporterTag, reportedTag])
 }
