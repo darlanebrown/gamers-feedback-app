@@ -61,3 +61,13 @@ async function fetchFromRAWG(title: string): Promise<Omit<GameMeta, 'fetchedAt'>
       : null,
   };
 }
+
+export async function suggestGames(q: string, limit: number): Promise<string[]> {
+  const rows = await prisma.game.findMany({
+    where: { title: { contains: q, mode: 'insensitive' } },
+    select: { title: true },
+    orderBy: { title: 'asc' },
+    take: limit,
+  });
+  return rows.map((r) => r.title);
+}
