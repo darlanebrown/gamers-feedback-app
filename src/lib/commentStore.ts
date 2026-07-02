@@ -59,3 +59,9 @@ export async function deleteCommentAsAdmin(id: string): Promise<boolean> {
   await prisma.reviewComment.delete({ where: { id } });
   return true;
 }
+
+export async function countRecentCommentsByTag(authorTag: string, since: Date): Promise<number> {
+  return prisma.reviewComment.count({
+    where: { authorTag, createdAt: { gte: since } },
+  });
+}

@@ -10,7 +10,7 @@ jest.mock('@/lib/prisma', () => ({
   },
 }));
 
-import { createComment, getComments, deleteComment, countComments, deleteCommentAsAdmin } from '@/lib/commentStore';
+import { createComment, getComments, deleteComment, countComments, deleteCommentAsAdmin, countRecentCommentsByTag } from '@/lib/commentStore';
 import { prisma } from '@/lib/prisma';
 
 const mockCreate     = (prisma.reviewComment as any).create     as jest.Mock;
@@ -128,5 +128,25 @@ describe('deleteCommentAsAdmin', () => {
 
     expect(mockDelete).not.toHaveBeenCalled();
     expect(result).toBe(false);
+  });
+});
+
+describe('countRecentCommentsByTag', () => {
+  it('counts comments by a user since a given date', async () => {
+    mockCount.mockResolvedValue(4);
+    const since = new Date('2024-01-01T00:00:00Z');
+
+    const result = await countRecentCommentsByTag('Darla#1', since);
+
+    expect(mockCount).toHaveBeenCalledWith({
+      where: { authorTag: 'Darla#1', createdAt: { gte: since } },
+    });
+    expect(result).toBe(4);
+  });
+
+  it('returns 0 when user has no recent comments', async () => {
+    mockCount.mockResolvedValue(0);
+    const result = await countRecentCommentsByTag('New#1', new Date());
+    expect(result).toBe(0);
   });
 });
