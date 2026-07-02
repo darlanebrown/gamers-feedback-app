@@ -6,6 +6,7 @@ import {
   countNotifications,
   markAllRead,
   markRead,
+  markManyRead,
 } from '@/lib/notificationStore';
 
 export async function GET(req: NextRequest) {
@@ -30,15 +31,17 @@ export async function PATCH(req: NextRequest) {
   const session = await getSession(req);
   if (!session) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
-  let id: string | undefined;
-  try {
-    const body = await req.json();
-    id = body?.id;
-  } catch {
-    // no body — mark all read
-  }
+  let body: Record<string, unknown> = {};
+  try { body = await req.json(); } catch { /* no body — mark all read */ }
 
-  if (id) {
+  const { id, ids } = body as { id?: string; ids?: unknown };
+
+  if (ids !== undefined) {
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return NextResponse.json({ error: 'ids must be a non-empty array' }, { status: 400 });
+    }
+    await markManyRead(ids as string[]);
+  } else if (id) {
     await markRead(id);
   } else {
     await markAllRead(session.gamerTag);
