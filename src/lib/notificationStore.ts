@@ -55,3 +55,10 @@ export async function markAllRead(userTag: string): Promise<void> {
 export async function markRead(id: string): Promise<void> {
   await prisma.notification.update({ where: { id }, data: { read: true } });
 }
+
+export async function markManyRead(ids: string[]): Promise<void> {
+  await prisma.notification.updateMany({
+    where: { id: { in: ids } },
+    data:  { read: true },
+  });
+}
