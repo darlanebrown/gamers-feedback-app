@@ -64,3 +64,46 @@ export async function getPaymentBySessionId(stripeSessionId: string): Promise<Pa
   const r = await (prisma as any).payment.findUnique({ where: { stripeSessionId } });
   return r ? toPayment(r) : null;
 }
+
+export interface LeaderboardEntry {
+  gamerTag:    string;
+  tipCount:    number;
+  totalCents:  number;
+}
+
+export interface Leaderboard {
+  topEarners: LeaderboardEntry[];
+  topTippers: LeaderboardEntry[];
+}
+
+export async function getLeaderboard({ limit = 10 }: { limit?: number } = {}): Promise<Leaderboard> {
+  const [earnerRows, tipperRows] = await Promise.all([
+    (prisma as any).payment.groupBy({
+      by:      ['recipientTag'],
+      where:   { status: 'completed' },
+      _count:  { id: true },
+      _sum:    { amountCents: true },
+      orderBy: { _sum: { amountCents: 'desc' } },
+      take:    limit,
+    }),
+    (prisma as any).payment.groupBy({
+      by:      ['senderTag'],
+      where:   { status: 'completed' },
+      _count:  { id: true },
+      _sum:    { amountCents: true },
+      orderBy: { _sum: { amountCents: 'desc' } },
+      take:    limit,
+    }),
+  ]);
+
+  const toEntry = (row: any, tagKey: string): LeaderboardEntry => ({
+    gamerTag:   row[tagKey],
+    tipCount:   row._count.id,
+    totalCents: row._sum.amountCents ?? 0,
+  });
+
+  return {
+    topEarners: earnerRows.map((r: any) => toEntry(r, 'recipientTag')),
+    topTippers: tipperRows.map((r: any) => toEntry(r, 'senderTag')),
+  };
+}
