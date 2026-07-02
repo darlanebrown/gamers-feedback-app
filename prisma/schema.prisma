@@ -207,6 +207,15 @@ model CommentFlag {
   @@unique([commentId, reporterTag])
 }
 
+model AuditLog {
+  id        String   @id @default(cuid())
+  action    String
+  actorTag  String
+  targetId  String?
+  detail    String?
+  createdAt DateTime @default(now())
+}
+
 model FeaturedReview {
   id        String   @id
   reviewId  String
