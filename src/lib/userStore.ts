@@ -51,6 +51,15 @@ export async function updateUserById(
   return rest as PublicUser;
 }
 
+export async function updateUserByTag(
+  gamerTag: string,
+  data: Partial<Pick<User, 'displayName' | 'bio'>>,
+): Promise<PublicUser> {
+  const updated = await (prisma.user as any).update({ where: { gamerTag }, data });
+  const { passwordHash: _, ...rest } = updated as User;
+  return rest as PublicUser;
+}
+
 export async function countUsers(): Promise<number> {
   return prisma.user.count();
 }
