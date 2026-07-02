@@ -10,10 +10,12 @@ jest.mock('@/lib/reviewStore', () => ({
 jest.mock('@/lib/commentStore', () => ({
   createComment:              jest.fn(),
   getComments:                jest.fn(),
+  getReplies:                 jest.fn(),
   deleteComment:              jest.fn(),
   countComments:              jest.fn(),
   countRecentCommentsByTag:   jest.fn(),
   updateComment:              jest.fn(),
+  getCommentById:             jest.fn(),
 }));
 
 jest.mock('@/lib/emailService', () => ({

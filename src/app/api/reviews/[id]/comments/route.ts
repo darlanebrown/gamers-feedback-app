@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { getReviewById } from '@/lib/reviewStore';
-import { createComment, getComments, deleteComment, countComments, countRecentCommentsByTag, updateComment } from '@/lib/commentStore';
+import { createComment, getComments, getReplies, deleteComment, countComments, countRecentCommentsByTag, updateComment, getCommentById } from '@/lib/commentStore';
 import { sendCommentEmail } from '@/lib/emailService';
 import { createNotification } from '@/lib/notificationStore';
 import { findUserByTag } from '@/lib/userStore';
 import { notifyMentions } from '@/lib/mentionService';
-import { getCommentById } from '@/lib/commentStore';
 
 export async function GET(
   req: NextRequest,
@@ -16,9 +15,15 @@ export async function GET(
   if (!review) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   const { searchParams } = new URL(req.url);
-  const page  = Math.max(1, parseInt(searchParams.get('page')  ?? '1',  10));
-  const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') ?? '20', 10)));
-  const skip  = (page - 1) * limit;
+  const page     = Math.max(1, parseInt(searchParams.get('page')  ?? '1',  10));
+  const limit    = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') ?? '20', 10)));
+  const skip     = (page - 1) * limit;
+  const parentId = searchParams.get('parentId') ?? undefined;
+
+  if (parentId) {
+    const comments = await getReplies(parentId, { skip, take: limit });
+    return NextResponse.json({ comments, page, limit });
+  }
 
   const [comments, total] = await Promise.all([
     getComments(params.id, { skip, take: limit }),

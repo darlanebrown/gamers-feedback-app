@@ -45,6 +45,19 @@ export async function getComments(
   return rows.map(toComment);
 }
 
+export async function getReplies(
+  parentId: string,
+  { skip = 0, take = 20 }: { skip?: number; take?: number } = {},
+): Promise<ReviewComment[]> {
+  const rows = await prisma.reviewComment.findMany({
+    where:   { parentId },
+    orderBy: { createdAt: 'asc' },
+    skip,
+    take,
+  });
+  return rows.map(toComment);
+}
+
 export async function deleteComment(id: string, requesterTag: string): Promise<boolean> {
   const comment = await prisma.reviewComment.findUnique({ where: { id } });
   if (!comment || comment.authorTag !== requesterTag) return false;
