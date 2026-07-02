@@ -171,7 +171,8 @@ npx jest --no-coverage # skip coverage report (faster)
 | `lib/banEnforcement` | `lib/banEnforcement.test.ts` | 7 |
 | `api/ban-email` | `api/ban-email.test.ts` | 5 |
 | `api/payments-checkout` | `api/payments-checkout.test.ts` | 14 |
-| **Total** | **149 suites** | **955** |
+| `api/payments-webhook` | `api/payments-webhook.test.ts` | 8 |
+| **Total** | **150 suites** | **963** |
 
 ## Test File Structure
 

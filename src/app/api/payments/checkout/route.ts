@@ -40,8 +40,9 @@ export async function POST(req: NextRequest) {
         currency:     'usd',
         unit_amount:  amountCents,
         product_data: {
-          name:        `Support ${recipientTag} on Gamers Feedback`,
-          description: `One-time support payment of $${dollars}`,
+          name:        `🫙 Tip Jar — Support ${recipientTag}`,
+          description: `Drop $${dollars} in ${recipientTag}'s tip jar on Gamers Feedback`,
+          images:      [`${BASE_URL()}/tip-jar.png`],
         },
       },
     }],
