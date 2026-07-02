@@ -208,6 +208,15 @@ model CommentFlag {
   @@unique([commentId, reporterTag])
 }
 
+model GameFollow {
+  id        String   @id @default(cuid())
+  userId    String
+  gameTitle String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, gameTitle])
+}
+
 model CommentReaction {
   id         String   @id @default(cuid())
   commentId  String
