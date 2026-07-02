@@ -18,6 +18,9 @@ export async function POST(req: NextRequest) {
     if (!valid)
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
 
+    if (user.banned)
+      return NextResponse.json({ error: 'Your account has been banned' }, { status: 403 });
+
     const token = await signToken({ id: user.id, email: user.email, gamerTag: user.gamerTag, role: user.role });
 
     const res = NextResponse.json({ user: { id: user.id, email: user.email, gamerTag: user.gamerTag, role: user.role } });
