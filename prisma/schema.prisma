@@ -108,6 +108,7 @@ model ReviewComment {
   reviewId  String
   authorTag String
   body      String
+  parentId  String?
   createdAt DateTime @default(now())
 }
 

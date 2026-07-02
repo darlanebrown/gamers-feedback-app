@@ -23,7 +23,7 @@ beforeEach(() => jest.resetAllMocks());
 
 const COMMENT = {
   id: 'c1', reviewId: 'r1', authorTag: 'Darla#1',
-  body: 'Great review!', createdAt: '2024-01-01T00:00:00.000Z',
+  body: 'Great review!', parentId: null, createdAt: '2024-01-01T00:00:00.000Z',
 };
 
 describe('createComment', () => {
