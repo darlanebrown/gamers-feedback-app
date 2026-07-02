@@ -3,6 +3,7 @@ jest.mock('@/lib/reviewStore', () => ({
   getAllReviews: jest.fn(),
   getReviewById: jest.fn(),
   updateReviewClassification: jest.fn(),
+  deleteReviewById: jest.fn(),
 }));
 jest.mock('@/lib/notificationStore', () => ({
   createNotification: jest.fn(),
@@ -16,23 +17,31 @@ jest.mock('@/lib/emailService', () => ({
   sendReclassifyEmail: jest.fn().mockResolvedValue(undefined),
 }));
 
+jest.mock('@/lib/auth', () => ({ getSession: jest.fn(), SESSION_COOKIE: 'gf_session' }));
+jest.mock('@/lib/securityLogger', () => ({ logSecurityEvent: jest.fn() }));
+
 import { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { GET  } from '@/app/api/admin/reviews/route';
-import { PATCH } from '@/app/api/admin/reviews/[id]/route';
+import { PATCH, DELETE } from '@/app/api/admin/reviews/[id]/route';
 import { requireAdmin } from '@/lib/adminMiddleware';
-import { getAllReviews, getReviewById, updateReviewClassification } from '@/lib/reviewStore';
+import { getAllReviews, getReviewById, updateReviewClassification, deleteReviewById } from '@/lib/reviewStore';
 import { createNotification } from '@/lib/notificationStore';
 import { findUserByTag } from '@/lib/userStore';
 import { sendReclassifyEmail } from '@/lib/emailService';
+import { getSession } from '@/lib/auth';
+import { logSecurityEvent } from '@/lib/securityLogger';
 
 const mockGuard         = requireAdmin               as jest.Mock;
 const mockGetAll        = getAllReviews              as jest.Mock;
 const mockGetOne        = getReviewById             as jest.Mock;
 const mockUpdate        = updateReviewClassification as jest.Mock;
+const mockDeleteById    = deleteReviewById           as jest.Mock;
 const mockNotify        = createNotification         as jest.Mock;
 const mockFindTag       = findUserByTag              as jest.Mock;
 const mockReclassEmail  = sendReclassifyEmail        as jest.Mock;
+const mockGetSession    = getSession                 as jest.Mock;
+const mockLogSecurity   = logSecurityEvent           as jest.Mock;
 
 function makeReview(overrides = {}) {
   return {
@@ -155,5 +164,49 @@ describe('PATCH /api/admin/reviews/[id]', () => {
     });
     const res = await PATCH(req, { params: { id: 'r1' } });
     expect(res.status).toBe(400);
+  });
+});
+
+// ── DELETE /api/admin/reviews/[id] ───────────────────────────────────────────
+
+describe('DELETE /api/admin/reviews/[id]', () => {
+  function makeDeleteReq(id = 'r1') {
+    return new NextRequest(`http://localhost/api/admin/reviews/${id}`, { method: 'DELETE' });
+  }
+
+  it('blocks unauthenticated requests', async () => {
+    mockGuard.mockResolvedValue(UNAUTH_FAIL);
+    const res = await DELETE(makeDeleteReq(), { params: { id: 'r1' } });
+    expect(res.status).toBe(401);
+  });
+
+  it('returns 404 when review does not exist', async () => {
+    mockGuard.mockResolvedValue(ADMIN_PASS);
+    mockGetOne.mockResolvedValue(null);
+    const res = await DELETE(makeDeleteReq('bad'), { params: { id: 'bad' } });
+    expect(res.status).toBe(404);
+  });
+
+  it('deletes the review and returns 200', async () => {
+    mockGuard.mockResolvedValue(ADMIN_PASS);
+    mockGetOne.mockResolvedValue(makeReview());
+    mockDeleteById.mockResolvedValue(undefined);
+    mockGetSession.mockResolvedValue({ gamerTag: 'Admin#1' });
+    const res = await DELETE(makeDeleteReq(), { params: { id: 'r1' } });
+    expect(res.status).toBe(200);
+    expect(mockDeleteById).toHaveBeenCalledWith('r1');
+    const body = await res.json();
+    expect(body.ok).toBe(true);
+  });
+
+  it('logs admin_review_delete with actor and target', async () => {
+    mockGuard.mockResolvedValue(ADMIN_PASS);
+    mockGetOne.mockResolvedValue(makeReview());
+    mockDeleteById.mockResolvedValue(undefined);
+    mockGetSession.mockResolvedValue({ gamerTag: 'Admin#1' });
+    await DELETE(makeDeleteReq(), { params: { id: 'r1' } });
+    expect(mockLogSecurity).toHaveBeenCalledWith(
+      'admin_review_delete', 'Admin#1', 'r1', 'deleted review by Darla#1',
+    );
   });
 });

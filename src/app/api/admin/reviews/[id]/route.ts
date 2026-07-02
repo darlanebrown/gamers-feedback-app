@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/adminMiddleware';
-import { getReviewById, updateReviewClassification } from '@/lib/reviewStore';
+import { getReviewById, updateReviewClassification, deleteReviewById } from '@/lib/reviewStore';
 import { createNotification } from '@/lib/notificationStore';
 import { findUserByTag } from '@/lib/userStore';
 import { sendReclassifyEmail } from '@/lib/emailService';
+import { getSession } from '@/lib/auth';
+import { logSecurityEvent } from '@/lib/securityLogger';
 
 const VALID = new Set(['helpful', 'spam', 'toxic', 'pending']);
 
@@ -39,4 +41,27 @@ export async function PATCH(
     })
     .catch(() => {});
   return NextResponse.json({ ok: true, id: params.id, classification });
+}
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { id: string } },
+) {
+  const guard = await requireAdmin(req);
+  if (guard) return guard;
+
+  const review = await getReviewById(params.id);
+  if (!review) return NextResponse.json({ error: 'Review not found' }, { status: 404 });
+
+  await deleteReviewById(params.id);
+
+  const session = await getSession(req);
+  logSecurityEvent(
+    'admin_review_delete',
+    session?.gamerTag ?? 'unknown',
+    params.id,
+    `deleted review by ${review.reviewerTag}`,
+  );
+
+  return NextResponse.json({ ok: true });
 }
