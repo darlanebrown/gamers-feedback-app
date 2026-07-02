@@ -4,17 +4,23 @@ jest.mock('@/lib/userStore', () => ({
   getUserById: jest.fn(),
   updateUserById: jest.fn(),
 }));
+jest.mock('@/lib/auth', () => ({ getSession: jest.fn(), SESSION_COOKIE: 'gf_session' }));
+jest.mock('@/lib/securityLogger', () => ({ logSecurityEvent: jest.fn() }));
 
 import { NextRequest, NextResponse } from 'next/server';
 import { GET  } from '@/app/api/admin/users/route';
 import { PATCH } from '@/app/api/admin/users/[id]/route';
 import { requireAdmin } from '@/lib/adminMiddleware';
 import { getAllUsers, getUserById, updateUserById } from '@/lib/userStore';
+import { getSession } from '@/lib/auth';
+import { logSecurityEvent } from '@/lib/securityLogger';
 
-const mockGuard    = requireAdmin   as jest.Mock;
-const mockGetAll   = getAllUsers     as jest.Mock;
-const mockGetOne   = getUserById    as jest.Mock;
-const mockUpdate   = updateUserById as jest.Mock;
+const mockGuard       = requireAdmin     as jest.Mock;
+const mockGetAll      = getAllUsers       as jest.Mock;
+const mockGetOne      = getUserById      as jest.Mock;
+const mockUpdate      = updateUserById   as jest.Mock;
+const mockGetSession  = getSession       as jest.Mock;
+const mockLogSecurity = logSecurityEvent as jest.Mock;
 
 const ADMIN_PASS  = null;
 const UNAUTH_FAIL = NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
@@ -135,5 +141,44 @@ describe('PATCH /api/admin/users/[id]', () => {
     });
     const res = await PATCH(req, { params: { id: 'u1' } });
     expect(res.status).toBe(400);
+  });
+
+  it('logs admin_ban when a user is banned', async () => {
+    mockGuard.mockResolvedValue(ADMIN_PASS);
+    mockGetOne.mockResolvedValue(makeUser({ banned: false }));
+    mockUpdate.mockResolvedValue(makeUser({ banned: true }));
+    mockGetSession.mockResolvedValue({ gamerTag: 'Admin#1' });
+    const req = new NextRequest('http://localhost/api/admin/users/u1', {
+      method: 'PATCH', body: JSON.stringify({ action: 'ban' }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    await PATCH(req, { params: { id: 'u1' } });
+    expect(mockLogSecurity).toHaveBeenCalledWith('admin_ban', 'Admin#1', 'u1', 'target: Darla#1');
+  });
+
+  it('logs admin_unban when a user is unbanned', async () => {
+    mockGuard.mockResolvedValue(ADMIN_PASS);
+    mockGetOne.mockResolvedValue(makeUser({ banned: true }));
+    mockUpdate.mockResolvedValue(makeUser({ banned: false }));
+    mockGetSession.mockResolvedValue({ gamerTag: 'Admin#1' });
+    const req = new NextRequest('http://localhost/api/admin/users/u1', {
+      method: 'PATCH', body: JSON.stringify({ action: 'unban' }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    await PATCH(req, { params: { id: 'u1' } });
+    expect(mockLogSecurity).toHaveBeenCalledWith('admin_unban', 'Admin#1', 'u1', 'target: Darla#1');
+  });
+
+  it('logs admin_promote when a user is promoted', async () => {
+    mockGuard.mockResolvedValue(ADMIN_PASS);
+    mockGetOne.mockResolvedValue(makeUser({ role: 'user' }));
+    mockUpdate.mockResolvedValue(makeUser({ role: 'admin' }));
+    mockGetSession.mockResolvedValue({ gamerTag: 'Admin#1' });
+    const req = new NextRequest('http://localhost/api/admin/users/u1', {
+      method: 'PATCH', body: JSON.stringify({ action: 'promote' }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    await PATCH(req, { params: { id: 'u1' } });
+    expect(mockLogSecurity).toHaveBeenCalledWith('admin_promote', 'Admin#1', 'u1', 'target: Darla#1');
   });
 });

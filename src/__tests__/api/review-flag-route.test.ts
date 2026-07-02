@@ -19,6 +19,10 @@ jest.mock('@/lib/flagStore', () => ({
   createFlag: jest.fn(),
 }));
 
+jest.mock('@/lib/securityLogger', () => ({
+  logSecurityEvent: jest.fn(),
+}));
+
 import { NextRequest } from 'next/server';
 import { POST } from '@/app/api/reviews/[id]/flag/route';
 import { getSession } from '@/lib/auth';
@@ -26,7 +30,9 @@ import { getReviewById } from '@/lib/reviewStore';
 import { sendFlagEmail } from '@/lib/emailService';
 import { sendFlagWebhook } from '@/lib/webhookService';
 import { createFlag } from '@/lib/flagStore';
+import { logSecurityEvent } from '@/lib/securityLogger';
 
+const mockLogSecurity = logSecurityEvent as jest.Mock;
 const mockSession     = getSession      as jest.Mock;
 const mockGetReview   = getReviewById   as jest.Mock;
 const mockFlagEmail   = sendFlagEmail   as jest.Mock;
@@ -106,5 +112,16 @@ describe('POST /api/reviews/[id]/flag', () => {
 
     expect(mockFlagEmail).toHaveBeenCalledWith('r1', 'Elden Ring', 'Player#99', 'Darla#1');
     expect(mockFlagWebhook).toHaveBeenCalledWith('r1', 'Elden Ring', 'Player#99', 'Darla#1');
+  });
+
+  it('logs flag_submitted on successful flag', async () => {
+    mockSession.mockResolvedValue(SESSION);
+    mockGetReview.mockResolvedValue(REVIEW);
+
+    await POST(makeReq(), { params: { id: 'r1' } });
+
+    expect(mockLogSecurity).toHaveBeenCalledWith(
+      'flag_submitted', 'Darla#1', 'r1', 'flagged review by Player#99',
+    );
   });
 });

@@ -8,13 +8,19 @@ jest.mock('@/lib/auth', () => ({
   SESSION_COOKIE: 'gf_session',
 }));
 
+jest.mock('@/lib/securityLogger', () => ({
+  logSecurityEvent: jest.fn(),
+}));
+
 import { NextRequest } from 'next/server';
 import { withRateLimit } from '@/lib/rateLimitMiddleware';
 import { checkRateLimit } from '@/lib/rateLimiter';
 import { getSession } from '@/lib/auth';
+import { logSecurityEvent } from '@/lib/securityLogger';
 
-const mockCheck      = checkRateLimit as jest.Mock;
-const mockGetSession = getSession     as jest.Mock;
+const mockCheck       = checkRateLimit    as jest.Mock;
+const mockGetSession  = getSession        as jest.Mock;
+const mockLogSecurity = logSecurityEvent  as jest.Mock;
 
 beforeEach(() => {
   jest.resetAllMocks();
@@ -90,5 +96,16 @@ describe('withRateLimit', () => {
     const res = await withRateLimit(makeReq(), handler);
 
     expect(res.headers.get('X-RateLimit-Remaining')).toBe('42');
+  });
+
+  it('logs rate_limit_exceeded when 429 is returned', async () => {
+    mockGetSession.mockResolvedValue(null);
+    mockCheck.mockReturnValue({ allowed: false, remaining: 0 });
+
+    await withRateLimit(makeReq('10.0.0.1'), jest.fn());
+
+    expect(mockLogSecurity).toHaveBeenCalledWith(
+      'rate_limit_exceeded', '10.0.0.1', expect.any(String),
+    );
   });
 });

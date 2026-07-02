@@ -5,6 +5,10 @@ jest.mock('@/lib/userStore', () => ({
   countUsers: jest.fn(),
 }));
 
+jest.mock('@/lib/securityLogger', () => ({
+  logSecurityEvent: jest.fn(),
+}));
+
 jest.mock('bcryptjs', () => ({
   hash: jest.fn(),
   compare: jest.fn(),
@@ -27,6 +31,9 @@ import { GET  as me }       from '@/app/api/auth/me/route';
 import { createUser, findUserByEmail, findUserByTag, countUsers } from '@/lib/userStore';
 import bcrypt from 'bcryptjs';
 import { signToken, getSession, clearSessionCookie } from '@/lib/auth';
+import { logSecurityEvent } from '@/lib/securityLogger';
+
+const mockLogSecurity = logSecurityEvent as jest.Mock;
 
 const mockCreate       = createUser       as jest.Mock;
 const mockFindEmail    = findUserByEmail  as jest.Mock;
@@ -175,6 +182,41 @@ describe('POST /api/auth/login', () => {
     expect(res.status).toBe(403);
     const body = await res.json();
     expect(body.error).toMatch(/banned/i);
+  });
+
+  it('logs login_failed when email is not found', async () => {
+    mockFindEmail.mockResolvedValue(null);
+    const req = new NextRequest('http://localhost/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'nobody@test.com', password: 'password123' }),
+    });
+    await login(req);
+    expect(mockLogSecurity).toHaveBeenCalledWith('login_failed', 'nobody@test.com', undefined, 'email not found');
+  });
+
+  it('logs login_failed when password is wrong', async () => {
+    mockFindEmail.mockResolvedValue(VALID_USER);
+    mockCompare.mockResolvedValue(false);
+    const req = new NextRequest('http://localhost/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'darla@test.com', password: 'wrongpass' }),
+    });
+    await login(req);
+    expect(mockLogSecurity).toHaveBeenCalledWith('login_failed', 'darla@test.com', VALID_USER.id, 'wrong password');
+  });
+
+  it('logs login_banned when a banned user attempts login', async () => {
+    mockFindEmail.mockResolvedValue({ ...VALID_USER, banned: true });
+    mockCompare.mockResolvedValue(true);
+    const req = new NextRequest('http://localhost/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'darla@test.com', password: 'password123' }),
+    });
+    await login(req);
+    expect(mockLogSecurity).toHaveBeenCalledWith('login_banned', VALID_USER.gamerTag, VALID_USER.id);
   });
 });
 
