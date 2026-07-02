@@ -159,6 +159,15 @@ model UserReport {
   @@unique([reporterTag, reportedTag])
 }
 
+model BanAppeal {
+  id         String    @id @default(cuid())
+  gamerTag   String    @unique
+  message    String
+  status     String    @default("pending")
+  reviewedAt DateTime?
+  createdAt  DateTime  @default(now())
+}
+
 model Payment {
   id              String    @id @default(cuid())
   stripeSessionId String    @unique
