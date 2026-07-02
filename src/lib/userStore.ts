@@ -9,6 +9,8 @@ export type User = {
   bio: string | null;
   role: string;
   banned: boolean;
+  banReason:   string | null;
+  bannedUntil: Date | null;
   createdAt: Date;
 };
 
@@ -76,6 +78,29 @@ export async function anonymizeUser(id: string): Promise<void> {
       banned: true,
     },
   });
+}
+
+export interface BanOptions {
+  banReason?:   string;
+  bannedUntil?: Date;
+}
+
+export async function banUserByTag(gamerTag: string, opts: BanOptions = {}): Promise<PublicUser> {
+  const user = await (prisma.user as any).update({
+    where: { gamerTag },
+    data:  { banned: true, banReason: opts.banReason ?? null, bannedUntil: opts.bannedUntil ?? null },
+  });
+  const { passwordHash: _, ...pub } = user;
+  return pub as PublicUser;
+}
+
+export async function unbanUserByTag(gamerTag: string): Promise<PublicUser> {
+  const user = await (prisma.user as any).update({
+    where: { gamerTag },
+    data:  { banned: false, banReason: null, bannedUntil: null },
+  });
+  const { passwordHash: _, ...pub } = user;
+  return pub as PublicUser;
 }
 
 export async function searchUsers(q: string, limit: number): Promise<PublicUser[]> {
