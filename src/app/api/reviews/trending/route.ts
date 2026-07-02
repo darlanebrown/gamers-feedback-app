@@ -3,8 +3,10 @@ import { getTrendingReviews } from '@/lib/trendingReviewsService';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const limit = Math.min(20, Math.max(1, parseInt(searchParams.get('limit') ?? '10', 10)));
+  const limit        = Math.min(20, Math.max(1, parseInt(searchParams.get('limit') ?? '10', 10)));
+  const hideSpoilers = searchParams.get('hideSpoilers') === 'true';
 
-  const reviews = await getTrendingReviews(limit, 7);
+  let reviews = await getTrendingReviews(limit, 7);
+  if (hideSpoilers) reviews = reviews.filter((r) => !r.hasSpoilers);
   return NextResponse.json({ reviews });
 }
