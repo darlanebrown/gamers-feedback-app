@@ -159,6 +159,22 @@ export async function sendFlagEmail(
   });
 }
 
+export async function sendPasswordResetEmail(toEmail: string, token: string): Promise<void> {
+  if (!ready()) return;
+  const link = `${baseUrl()}/reset-password?token=${encodeURIComponent(token)}`;
+  await client().emails.send({
+    from:    'Gamers Feedback <noreply@gamersfeedback.app>',
+    to:      toEmail,
+    subject: 'Reset your Gamers Feedback password',
+    html: `
+      <h2>Password Reset</h2>
+      <p>Click the link below to reset your password. This link expires in 1 hour.</p>
+      <p><a href="${link}">Reset Password →</a></p>
+      <p>If you did not request a reset, ignore this email.</p>
+    `,
+  });
+}
+
 export async function sendClassificationEmail(
   reviewId: string,
   gameTitle: string,
