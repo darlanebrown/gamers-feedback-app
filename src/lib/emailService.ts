@@ -231,3 +231,45 @@ export async function sendModerationEmail(
     `,
   });
 }
+
+export interface BanEmailOptions {
+  reason?:     string;
+  bannedUntil?: Date;
+}
+
+export async function sendBanEmail(
+  toEmail: string,
+  gamerTag: string,
+  opts: BanEmailOptions = {},
+): Promise<void> {
+  if (!ready()) return;
+  const expiryLine = opts.bannedUntil
+    ? `<p>Your ban will be lifted on <strong>${opts.bannedUntil.toUTCString()}</strong>.</p>`
+    : '<p>This ban is permanent.</p>';
+  await client().emails.send({
+    from:    'Gamers Feedback <noreply@gamersfeedback.app>',
+    to:      toEmail,
+    subject: 'Your Gamers Feedback account has been banned',
+    html: `
+      <h2>Account Banned</h2>
+      <p>Hi <strong>${gamerTag}</strong>, your account has been banned.</p>
+      ${opts.reason ? `<p><strong>Reason:</strong> ${opts.reason}</p>` : ''}
+      ${expiryLine}
+      <p>If you believe this is a mistake, please contact support.</p>
+    `,
+  });
+}
+
+export async function sendUnbanEmail(toEmail: string, gamerTag: string): Promise<void> {
+  if (!ready()) return;
+  await client().emails.send({
+    from:    'Gamers Feedback <noreply@gamersfeedback.app>',
+    to:      toEmail,
+    subject: 'Your Gamers Feedback account has been reinstated',
+    html: `
+      <h2>Account Reinstated</h2>
+      <p>Hi <strong>${gamerTag}</strong>, your account ban has been lifted. You can now log in and use Gamers Feedback again.</p>
+      <p><a href="${baseUrl()}">Go to Gamers Feedback →</a></p>
+    `,
+  });
+}
