@@ -65,3 +65,17 @@ export async function countRecentCommentsByTag(authorTag: string, since: Date): 
     where: { authorTag, createdAt: { gte: since } },
   });
 }
+
+export async function updateComment(
+  id: string,
+  requesterTag: string,
+  body: string,
+): Promise<ReviewComment | null> {
+  const comment = await prisma.reviewComment.findUnique({ where: { id } });
+  if (!comment || comment.authorTag !== requesterTag) return null;
+  const row = await prisma.reviewComment.update({
+    where: { id },
+    data:  { body },
+  });
+  return toComment(row);
+}
