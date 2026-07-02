@@ -38,6 +38,24 @@ export async function sendFlagWebhook(
   });
 }
 
+export async function sendCommentFlagWebhook(
+  commentId: string,
+  reviewId: string,
+  authorTag: string,
+  reporterTag: string,
+): Promise<void> {
+  await post({
+    type:        'comment_flag',
+    commentId,
+    reviewId,
+    authorTag,
+    reporterTag,
+    message:     `🚩 Comment by ${authorTag} flagged by ${reporterTag}`,
+    reviewUrl:   `${baseUrl()}/reviews/${reviewId}`,
+    adminUrl:    `${baseUrl()}/admin`,
+  });
+}
+
 export async function sendClassificationWebhook(
   reviewId: string,
   gameTitle: string,
