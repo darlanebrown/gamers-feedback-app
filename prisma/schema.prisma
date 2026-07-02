@@ -159,6 +159,17 @@ model UserReport {
   @@unique([reporterTag, reportedTag])
 }
 
+model Payment {
+  id              String    @id @default(cuid())
+  stripeSessionId String    @unique
+  senderTag       String
+  recipientTag    String
+  amountCents     Int
+  status          String    @default("pending")
+  completedAt     DateTime?
+  createdAt       DateTime  @default(now())
+}
+
 model Mute {
   id        String   @id @default(cuid())
   muterTag  String
