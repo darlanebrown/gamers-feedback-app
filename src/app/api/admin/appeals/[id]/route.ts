@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession }                          from '@/lib/auth';
-import { getAppealById, reviewAppeal }         from '@/lib/appealStore';
-import { unbanUserByTag }                      from '@/lib/userStore';
-import { logSecurityEvent }                    from '@/lib/securityLogger';
-import { createAuditEntry }                    from '@/lib/auditLogStore';
+import { getSession }                              from '@/lib/auth';
+import { getAppealById, reviewAppeal }             from '@/lib/appealStore';
+import { unbanUserByTag, findUserByTag }           from '@/lib/userStore';
+import { logSecurityEvent }                        from '@/lib/securityLogger';
+import { createAuditEntry }                        from '@/lib/auditLogStore';
+import { sendAppealApprovedEmail, sendAppealDeniedEmail } from '@/lib/emailService';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -36,6 +37,12 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   const detail    = `appeal: ${id}, gamerTag: ${existing.gamerTag}`;
   logSecurityEvent(eventType as any, session.gamerTag, id, detail);
   createAuditEntry(eventType, session.gamerTag, id, detail).catch(() => {});
+
+  const user = await findUserByTag(existing.gamerTag);
+  if (user) {
+    const emailFn = status === 'approved' ? sendAppealApprovedEmail : sendAppealDeniedEmail;
+    emailFn(user.email, existing.gamerTag).catch(() => {});
+  }
 
   return NextResponse.json({ appeal });
 }

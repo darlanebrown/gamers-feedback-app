@@ -176,7 +176,8 @@ npx jest --no-coverage # skip coverage report (faster)
 | `api/user-tips-route` | `api/user-tips-route.test.ts` | 7 |
 | `api/ban-appeal` | `api/ban-appeal.test.ts` | 8 |
 | `api/admin-appeals` | `api/admin-appeals.test.ts` | 14 |
-| **Total** | **154 suites** | **1002** |
+| `api/appeal-decision-email` | `api/appeal-decision-email.test.ts` | 6 |
+| **Total** | **155 suites** | **1008** |
 
 ## Test File Structure
 

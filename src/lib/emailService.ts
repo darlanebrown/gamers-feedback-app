@@ -273,3 +273,33 @@ export async function sendUnbanEmail(toEmail: string, gamerTag: string): Promise
     `,
   });
 }
+
+export async function sendAppealApprovedEmail(toEmail: string, gamerTag: string): Promise<void> {
+  if (!ready()) return;
+  await client().emails.send({
+    from:    'Gamers Feedback <noreply@gamersfeedback.app>',
+    to:      toEmail,
+    subject: '✅ Your appeal has been approved — Gamers Feedback',
+    html: `
+      <h2>Appeal Approved</h2>
+      <p>Hi <strong>${gamerTag}</strong>, great news — your ban appeal has been reviewed and approved.</p>
+      <p>Your account has been reinstated. Welcome back!</p>
+      <p><a href="${baseUrl()}">Go to Gamers Feedback →</a></p>
+    `,
+  });
+}
+
+export async function sendAppealDeniedEmail(toEmail: string, gamerTag: string): Promise<void> {
+  if (!ready()) return;
+  await client().emails.send({
+    from:    'Gamers Feedback <noreply@gamersfeedback.app>',
+    to:      toEmail,
+    subject: 'Your Gamers Feedback appeal decision',
+    html: `
+      <h2>Appeal Decision</h2>
+      <p>Hi <strong>${gamerTag}</strong>, your ban appeal has been reviewed.</p>
+      <p>After careful consideration, the decision to ban your account has been upheld.</p>
+      <p>If you believe this is in error, please contact our support team.</p>
+    `,
+  });
+}

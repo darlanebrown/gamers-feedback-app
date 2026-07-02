@@ -4,9 +4,13 @@ jest.mock('@/lib/appealStore', () => ({
   getAppealById: jest.fn(),
   reviewAppeal:  jest.fn(),
 }));
-jest.mock('@/lib/userStore', () => ({ unbanUserByTag: jest.fn() }));
+jest.mock('@/lib/userStore', () => ({ unbanUserByTag: jest.fn(), findUserByTag: jest.fn() }));
 jest.mock('@/lib/securityLogger', () => ({ logSecurityEvent: jest.fn() }));
 jest.mock('@/lib/auditLogStore',  () => ({ createAuditEntry: jest.fn().mockResolvedValue(undefined) }));
+jest.mock('@/lib/emailService', () => ({
+  sendAppealApprovedEmail: jest.fn().mockResolvedValue(undefined),
+  sendAppealDeniedEmail:   jest.fn().mockResolvedValue(undefined),
+}));
 
 import { NextRequest } from 'next/server';
 import { GET }   from '@/app/api/admin/appeals/route';
@@ -46,8 +50,14 @@ beforeEach(() => {
   mockGetById.mockResolvedValue(PENDING_APPEAL);
   mockReview.mockResolvedValue(APPROVED_APPEAL);
   mockUnban.mockResolvedValue(undefined);
+  (jest.requireMock('@/lib/userStore') as { findUserByTag: jest.Mock })
+    .findUserByTag.mockResolvedValue({ id: 'u1', gamerTag: 'BannedUser#3', email: 'banned@test.com' });
   (jest.requireMock('@/lib/auditLogStore') as { createAuditEntry: jest.Mock })
     .createAuditEntry.mockResolvedValue(undefined);
+  (jest.requireMock('@/lib/emailService') as { sendAppealApprovedEmail: jest.Mock })
+    .sendAppealApprovedEmail.mockResolvedValue(undefined);
+  (jest.requireMock('@/lib/emailService') as { sendAppealDeniedEmail: jest.Mock })
+    .sendAppealDeniedEmail.mockResolvedValue(undefined);
 });
 
 describe('GET /api/admin/appeals', () => {
