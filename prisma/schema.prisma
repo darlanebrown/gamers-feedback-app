@@ -141,3 +141,12 @@ model CommentVote {
 
   @@unique([commentId, voterTag])
 }
+
+model Mute {
+  id        String   @id @default(cuid())
+  muterTag  String
+  mutedTag  String
+  createdAt DateTime @default(now())
+
+  @@unique([muterTag, mutedTag])
+}
