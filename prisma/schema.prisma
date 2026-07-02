@@ -206,3 +206,10 @@ model CommentFlag {
 
   @@unique([commentId, reporterTag])
 }
+
+model FeaturedReview {
+  id        String   @id
+  reviewId  String
+  setBy     String
+  updatedAt DateTime @updatedAt
+}
