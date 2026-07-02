@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from './auth';
 import { checkRateLimit } from './rateLimiter';
+import { logSecurityEvent } from './securityLogger';
 
 type Handler = (req: NextRequest) => Promise<Response>;
 
@@ -11,6 +12,7 @@ export async function withRateLimit(req: NextRequest, handler: Handler): Promise
   const { allowed, remaining } = checkRateLimit(key);
 
   if (!allowed) {
+    logSecurityEvent('rate_limit_exceeded', key, req.url);
     return NextResponse.json(
       { error: 'Too many requests', retryAfter: 60 },
       {

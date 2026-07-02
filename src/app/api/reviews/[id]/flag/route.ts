@@ -4,6 +4,7 @@ import { getReviewById } from '@/lib/reviewStore';
 import { createFlag } from '@/lib/flagStore';
 import { sendFlagEmail } from '@/lib/emailService';
 import { sendFlagWebhook } from '@/lib/webhookService';
+import { logSecurityEvent } from '@/lib/securityLogger';
 
 export async function POST(
   req: NextRequest,
@@ -28,6 +29,7 @@ export async function POST(
     throw err;
   }
 
+  logSecurityEvent('flag_submitted', session.gamerTag, params.id, `flagged review by ${review.reviewerTag}`);
   sendFlagEmail(params.id, review.gameTitle, review.reviewerTag, session.gamerTag).catch(() => {});
   sendFlagWebhook(params.id, review.gameTitle, review.reviewerTag, session.gamerTag).catch(() => {});
 

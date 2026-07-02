@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/adminMiddleware';
 import { getUserById, updateUserById } from '@/lib/userStore';
+import { logSecurityEvent } from '@/lib/securityLogger';
+import { getSession } from '@/lib/auth';
 
 const VALID_ACTIONS = new Set(['ban', 'unban', 'promote']);
 
@@ -28,5 +30,10 @@ export async function PATCH(
                            { role: 'admin' };
 
   const updated = await updateUserById(params.id, update);
+
+  const session = await getSession(req);
+  const eventType = action === 'ban' ? 'admin_ban' : action === 'unban' ? 'admin_unban' : 'admin_promote';
+  logSecurityEvent(eventType as any, session?.gamerTag ?? 'unknown', params.id, `target: ${user.gamerTag}`);
+
   return NextResponse.json({ ok: true, user: updated });
 }
