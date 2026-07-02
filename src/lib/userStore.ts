@@ -77,3 +77,12 @@ export async function anonymizeUser(id: string): Promise<void> {
     },
   });
 }
+
+export async function searchUsers(q: string, limit: number): Promise<PublicUser[]> {
+  const rows = await prisma.user.findMany({
+    where:   { gamerTag: { contains: q, mode: 'insensitive' }, banned: false },
+    orderBy: { gamerTag: 'asc' },
+    take:    limit,
+  });
+  return rows.map(({ passwordHash: _, ...pub }) => pub as PublicUser);
+}
