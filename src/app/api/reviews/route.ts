@@ -48,21 +48,15 @@ export async function GET(req: NextRequest) {
 
   // Game filter bypasses pagination (game pages handle their own sorting/display)
   if (game) {
-    const reviews = await getReviewsByGame(game);
+    const all = await getReviewsByGame(game);
+    const reviews = all.filter((r) => r.classification === 'helpful');
     return NextResponse.json({ reviews });
   }
 
-  if (filter === 'helpful') {
-    const [reviews, total] = await Promise.all([
-      getHelpfulReviews({ skip, take: limit }),
-      countHelpfulReviews(),
-    ]);
-    return NextResponse.json({ reviews, total, page, limit });
-  }
-
+  // Default and filter=helpful both show only moderation-approved reviews
   const [reviews, total] = await Promise.all([
-    getAllReviews({ skip, take: limit }),
-    countAllReviews(),
+    getHelpfulReviews({ skip, take: limit }),
+    countHelpfulReviews(),
   ]);
   return NextResponse.json({ reviews, total, page, limit });
 }

@@ -53,15 +53,16 @@ beforeEach(() => {
 });
 
 describe('GET /api/reviews', () => {
-  it('returns all reviews with default pagination', async () => {
-    mockGetAll.mockResolvedValue([makeReview()]);
-    mockCountAll.mockResolvedValue(1);
+  it('returns only helpful reviews by default (hides pending/spam/toxic)', async () => {
+    mockGetHelp.mockResolvedValue([makeReview()]);
+    mockCountHelp.mockResolvedValue(1);
     const req = new NextRequest('http://localhost/api/reviews');
     const res = await GET(req);
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(mockGetAll).toHaveBeenCalledWith({ skip: 0, take: 20 });
+    expect(mockGetHelp).toHaveBeenCalledWith({ skip: 0, take: 20 });
+    expect(mockGetAll).not.toHaveBeenCalled();
     expect(body.reviews).toHaveLength(1);
     expect(body.total).toBe(1);
     expect(body.page).toBe(1);
@@ -69,12 +70,28 @@ describe('GET /api/reviews', () => {
   });
 
   it('passes correct skip for page 2', async () => {
-    mockGetAll.mockResolvedValue([]);
-    mockCountAll.mockResolvedValue(25);
+    mockGetHelp.mockResolvedValue([]);
+    mockCountHelp.mockResolvedValue(25);
     const req = new NextRequest('http://localhost/api/reviews?page=2&limit=10');
     await GET(req);
 
-    expect(mockGetAll).toHaveBeenCalledWith({ skip: 10, take: 10 });
+    expect(mockGetHelp).toHaveBeenCalledWith({ skip: 10, take: 10 });
+    expect(mockGetAll).not.toHaveBeenCalled();
+  });
+
+  it('hides spam, toxic, and pending reviews from game listing', async () => {
+    const helpful = makeReview({ classification: 'helpful' });
+    const spam    = makeReview({ id: 'r2', classification: 'spam' });
+    const toxic   = makeReview({ id: 'r3', classification: 'toxic' });
+    const pending = makeReview({ id: 'r4', classification: 'pending' });
+    mockGetByGame.mockResolvedValue([helpful, spam, toxic, pending]);
+
+    const req = new NextRequest('http://localhost/api/reviews?game=Hades');
+    const res = await GET(req);
+    const body = await res.json();
+
+    expect(body.reviews).toHaveLength(1);
+    expect(body.reviews[0].classification).toBe('helpful');
   });
 
   it('calls getHelpfulReviews and countHelpfulReviews when filter=helpful', async () => {
