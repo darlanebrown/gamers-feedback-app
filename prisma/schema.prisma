@@ -213,3 +213,13 @@ model FeaturedReview {
   setBy     String
   updatedAt DateTime @updatedAt
 }
+
+model ReviewReaction {
+  id          String   @id @default(cuid())
+  reviewId    String
+  reactorTag  String
+  emoji       String
+  createdAt   DateTime @default(now())
+
+  @@unique([reviewId, reactorTag, emoji])
+}
