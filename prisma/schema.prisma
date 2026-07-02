@@ -208,6 +208,15 @@ model Wishlist {
   @@unique([userId, gameTitle])
 }
 
+model ReviewTag {
+  id        String   @id @default(cuid())
+  reviewId  String
+  tag       String
+  createdAt DateTime @default(now())
+
+  @@unique([reviewId, tag])
+}
+
 model CommentFlag {
   id          String   @id @default(cuid())
   commentId   String
