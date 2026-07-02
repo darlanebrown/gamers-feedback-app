@@ -5,6 +5,7 @@ import { createComment, getComments, deleteComment, countComments, countRecentCo
 import { sendCommentEmail } from '@/lib/emailService';
 import { createNotification } from '@/lib/notificationStore';
 import { findUserByTag } from '@/lib/userStore';
+import { notifyMentions } from '@/lib/mentionService';
 
 export async function GET(
   req: NextRequest,
@@ -57,6 +58,8 @@ export async function POST(
   }
 
   const comment = await createComment(params.id, session.gamerTag, body.trim());
+
+  notifyMentions(body.trim(), params.id, session.gamerTag).catch(() => {});
 
   if (session.gamerTag !== review.reviewerTag) {
     findUserByTag(review.reviewerTag)
