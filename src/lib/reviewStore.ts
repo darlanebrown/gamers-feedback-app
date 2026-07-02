@@ -3,6 +3,7 @@
 
 import { Review, ReviewClassification } from '@/types';
 import { prisma } from './prisma';
+import { createRevision } from './revisionStore';
 
 function toReview(row: any): Review {
   return {
@@ -273,6 +274,17 @@ export async function updateReview(
 ): Promise<Review | null> {
   const existing = await prisma.review.findUnique({ where: { id } });
   if (!existing || existing.reviewerTag !== reviewerTag) return null;
+
+  // Snapshot the current state before overwriting
+  await createRevision(id, {
+    headline: existing.headline,
+    body:     existing.body,
+    pros:     existing.pros,
+    cons:     existing.cons,
+    rating:   existing.rating,
+    playtime: existing.playtime,
+  });
+
   const row = await prisma.review.update({
     where: { id },
     data: { ...fields, classification: 'pending', classificationReason: null },
