@@ -5,6 +5,9 @@ jest.mock('@/lib/prisma', () => ({
       update:     jest.fn(),
       delete:     jest.fn(),
     },
+    reviewRevision: {
+      create: jest.fn().mockResolvedValue(undefined),
+    },
   },
 }));
 

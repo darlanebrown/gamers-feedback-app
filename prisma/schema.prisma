@@ -207,6 +207,18 @@ model CommentFlag {
   @@unique([commentId, reporterTag])
 }
 
+model ReviewRevision {
+  id        String   @id @default(cuid())
+  reviewId  String
+  headline  String
+  body      String
+  pros      String
+  cons      String
+  rating    Int
+  playtime  String
+  editedAt  DateTime @default(now())
+}
+
 model AuditLog {
   id        String   @id @default(cuid())
   action    String
