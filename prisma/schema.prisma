@@ -207,6 +207,16 @@ model CommentFlag {
   @@unique([commentId, reporterTag])
 }
 
+model CommentReaction {
+  id         String   @id @default(cuid())
+  commentId  String
+  reactorTag String
+  emoji      String
+  createdAt  DateTime @default(now())
+
+  @@unique([commentId, reactorTag, emoji])
+}
+
 model PinnedReview {
   id        String   @id @default(cuid())
   ownerTag  String   @unique
