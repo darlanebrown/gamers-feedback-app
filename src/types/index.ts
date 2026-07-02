@@ -16,6 +16,7 @@ export interface Review {
   classification: ReviewClassification;
   classificationReason?: string;
   hasSpoilers: boolean;
+  viewCount:   number;
   createdAt: string;
 }
 

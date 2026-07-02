@@ -1,5 +1,6 @@
 jest.mock('@/lib/reviewStore', () => ({
-  getReviewById: jest.fn(),
+  getReviewById:      jest.fn(),
+  incrementViewCount: jest.fn().mockResolvedValue(undefined),
 }));
 
 import { NextRequest } from 'next/server';
@@ -16,7 +17,11 @@ const REVIEW = {
   classificationReason: null, createdAt: '2024-01-01T00:00:00.000Z',
 };
 
-beforeEach(() => jest.resetAllMocks());
+beforeEach(() => {
+  jest.resetAllMocks();
+  (jest.requireMock('@/lib/reviewStore') as { incrementViewCount: jest.Mock })
+    .incrementViewCount.mockResolvedValue(undefined);
+});
 
 describe('GET /api/reviews/[id]', () => {
   it('returns 200 with the review when found', async () => {

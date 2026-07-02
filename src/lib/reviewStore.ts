@@ -20,6 +20,7 @@ function toReview(row: any): Review {
     classification: row.classification as ReviewClassification,
     classificationReason: row.classificationReason ?? undefined,
     hasSpoilers: row.hasSpoilers ?? false,
+    viewCount:   row.viewCount ?? 0,
     createdAt: row.createdAt.toISOString(),
   };
 }
@@ -114,6 +115,10 @@ export async function updateReviewClassification(
 export async function getReviewById(id: string): Promise<Review | null> {
   const row = await prisma.review.findUnique({ where: { id } });
   return row ? toReview(row) : null;
+}
+
+export async function incrementViewCount(id: string): Promise<void> {
+  await prisma.review.update({ where: { id }, data: { viewCount: { increment: 1 } } });
 }
 
 export async function getRecentNegativeReviewCounts(
