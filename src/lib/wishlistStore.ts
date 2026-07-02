@@ -15,3 +15,19 @@ export async function removeFromWishlist(userId: string, gameTitle: string): Pro
   const { count } = await prisma.wishlist.deleteMany({ where: { userId, gameTitle } });
   return count > 0;
 }
+
+export interface BulkAddResult {
+  added:          number;
+  alreadyPresent: number;
+}
+
+export async function bulkAddToWishlist(
+  userId:     string,
+  gameTitles: string[],
+): Promise<BulkAddResult> {
+  const result = await prisma.wishlist.createMany({
+    data:           gameTitles.map((gameTitle) => ({ userId, gameTitle })),
+    skipDuplicates: true,
+  });
+  return { added: result.count, alreadyPresent: gameTitles.length - result.count };
+}
