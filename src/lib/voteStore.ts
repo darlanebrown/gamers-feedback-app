@@ -30,3 +30,34 @@ export async function getUserVote(reviewId: string, voterTag: string): Promise<V
   });
   return vote[0]?.type as VoteType | null ?? null;
 }
+
+export async function getVotesByTag(
+  voterTag: string,
+  opts: { skip: number; take: number; type?: VoteType },
+) {
+  const votes = await prisma.reviewVote.findMany({
+    where:   { voterTag, ...(opts.type ? { type: opts.type } : {}) },
+    orderBy: { createdAt: 'desc' },
+    skip:    opts.skip,
+    take:    opts.take,
+  });
+
+  if (votes.length === 0) return [];
+
+  const reviewIds = votes.map((v) => v.reviewId);
+  const reviews = await prisma.review.findMany({
+    where:  { id: { in: reviewIds } },
+    select: { id: true, gameTitle: true, reviewerTag: true },
+  });
+  const reviewMap = new Map(reviews.map((r) => [r.id, r]));
+
+  return votes.map((v) => ({
+    id:          v.id,
+    reviewId:    v.reviewId,
+    voterTag:    v.voterTag,
+    type:        v.type,
+    gameTitle:   reviewMap.get(v.reviewId)?.gameTitle   ?? '',
+    reviewerTag: reviewMap.get(v.reviewId)?.reviewerTag ?? '',
+    createdAt:   v.createdAt,
+  }));
+}
