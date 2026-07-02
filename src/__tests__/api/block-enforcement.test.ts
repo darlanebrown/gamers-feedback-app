@@ -4,6 +4,10 @@ jest.mock('@/lib/blockStore', () => ({
   isBlocking:     jest.fn(),
 }));
 
+jest.mock('@/lib/muteStore', () => ({
+  getMutedTags: jest.fn(),
+}));
+
 jest.mock('@/lib/followStore', () => ({
   getFollowedTags: jest.fn(),
 }));
@@ -38,6 +42,8 @@ beforeEach(() => {
   jest.resetAllMocks();
   mockGetBlocked.mockResolvedValue([]);
   mockGetFollowed.mockResolvedValue([]);
+  (jest.requireMock('@/lib/muteStore') as { getMutedTags: jest.Mock })
+    .getMutedTags.mockResolvedValue([]);
   mockReview.mockResolvedValue([]);
   mockComment.mockResolvedValue([]);
   mockVote.mockResolvedValue([]);

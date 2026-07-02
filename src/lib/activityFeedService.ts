@@ -1,6 +1,7 @@
 import { prisma } from './prisma';
 import { getFollowedTags } from './followStore';
 import { getBlockedTags } from './blockStore';
+import { getMutedTags } from './muteStore';
 
 export type ActivityItem = {
   type: 'review' | 'comment' | 'vote';
@@ -20,12 +21,13 @@ export async function getActivityFeed({
   skip: number;
   take: number;
 }): Promise<ActivityItem[]> {
-  const [followedTags, blockedTags] = await Promise.all([
+  const [followedTags, blockedTags, mutedTags] = await Promise.all([
     getFollowedTags(gamerTag),
     getBlockedTags(gamerTag),
+    getMutedTags(gamerTag),
   ]);
-  const blockedSet   = new Set(blockedTags);
-  const activeTags   = followedTags.filter((t) => !blockedSet.has(t));
+  const excludedSet  = new Set([...blockedTags, ...mutedTags]);
+  const activeTags   = followedTags.filter((t) => !excludedSet.has(t));
   if (activeTags.length === 0) return [];
 
   const [reviews, comments, votes] = await Promise.all([
