@@ -30,6 +30,36 @@ export async function countFlags(reviewId: string): Promise<number> {
   return prisma.reviewFlag.count({ where: { reviewId } });
 }
 
+export async function getFlagsByReporter(
+  reporterTag: string,
+  opts: { skip: number; take: number },
+) {
+  const flags = await prisma.reviewFlag.findMany({
+    where:   { reporterTag },
+    orderBy: { createdAt: 'desc' },
+    skip:    opts.skip,
+    take:    opts.take,
+  });
+
+  if (flags.length === 0) return [];
+
+  const reviewIds = flags.map((f) => f.reviewId);
+  const reviews = await prisma.review.findMany({
+    where:  { id: { in: reviewIds } },
+    select: { id: true, gameTitle: true, reviewerTag: true },
+  });
+  const reviewMap = new Map(reviews.map((r) => [r.id, r]));
+
+  return flags.map((f) => ({
+    id:          f.id,
+    reviewId:    f.reviewId,
+    reporterTag: f.reporterTag,
+    gameTitle:   reviewMap.get(f.reviewId)?.gameTitle   ?? '',
+    reviewerTag: reviewMap.get(f.reviewId)?.reviewerTag ?? '',
+    createdAt:   f.createdAt,
+  }));
+}
+
 export async function getFlaggedReviews(): Promise<FlaggedReview[]> {
   const groups = await prisma.reviewFlag.groupBy({
     by:      ['reviewId'],
