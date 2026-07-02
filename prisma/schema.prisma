@@ -131,3 +131,13 @@ model Draft {
   playtime    String?
   updatedAt   DateTime @updatedAt
 }
+
+model CommentVote {
+  id        String   @id @default(cuid())
+  commentId String
+  voterTag  String
+  type      String
+  createdAt DateTime @default(now())
+
+  @@unique([commentId, voterTag])
+}
