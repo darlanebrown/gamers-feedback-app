@@ -19,8 +19,10 @@ model User {
   displayName  String?
   bio          String?
   role         String   @default("user")
-  banned       Boolean  @default(false)
-  createdAt    DateTime @default(now())
+  banned       Boolean   @default(false)
+  banReason    String?
+  bannedUntil  DateTime?
+  createdAt    DateTime  @default(now())
 }
 
 model Game {
