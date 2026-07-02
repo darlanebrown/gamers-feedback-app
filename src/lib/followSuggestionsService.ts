@@ -1,4 +1,5 @@
 import { prisma } from './prisma';
+import { getBlockedTags } from './blockStore';
 
 export interface FollowSuggestion {
   gamerTag:    string;
@@ -18,13 +19,14 @@ export async function getFollowSuggestions(
   const myGames = myReviews.map((r) => r.gameTitle);
   if (myGames.length === 0) return [];
 
-  // Users already followed
-  const following = await prisma.follow.findMany({
-    where:  { followerTag: gamerTag },
-    select: { followingTag: true },
-  });
+  // Users already followed + blocked users
+  const [following, blockedTags] = await Promise.all([
+    prisma.follow.findMany({ where: { followerTag: gamerTag }, select: { followingTag: true } }),
+    getBlockedTags(gamerTag),
+  ]);
   const followingSet = new Set(following.map((f) => f.followingTag));
   followingSet.add(gamerTag); // exclude self
+  for (const tag of blockedTags) followingSet.add(tag); // exclude blocked
 
   // Other reviewers of the same games
   const others = await prisma.review.findMany({
