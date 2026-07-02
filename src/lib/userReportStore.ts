@@ -20,6 +20,8 @@ export interface UserReport {
   reporterTag: string;
   reportedTag: string;
   reason:      string;
+  resolution:  string | null;
+  resolvedAt:  Date | null;
   createdAt:   Date;
 }
 
@@ -45,6 +47,38 @@ export async function getUserReports({
     reporterTag: r.reporterTag,
     reportedTag: r.reportedTag,
     reason:      r.reason,
+    resolution:  (r as any).resolution ?? null,
+    resolvedAt:  (r as any).resolvedAt ?? null,
     createdAt:   r.createdAt,
   }));
+}
+
+export async function getReportById(id: string): Promise<UserReport | null> {
+  const r = await prisma.userReport.findUnique({ where: { id } });
+  if (!r) return null;
+  return {
+    id:          r.id,
+    reporterTag: r.reporterTag,
+    reportedTag: r.reportedTag,
+    reason:      r.reason,
+    resolution:  (r as any).resolution ?? null,
+    resolvedAt:  (r as any).resolvedAt ?? null,
+    createdAt:   r.createdAt,
+  };
+}
+
+export async function resolveUserReport(id: string, resolution: string): Promise<UserReport> {
+  const r = await (prisma.userReport as any).update({
+    where: { id },
+    data:  { resolution, resolvedAt: new Date() },
+  });
+  return {
+    id:          r.id,
+    reporterTag: r.reporterTag,
+    reportedTag: r.reportedTag,
+    reason:      r.reason,
+    resolution:  r.resolution ?? null,
+    resolvedAt:  r.resolvedAt ?? null,
+    createdAt:   r.createdAt,
+  };
 }
