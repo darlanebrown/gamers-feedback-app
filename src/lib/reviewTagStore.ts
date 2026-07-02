@@ -39,6 +39,17 @@ export async function getTagsForReview(reviewId: string): Promise<string[]> {
   return rows.map((r) => r.tag);
 }
 
+export type TagCount = { tag: string; count: number };
+
+export async function getTrendingTags(): Promise<TagCount[]> {
+  const rows = await prisma.reviewTag.groupBy({
+    by:      ['tag'],
+    _count:  { id: true },
+    orderBy: { _count: { id: 'desc' } },
+  });
+  return rows.map((r) => ({ tag: r.tag, count: r._count.id }));
+}
+
 export async function getReviewsByTag(tag: string): Promise<Review[]> {
   const tagRows = await prisma.reviewTag.findMany({
     where:  { tag },
