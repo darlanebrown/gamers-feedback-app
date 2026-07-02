@@ -177,3 +177,13 @@ model PasswordReset {
   used      Boolean  @default(false)
   createdAt DateTime @default(now())
 }
+
+model EmailPreference {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  enabled   Boolean  @default(true)
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, type])
+}
