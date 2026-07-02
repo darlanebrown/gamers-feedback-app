@@ -153,6 +153,15 @@ model Mute {
   @@unique([muterTag, mutedTag])
 }
 
+model Block {
+  id         String   @id @default(cuid())
+  blockerTag String
+  blockedTag String
+  createdAt  DateTime @default(now())
+
+  @@unique([blockerTag, blockedTag])
+}
+
 model Collection {
   id        String   @id @default(cuid())
   ownerTag  String
