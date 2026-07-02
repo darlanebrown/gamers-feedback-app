@@ -12,6 +12,10 @@ jest.mock('@/lib/alertService', () => ({
   checkForBombing: jest.fn(),
 }));
 
+jest.mock('@/lib/gameFollowNotificationService', () => ({
+  notifyGameFollowers: jest.fn().mockResolvedValue(undefined),
+}));
+
 import { NextRequest } from 'next/server';
 import { GET, POST } from '@/app/api/reviews/route';
 import { getAllReviews, getHelpfulReviews, getReviewsByGame, addReview, getRecentReviewCountByTag, countAllReviews, countHelpfulReviews } from '@/lib/reviewStore';
@@ -50,6 +54,8 @@ beforeEach(() => {
   mockRecentCount.mockResolvedValue(0);
   mockCountAll.mockResolvedValue(0);
   mockCountHelp.mockResolvedValue(0);
+  (jest.requireMock('@/lib/gameFollowNotificationService') as { notifyGameFollowers: jest.Mock })
+    .notifyGameFollowers.mockResolvedValue(undefined);
 });
 
 describe('GET /api/reviews', () => {
