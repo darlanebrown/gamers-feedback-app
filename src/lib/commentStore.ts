@@ -79,3 +79,29 @@ export async function updateComment(
   });
   return toComment(row);
 }
+
+export async function getCommentsByTag(
+  authorTag: string,
+  opts: { skip: number; take: number },
+) {
+  const comments = await prisma.reviewComment.findMany({
+    where:   { authorTag },
+    orderBy: { createdAt: 'desc' },
+    skip:    opts.skip,
+    take:    opts.take,
+  });
+
+  if (comments.length === 0) return [];
+
+  const reviewIds = [...new Set(comments.map((c) => c.reviewId))];
+  const reviews = await prisma.review.findMany({
+    where:  { id: { in: reviewIds } },
+    select: { id: true, gameTitle: true },
+  });
+  const gameMap = new Map(reviews.map((r) => [r.id, r.gameTitle]));
+
+  return comments.map((c) => ({
+    ...toComment(c),
+    gameTitle: gameMap.get(c.reviewId) ?? '',
+  }));
+}
