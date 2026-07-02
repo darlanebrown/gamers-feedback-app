@@ -212,3 +212,22 @@ export async function sendClassificationEmail(
     `,
   });
 }
+
+export async function sendModerationEmail(
+  reportedTag: string,
+  reporterTag: string,
+  reason: string,
+): Promise<void> {
+  if (!ready()) return;
+  await client().emails.send({
+    from:    'Gamers Feedback <noreply@gamersfeedback.app>',
+    to:      process.env.MODERATOR_EMAIL!,
+    subject: `User report: ${reportedTag}`,
+    html: `
+      <h2>User Report</h2>
+      <p><strong>${reporterTag}</strong> reported <strong>${reportedTag}</strong>.</p>
+      <p><strong>Reason:</strong> ${reason}</p>
+      <p><a href="${baseUrl()}/admin/users">Review in Admin Panel →</a></p>
+    `,
+  });
+}
