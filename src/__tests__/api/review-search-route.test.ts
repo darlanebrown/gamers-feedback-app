@@ -56,15 +56,27 @@ describe('GET /api/reviews/search', () => {
   it('passes q, platform, minRating, maxRating, skip, take to searchReviews', async () => {
     await GET(makeReq({ q: 'hades', platform: 'PC', minRating: '7', maxRating: '10', page: '2', limit: '10' }));
     expect(mockSearch).toHaveBeenCalledWith({
-      q: 'hades', platform: 'PC', minRating: 7, maxRating: 10, skip: 10, take: 10,
+      q: 'hades', platform: 'PC', minRating: 7, maxRating: 10, skip: 10, take: 10, tag: undefined,
     });
   });
 
-  it('defaults page=1 limit=20 and omits platform/rating when not provided', async () => {
+  it('defaults page=1 limit=20 and omits platform/rating/tag when not provided', async () => {
     await GET(makeReq({ q: 'celeste' }));
     expect(mockSearch).toHaveBeenCalledWith({
-      q: 'celeste', platform: undefined, minRating: undefined, maxRating: undefined, skip: 0, take: 20,
+      q: 'celeste', platform: undefined, minRating: undefined, maxRating: undefined, skip: 0, take: 20, tag: undefined,
     });
+  });
+
+  it('passes tag to searchReviews when provided', async () => {
+    await GET(makeReq({ q: 'hades', tag: 'rpg' }));
+    expect(mockSearch).toHaveBeenCalledWith(expect.objectContaining({ q: 'hades', tag: 'rpg' }));
+  });
+
+  it('returns 400 for an invalid tag', async () => {
+    const res = await GET(makeReq({ q: 'hades', tag: 'notvalid' }));
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toMatch(/tag/i);
   });
 
   it('clamps limit to max 50', async () => {

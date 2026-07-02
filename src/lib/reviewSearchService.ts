@@ -6,6 +6,7 @@ export type SearchParams = {
   platform?: string;
   minRating?: number;
   maxRating?: number;
+  tag?: string;
   skip: number;
   take: number;
 };
@@ -40,6 +41,7 @@ export async function searchReviews({
   platform,
   minRating,
   maxRating,
+  tag,
   skip,
   take,
 }: SearchParams): Promise<SearchResult> {
@@ -55,6 +57,11 @@ export async function searchReviews({
   if (platform)  where.platform = platform;
   if (minRating !== undefined) where.rating = { ...where.rating, gte: minRating };
   if (maxRating !== undefined) where.rating = { ...where.rating, lte: maxRating };
+
+  if (tag) {
+    const tagRows = await prisma.reviewTag.findMany({ where: { tag }, select: { reviewId: true } });
+    where.id = { in: tagRows.map((r) => r.reviewId) };
+  }
 
   const [rows, total] = await Promise.all([
     prisma.review.findMany({ where, skip, take, orderBy: { createdAt: 'desc' } }),

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { searchReviews } from '@/lib/reviewSearchService';
+import { VALID_TAGS } from '@/lib/reviewTagStore';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -17,6 +18,14 @@ export async function GET(req: NextRequest) {
   const minRating = minRatingRaw !== null ? parseInt(minRatingRaw, 10) : undefined;
   const maxRating = maxRatingRaw !== null ? parseInt(maxRatingRaw, 10) : undefined;
 
-  const { reviews, total } = await searchReviews({ q, platform, minRating, maxRating, skip, take: limit });
+  const tagRaw = searchParams.get('tag') ?? undefined;
+  if (tagRaw && !VALID_TAGS.includes(tagRaw as any)) {
+    return NextResponse.json(
+      { error: `Invalid tag. Valid tags: ${VALID_TAGS.join(', ')}` },
+      { status: 400 },
+    );
+  }
+
+  const { reviews, total } = await searchReviews({ q, platform, minRating, maxRating, tag: tagRaw, skip, take: limit });
   return NextResponse.json({ reviews, total, page, limit });
 }
