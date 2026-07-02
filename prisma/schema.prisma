@@ -145,6 +145,16 @@ model CommentVote {
   @@unique([commentId, voterTag])
 }
 
+model UserReport {
+  id           String   @id @default(cuid())
+  reporterTag  String
+  reportedTag  String
+  reason       String
+  createdAt    DateTime @default(now())
+
+  @@unique([reporterTag, reportedTag])
+}
+
 model Mute {
   id        String   @id @default(cuid())
   muterTag  String
