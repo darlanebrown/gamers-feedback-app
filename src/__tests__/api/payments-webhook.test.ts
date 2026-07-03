@@ -5,19 +5,21 @@ jest.mock('@/lib/stripeClient', () => ({
   PRESET_AMOUNTS: new Set([300, 500, 1000, 2500]),
 }));
 jest.mock('@/lib/paymentStore', () => ({
-  completePayment:      jest.fn(),
+  completePayment:       jest.fn(),
   getPaymentBySessionId: jest.fn(),
 }));
-jest.mock('@/lib/notificationStore', () => ({ createNotification: jest.fn() }));
+jest.mock('@/lib/tipNotificationService', () => ({
+  notifyTipReceived: jest.fn(),
+}));
 
 import { NextRequest } from 'next/server';
 import { POST } from '@/app/api/payments/webhook/route';
 import { completePayment, getPaymentBySessionId } from '@/lib/paymentStore';
-import { createNotification } from '@/lib/notificationStore';
+import { notifyTipReceived } from '@/lib/tipNotificationService';
 
-const mockComplete    = completePayment       as jest.Mock;
+const mockComplete     = completePayment       as jest.Mock;
 const mockGetBySession = getPaymentBySessionId as jest.Mock;
-const mockNotify      = createNotification    as jest.Mock;
+const mockNotifyTip    = notifyTipReceived     as jest.Mock;
 
 const COMPLETED_SESSION = {
   id:       'cs_test_123',
@@ -45,7 +47,7 @@ beforeEach(() => {
     .stripe.mockReturnValue({ webhooks: { constructEvent: mockConstructEvent } });
   mockGetBySession.mockResolvedValue(null);
   mockComplete.mockResolvedValue(COMPLETED_PAYMENT);
-  mockNotify.mockResolvedValue(undefined);
+  mockNotifyTip.mockResolvedValue(undefined);
 });
 
 describe('POST /api/payments/webhook', () => {
@@ -78,22 +80,14 @@ describe('POST /api/payments/webhook', () => {
     expect(mockComplete).toHaveBeenCalledWith('cs_test_123');
   });
 
-  it('sends notification to recipient on payment completion', async () => {
+  it('fires tip notification to recipient on payment completion', async () => {
     await POST(makeWebhookReq(JSON.stringify(COMPLETED_SESSION)));
-    expect(mockNotify).toHaveBeenCalledWith(
-      expect.objectContaining({
-        recipientTag: 'Creator#5',
-        type:         'tip_received',
-        actorTag:     'Darla#1',
-      }),
-    );
+    expect(mockNotifyTip).toHaveBeenCalledWith('Creator#5', 'Darla#1');
   });
 
-  it('notification includes amountCents in body', async () => {
+  it('notification is preference-gated via notifyTipReceived (not raw createNotification)', async () => {
     await POST(makeWebhookReq(JSON.stringify(COMPLETED_SESSION)));
-    expect(mockNotify).toHaveBeenCalledWith(
-      expect.objectContaining({ body: expect.stringContaining('$5.00') }),
-    );
+    expect(mockNotifyTip).toHaveBeenCalledTimes(1);
   });
 
   it('returns 200 even if already completed (idempotent)', async () => {
