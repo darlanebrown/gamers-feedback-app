@@ -1,44 +1,60 @@
 jest.mock('@/lib/prisma', () => ({
   prisma: {
-    gameFollow:   { findMany: jest.fn() },
-    user:         { findMany: jest.fn() },
-    notification: { createMany: jest.fn() },
+    gameFollow: { findMany: jest.fn() },
+    user:       { findMany: jest.fn() },
   },
 }));
+jest.mock('@/lib/notificationPrefStore', () => ({ getPreferences: jest.fn() }));
+jest.mock('@/lib/notificationStore',     () => ({ createNotification: jest.fn() }));
 
 import { notifyGameFollowers } from '@/lib/gameFollowNotificationService';
-import { prisma } from '@/lib/prisma';
+import { prisma }              from '@/lib/prisma';
+import { getPreferences }      from '@/lib/notificationPrefStore';
+import { createNotification }  from '@/lib/notificationStore';
 
-const mockFollowFindMany        = prisma.gameFollow.findMany   as jest.Mock;
-const mockUserFindMany          = prisma.user.findMany         as jest.Mock;
-const mockNotificationCreateMany = prisma.notification.createMany as jest.Mock;
+const mockFollowFindMany = prisma.gameFollow.findMany as jest.Mock;
+const mockUserFindMany   = prisma.user.findMany       as jest.Mock;
+const mockGetPrefs       = getPreferences             as jest.Mock;
+const mockNotify         = createNotification         as jest.Mock;
+
+const PREFS_ON  = { newFollower: true, tipReceived: true, commentOnReview: true, mention: true, newGameReview: true,  replyToComment: true };
+const PREFS_OFF = { ...PREFS_ON, newGameReview: false };
 
 beforeEach(() => {
   jest.resetAllMocks();
   mockFollowFindMany.mockResolvedValue([]);
   mockUserFindMany.mockResolvedValue([]);
-  mockNotificationCreateMany.mockResolvedValue({ count: 0 });
+  mockGetPrefs.mockResolvedValue(PREFS_ON);
+  mockNotify.mockResolvedValue(undefined);
 });
 
 describe('notifyGameFollowers', () => {
   it('does nothing when no users follow the game', async () => {
-    mockFollowFindMany.mockResolvedValue([]);
     await notifyGameFollowers('Hades', 'r1', 'Darla#1');
-    expect(mockNotificationCreateMany).not.toHaveBeenCalled();
+    expect(mockNotify).not.toHaveBeenCalled();
   });
 
-  it('notifies all followers with new_game_review notification', async () => {
+  it('notifies followers whose newGameReview pref is enabled', async () => {
     mockFollowFindMany.mockResolvedValue([{ userId: 'u1' }, { userId: 'u2' }]);
     mockUserFindMany.mockResolvedValue([{ gamerTag: 'Alice#1' }, { gamerTag: 'Bob#2' }]);
 
     await notifyGameFollowers('Hades', 'r1', 'Reviewer#1');
 
-    expect(mockNotificationCreateMany).toHaveBeenCalledWith({
-      data: expect.arrayContaining([
-        expect.objectContaining({ userTag: 'Alice#1', type: 'new_game_review', reviewId: 'r1', gameTitle: 'Hades', actorTag: 'Reviewer#1' }),
-        expect.objectContaining({ userTag: 'Bob#2',  type: 'new_game_review', reviewId: 'r1', gameTitle: 'Hades', actorTag: 'Reviewer#1' }),
-      ]),
-    });
+    expect(mockNotify).toHaveBeenCalledWith('Alice#1', 'new_game_review', 'Reviewer#1', 'r1', 'Hades');
+    expect(mockNotify).toHaveBeenCalledWith('Bob#2',   'new_game_review', 'Reviewer#1', 'r1', 'Hades');
+  });
+
+  it('skips follower when newGameReview pref is disabled', async () => {
+    mockFollowFindMany.mockResolvedValue([{ userId: 'u1' }, { userId: 'u2' }]);
+    mockUserFindMany.mockResolvedValue([{ gamerTag: 'Alice#1' }, { gamerTag: 'Bob#2' }]);
+    mockGetPrefs
+      .mockResolvedValueOnce(PREFS_ON)
+      .mockResolvedValueOnce(PREFS_OFF);
+
+    await notifyGameFollowers('Hades', 'r1', 'Reviewer#1');
+
+    expect(mockNotify).toHaveBeenCalledTimes(1);
+    expect(mockNotify).toHaveBeenCalledWith('Alice#1', 'new_game_review', 'Reviewer#1', 'r1', 'Hades');
   });
 
   it('excludes the reviewer from notifications', async () => {
@@ -47,9 +63,8 @@ describe('notifyGameFollowers', () => {
 
     await notifyGameFollowers('Hades', 'r1', 'Darla#1');
 
-    const call = mockNotificationCreateMany.mock.calls[0][0];
-    expect(call.data).toHaveLength(1);
-    expect(call.data[0].userTag).toBe('Bob#2');
+    expect(mockNotify).toHaveBeenCalledTimes(1);
+    expect(mockNotify).toHaveBeenCalledWith('Bob#2', 'new_game_review', 'Darla#1', 'r1', 'Hades');
   });
 
   it('does nothing when the only follower is the reviewer', async () => {
@@ -58,7 +73,7 @@ describe('notifyGameFollowers', () => {
 
     await notifyGameFollowers('Hades', 'r1', 'Darla#1');
 
-    expect(mockNotificationCreateMany).not.toHaveBeenCalled();
+    expect(mockNotify).not.toHaveBeenCalled();
   });
 
   it('queries followers by gameTitle', async () => {
@@ -67,5 +82,14 @@ describe('notifyGameFollowers', () => {
       where:  { gameTitle: 'Elden Ring' },
       select: { userId: true },
     });
+  });
+
+  it('calls getPreferences with each follower tag', async () => {
+    mockFollowFindMany.mockResolvedValue([{ userId: 'u1' }]);
+    mockUserFindMany.mockResolvedValue([{ gamerTag: 'Alice#1' }]);
+
+    await notifyGameFollowers('Hades', 'r1', 'Reviewer#1');
+
+    expect(mockGetPrefs).toHaveBeenCalledWith('Alice#1');
   });
 });

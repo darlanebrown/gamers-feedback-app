@@ -1,5 +1,6 @@
-import { findUserByTag } from './userStore';
+import { findUserByTag }    from './userStore';
 import { createNotification } from './notificationStore';
+import { getPreferences }   from './notificationPrefStore';
 
 export function extractMentions(body: string): string[] {
   const matches = body.match(/@([^\s@,!?]+)/g) ?? [];
@@ -16,9 +17,12 @@ export async function notifyMentions(
 
   await Promise.all(
     mentions.map(async (tag) => {
-      const user = await findUserByTag(tag);
-      if (user) {
-        await createNotification(tag, 'mention' as any, actorTag, reviewId);
+      const [user, prefs] = await Promise.all([
+        findUserByTag(tag),
+        getPreferences(tag),
+      ]);
+      if (user && prefs.mention) {
+        await createNotification(tag, 'mention', actorTag, reviewId);
       }
     }),
   );
