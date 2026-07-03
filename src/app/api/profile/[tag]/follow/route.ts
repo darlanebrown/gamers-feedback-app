@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { followUser, unfollowUser, isFollowing } from '@/lib/followStore';
 import { findUserByTag } from '@/lib/userStore';
-import { createNotification } from '@/lib/notificationStore';
+import { notifyNewFollower } from '@/lib/followNotificationService';
 import { sendFollowEmail } from '@/lib/emailService';
 
 export async function POST(
@@ -20,7 +20,7 @@ export async function POST(
 
   await followUser(session.gamerTag, params.tag);
   const following = await isFollowing(session.gamerTag, params.tag);
-  createNotification(params.tag, 'follow', session.gamerTag).catch(() => {});
+  notifyNewFollower(params.tag, session.gamerTag).catch(() => {});
   sendFollowEmail(target.email, session.gamerTag).catch(() => {});
   return NextResponse.json({ ok: true, following });
 }

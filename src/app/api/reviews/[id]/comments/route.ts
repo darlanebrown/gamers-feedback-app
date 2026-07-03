@@ -3,7 +3,7 @@ import { getSession } from '@/lib/auth';
 import { getReviewById } from '@/lib/reviewStore';
 import { createComment, getComments, getReplies, deleteComment, countComments, countRecentCommentsByTag, updateComment, getCommentById } from '@/lib/commentStore';
 import { sendCommentEmail } from '@/lib/emailService';
-import { createNotification } from '@/lib/notificationStore';
+import { notifyCommentOnReview, notifyReplyToComment } from '@/lib/commentNotificationService';
 import { findUserByTag } from '@/lib/userStore';
 import { notifyMentions } from '@/lib/mentionService';
 
@@ -67,7 +67,7 @@ export async function POST(
     const parent = await getCommentById(parentId);
     if (!parent) return NextResponse.json({ error: 'Parent comment not found' }, { status: 404 });
     if (parent.authorTag !== session.gamerTag) {
-      createNotification(parent.authorTag, 'reply' as any, session.gamerTag, params.id).catch(() => {});
+      notifyReplyToComment(parent.authorTag, session.gamerTag, params.id).catch(() => {});
     }
   }
 
@@ -83,7 +83,7 @@ export async function POST(
         }
       })
       .catch(() => {});
-    createNotification(review.reviewerTag, 'comment', session.gamerTag, params.id, review.gameTitle)
+    notifyCommentOnReview(review.reviewerTag, session.gamerTag, params.id, review.gameTitle)
       .catch(() => {});
   }
 

@@ -184,7 +184,9 @@ npx jest --no-coverage # skip coverage report (faster)
 | `api/notification-prefs` | `api/notification-prefs.test.ts` | 10 |
 | `api/game-stats` | `api/game-stats.test.ts` | 8 |
 | `api/tip-notification-service` | `api/tip-notification-service.test.ts` | 8 |
-| **Total** | **162 suites** | **1063** |
+| `api/follow-notification-service` | `api/follow-notification-service.test.ts` | 8 |
+| `api/comment-notification-service` | `api/comment-notification-service.test.ts` | 10 |
+| **Total** | **164 suites** | **1082** |
 
 ## Test File Structure
 
