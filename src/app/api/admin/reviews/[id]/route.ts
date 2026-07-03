@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/adminMiddleware';
 import { getReviewById, updateReviewClassification, deleteReviewById } from '@/lib/reviewStore';
-import { createNotification } from '@/lib/notificationStore';
+import { notifyReclassify } from '@/lib/reclassifyNotificationService';
 import { findUserByTag } from '@/lib/userStore';
 import { sendReclassifyEmail } from '@/lib/emailService';
 import { getSession } from '@/lib/auth';
@@ -29,13 +29,7 @@ export async function PATCH(
   if (!review) return NextResponse.json({ error: 'Review not found' }, { status: 404 });
 
   await updateReviewClassification(params.id, classification, reason ?? 'Admin override');
-  createNotification(
-    review.reviewerTag,
-    'reclassify',
-    undefined,
-    params.id,
-    review.gameTitle,
-  ).catch(() => {});
+  notifyReclassify(review.reviewerTag, params.id, review.gameTitle).catch(() => {});
   findUserByTag(review.reviewerTag)
     .then((author) => {
       if (author) sendReclassifyEmail(author.email, review.gameTitle, classification).catch(() => {});

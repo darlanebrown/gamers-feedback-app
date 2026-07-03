@@ -5,8 +5,8 @@ jest.mock('@/lib/reviewStore', () => ({
   updateReviewClassification: jest.fn(),
   deleteReviewById: jest.fn(),
 }));
-jest.mock('@/lib/notificationStore', () => ({
-  createNotification: jest.fn(),
+jest.mock('@/lib/reclassifyNotificationService', () => ({
+  notifyReclassify: jest.fn(),
 }));
 
 jest.mock('@/lib/userStore', () => ({
@@ -26,7 +26,7 @@ import { GET  } from '@/app/api/admin/reviews/route';
 import { PATCH, DELETE } from '@/app/api/admin/reviews/[id]/route';
 import { requireAdmin } from '@/lib/adminMiddleware';
 import { getAllReviews, getReviewById, updateReviewClassification, deleteReviewById } from '@/lib/reviewStore';
-import { createNotification } from '@/lib/notificationStore';
+import { notifyReclassify } from '@/lib/reclassifyNotificationService';
 import { findUserByTag } from '@/lib/userStore';
 import { sendReclassifyEmail } from '@/lib/emailService';
 import { getSession } from '@/lib/auth';
@@ -37,7 +37,7 @@ const mockGetAll        = getAllReviews              as jest.Mock;
 const mockGetOne        = getReviewById             as jest.Mock;
 const mockUpdate        = updateReviewClassification as jest.Mock;
 const mockDeleteById    = deleteReviewById           as jest.Mock;
-const mockNotify        = createNotification         as jest.Mock;
+const mockNotifyReclass = notifyReclassify            as jest.Mock;
 const mockFindTag       = findUserByTag              as jest.Mock;
 const mockReclassEmail  = sendReclassifyEmail        as jest.Mock;
 const mockGetSession    = getSession                 as jest.Mock;
@@ -60,7 +60,7 @@ const FORBID_FAIL = NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
 beforeEach(() => {
   jest.resetAllMocks();
-  mockNotify.mockResolvedValue(undefined);
+  mockNotifyReclass.mockResolvedValue(undefined);
   mockFindTag.mockResolvedValue({ id: 'u1', email: 'darla@test.com', gamerTag: 'Darla#1' });
   (jest.requireMock('@/lib/emailService') as { sendReclassifyEmail: jest.Mock })
     .sendReclassifyEmail.mockResolvedValue(undefined);
@@ -139,6 +139,20 @@ describe('PATCH /api/admin/reviews/[id]', () => {
     const res = await PATCH(req, { params: { id: 'r1' } });
     expect(res.status).toBe(200);
     expect(mockUpdate).toHaveBeenCalledWith('r1', 'spam', 'Admin override');
+  });
+
+  it('fires preference-gated reclassify notification', async () => {
+    mockGuard.mockResolvedValue(ADMIN_PASS);
+    mockGetOne.mockResolvedValue(makeReview({ classification: 'helpful' }));
+    mockUpdate.mockResolvedValue(undefined);
+    const req = new NextRequest('http://localhost/api/admin/reviews/r1', {
+      method: 'PATCH', body: JSON.stringify({ classification: 'spam', reason: 'Admin override' }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    await PATCH(req, { params: { id: 'r1' } });
+
+    expect(mockNotifyReclass).toHaveBeenCalledWith('Darla#1', 'r1', 'Hades');
   });
 
   it('sends a reclassify email to the review author', async () => {
