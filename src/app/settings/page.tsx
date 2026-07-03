@@ -4,7 +4,18 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './settings.module.css';
 
-type Tab = 'profile' | 'security' | 'danger';
+type Tab = 'profile' | 'security' | 'notifications' | 'danger';
+
+type NotifPrefs = {
+  newFollower:     boolean;
+  tipReceived:     boolean;
+  commentOnReview: boolean;
+  replyToComment:  boolean;
+  mention:         boolean;
+  newGameReview:   boolean;
+  voteOnReview:    boolean;
+  reclassify:      boolean;
+};
 
 type Me = {
   id: string;
@@ -33,6 +44,11 @@ export default function SettingsPage() {
   const [secMsg, setSecMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [secLoading, setSecLoading] = useState(false);
 
+  // Notifications
+  const [notifPrefs, setNotifPrefs] = useState<NotifPrefs | null>(null);
+  const [notifLoading, setNotifLoading] = useState(false);
+  const [notifMsg, setNotifMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
   // Danger
   const [deleteConfirm, setDeleteConfirm] = useState('');
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -47,8 +63,32 @@ export default function SettingsPage() {
         setMe(u);
         setDisplayName(u.displayName ?? '');
         setBio(u.bio ?? '');
+        fetch('/api/users/me/notification-preferences')
+          .then((r) => r.ok ? r.json() : null)
+          .then((d) => d && setNotifPrefs(d.preferences))
+          .catch(() => {});
       });
   }, [router]);
+
+  const togglePref = async (key: keyof NotifPrefs) => {
+    if (!notifPrefs || notifLoading) return;
+    const newVal = !notifPrefs[key];
+    setNotifLoading(true);
+    setNotifMsg(null);
+    const res = await fetch('/api/users/me/notification-preferences', {
+      method:  'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ [key]: newVal }),
+    });
+    setNotifLoading(false);
+    if (res.ok) {
+      const d = await res.json();
+      setNotifPrefs(d.preferences);
+      setNotifMsg({ ok: true, text: 'Preferences saved.' });
+    } else {
+      setNotifMsg({ ok: false, text: 'Something went wrong.' });
+    }
+  };
 
   const saveProfile = async () => {
     setProfileLoading(true);
@@ -110,13 +150,13 @@ export default function SettingsPage() {
       <p className={styles.subheading}>{me.gamerTag}</p>
 
       <div className={styles.tabs}>
-        {(['profile', 'security', 'danger'] as Tab[]).map((t) => (
+        {(['profile', 'security', 'notifications', 'danger'] as Tab[]).map((t) => (
           <button
             key={t}
             className={`${styles.tab} ${tab === t ? styles.tabActive : ''} ${t === 'danger' ? styles.tabDanger : ''}`}
             onClick={() => setTab(t)}
           >
-            {t === 'profile' ? 'Profile' : t === 'security' ? 'Security' : 'Danger Zone'}
+            {t === 'profile' ? 'Profile' : t === 'security' ? 'Security' : t === 'notifications' ? 'Notifications' : 'Danger Zone'}
           </button>
         ))}
       </div>
@@ -196,6 +236,45 @@ export default function SettingsPage() {
           >
             {secLoading ? 'Updating…' : 'Update Password'}
           </button>
+        </section>
+      )}
+
+      {tab === 'notifications' && (
+        <section className={styles.section}>
+          {!notifPrefs ? (
+            <p className={styles.loading}>Loading…</p>
+          ) : (
+            <>
+              {([
+                { key: 'newFollower',     label: 'New follower',            desc: 'When someone follows you' },
+                { key: 'tipReceived',     label: 'Tip received',            desc: 'When someone tips you' },
+                { key: 'voteOnReview',    label: 'Vote on your review',     desc: 'When someone upvotes or downvotes your review' },
+                { key: 'commentOnReview', label: 'Comment on your review',  desc: 'When someone comments on your review' },
+                { key: 'replyToComment',  label: 'Reply to your comment',   desc: 'When someone replies to your comment' },
+                { key: 'mention',         label: 'Mention',                 desc: 'When someone @mentions you' },
+                { key: 'newGameReview',   label: 'New review for a game',   desc: 'When someone reviews a game you follow' },
+                { key: 'reclassify',      label: 'Review reclassified',     desc: 'When an admin changes your review\'s classification' },
+              ] as { key: keyof NotifPrefs; label: string; desc: string }[]).map(({ key, label, desc }) => (
+                <div key={key} className={styles.notifRow}>
+                  <div>
+                    <p className={styles.notifLabel}>{label}</p>
+                    <p className={styles.notifDesc}>{desc}</p>
+                  </div>
+                  <button
+                    className={`${styles.toggle} ${notifPrefs[key] ? styles.toggleOn : ''}`}
+                    onClick={() => togglePref(key)}
+                    disabled={notifLoading}
+                    aria-label={`${notifPrefs[key] ? 'Disable' : 'Enable'} ${label}`}
+                  >
+                    <span className={styles.toggleThumb} />
+                  </button>
+                </div>
+              ))}
+              {notifMsg && (
+                <p className={notifMsg.ok ? styles.msgOk : styles.msgErr}>{notifMsg.text}</p>
+              )}
+            </>
+          )}
         </section>
       )}
 

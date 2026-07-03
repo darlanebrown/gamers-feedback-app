@@ -3,7 +3,8 @@ import { getSession }                          from '@/lib/auth';
 import { getPreferences, upsertPreferences }   from '@/lib/notificationPrefStore';
 
 const VALID_KEYS = new Set([
-  'newFollower', 'tipReceived', 'commentOnReview', 'mention', 'newGameReview', 'replyToComment',
+  'newFollower', 'tipReceived', 'commentOnReview', 'mention',
+  'newGameReview', 'replyToComment', 'voteOnReview', 'reclassify',
 ]);
 
 export async function GET(req: NextRequest) {

@@ -18,6 +18,7 @@ const SESSION = { gamerTag: 'Darla#1', role: 'user' };
 const DEFAULT_PREFS = {
   gamerTag: 'Darla#1', newFollower: true, tipReceived: true,
   commentOnReview: true, mention: true, newGameReview: true, replyToComment: true,
+  voteOnReview: true, reclassify: true,
 };
 
 function makeReq(method: string, body?: object) {
@@ -48,6 +49,8 @@ describe('GET /api/users/me/notification-preferences', () => {
     expect(body.preferences.gamerTag).toBe('Darla#1');
     expect(body.preferences.newFollower).toBe(true);
     expect(body.preferences.tipReceived).toBe(true);
+    expect(body.preferences.voteOnReview).toBe(true);
+    expect(body.preferences.reclassify).toBe(true);
   });
 
   it('calls getPreferences with session gamerTag', async () => {
@@ -72,6 +75,20 @@ describe('PATCH /api/users/me/notification-preferences', () => {
   it('updates multiple preferences in one call', async () => {
     await PATCH(makeReq('PATCH', { tipReceived: false, mention: false }));
     expect(mockUpsert).toHaveBeenCalledWith('Darla#1', { tipReceived: false, mention: false });
+  });
+
+  it('accepts voteOnReview as a valid preference key', async () => {
+    mockUpsert.mockResolvedValue({ ...DEFAULT_PREFS, voteOnReview: false });
+    const res = await PATCH(makeReq('PATCH', { voteOnReview: false }));
+    expect(res.status).toBe(200);
+    expect(mockUpsert).toHaveBeenCalledWith('Darla#1', { voteOnReview: false });
+  });
+
+  it('accepts reclassify as a valid preference key', async () => {
+    mockUpsert.mockResolvedValue({ ...DEFAULT_PREFS, reclassify: false });
+    const res = await PATCH(makeReq('PATCH', { reclassify: false }));
+    expect(res.status).toBe(200);
+    expect(mockUpsert).toHaveBeenCalledWith('Darla#1', { reclassify: false });
   });
 
   it('returns 400 for unknown preference keys', async () => {
