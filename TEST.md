@@ -111,7 +111,7 @@ npx jest --no-coverage # skip coverage report (faster)
 | `api/follow-suggestions` | `api/follow-suggestions.test.ts` | — |
 | `api/game-comparison` | `api/game-comparison.test.ts` | — |
 | `api/game-follow` | `api/game-follow.test.ts` | 7 |
-| `api/game-follow-notifications` | `api/game-follow-notifications.test.ts` | 5 |
+| `api/game-follow-notifications` | `api/game-follow-notifications.test.ts` | 7 |
 | `api/game-leaderboard` | `api/game-leaderboard.test.ts` | — |
 | `api/health-route` | `api/health-route.test.ts` | — |
 | `api/mute-enforcement` | `api/mute-enforcement.test.ts` | 4 |
@@ -139,7 +139,7 @@ npx jest --no-coverage # skip coverage report (faster)
 | `api/trending-tags-route` | `api/trending-tags-route.test.ts` | 4 |
 | `api/user-activity-route` | `api/user-activity-route.test.ts` | — |
 | `api/user-block` | `api/user-block.test.ts` | 7 |
-| `api/user-mentions` | `api/user-mentions.test.ts` | 10 |
+| `api/user-mentions` | `api/user-mentions.test.ts` | 12 |
 | `api/user-report` | `api/user-report.test.ts` | 8 |
 | `api/user-reputation` | `api/user-reputation.test.ts` | — |
 | `api/user-review-stats` | `api/user-review-stats.test.ts` | — |
@@ -186,7 +186,7 @@ npx jest --no-coverage # skip coverage report (faster)
 | `api/tip-notification-service` | `api/tip-notification-service.test.ts` | 8 |
 | `api/follow-notification-service` | `api/follow-notification-service.test.ts` | 8 |
 | `api/comment-notification-service` | `api/comment-notification-service.test.ts` | 10 |
-| **Total** | **164 suites** | **1082** |
+| **Total** | **164 suites** | **1086** |
 
 ## Test File Structure
 

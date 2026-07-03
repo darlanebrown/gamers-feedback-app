@@ -1,17 +1,24 @@
-jest.mock('@/lib/userStore',        () => ({ findUserByTag: jest.fn() }));
-jest.mock('@/lib/notificationStore', () => ({ createNotification: jest.fn() }));
+jest.mock('@/lib/userStore',             () => ({ findUserByTag: jest.fn() }));
+jest.mock('@/lib/notificationStore',     () => ({ createNotification: jest.fn() }));
+jest.mock('@/lib/notificationPrefStore', () => ({ getPreferences: jest.fn() }));
 
 import { extractMentions, notifyMentions } from '@/lib/mentionService';
-import { findUserByTag }       from '@/lib/userStore';
-import { createNotification }  from '@/lib/notificationStore';
+import { findUserByTag }    from '@/lib/userStore';
+import { createNotification } from '@/lib/notificationStore';
+import { getPreferences }   from '@/lib/notificationPrefStore';
 
-const mockFindUser  = findUserByTag      as jest.Mock;
-const mockNotify    = createNotification as jest.Mock;
+const mockFindUser = findUserByTag      as jest.Mock;
+const mockNotify   = createNotification as jest.Mock;
+const mockGetPrefs = getPreferences     as jest.Mock;
+
+const PREFS_ON  = { gamerTag: 'Bob#2', newFollower: true, tipReceived: true, commentOnReview: true, mention: true,  newGameReview: true, replyToComment: true };
+const PREFS_OFF = { ...PREFS_ON, mention: false };
 
 beforeEach(() => {
   jest.resetAllMocks();
   mockFindUser.mockResolvedValue(null);
   mockNotify.mockResolvedValue(undefined);
+  mockGetPrefs.mockResolvedValue(PREFS_ON);
 });
 
 describe('extractMentions', () => {
@@ -66,5 +73,18 @@ describe('notifyMentions', () => {
     await notifyMentions('Great game!', 'r1', 'Darla#1');
     expect(mockFindUser).not.toHaveBeenCalled();
     expect(mockNotify).not.toHaveBeenCalled();
+  });
+
+  it('skips notification when mention pref is disabled', async () => {
+    mockFindUser.mockResolvedValue({ gamerTag: 'Bob#2' });
+    mockGetPrefs.mockResolvedValue(PREFS_OFF);
+    await notifyMentions('hey @Bob#2', 'r1', 'Darla#1');
+    expect(mockNotify).not.toHaveBeenCalled();
+  });
+
+  it('calls getPreferences with the mentioned tag', async () => {
+    mockFindUser.mockResolvedValue({ gamerTag: 'Bob#2' });
+    await notifyMentions('hey @Bob#2', 'r1', 'Darla#1');
+    expect(mockGetPrefs).toHaveBeenCalledWith('Bob#2');
   });
 });
