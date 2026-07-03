@@ -8,7 +8,8 @@ export type SecurityEventType =
   | 'admin_promote'
   | 'admin_flag_dismiss'
   | 'admin_comment_delete'
-  | 'admin_review_delete';
+  | 'admin_review_delete'
+  | 'admin_feature_review';
 
 export type SecurityEvent = {
   event:     SecurityEventType;

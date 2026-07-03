@@ -13,20 +13,18 @@ const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 export async function getUserDigestData(gamerTag: string): Promise<DigestData> {
   const since = new Date(Date.now() - SEVEN_DAYS_MS);
 
-  const [newFollowers, upvotes, downvotes, totalReviews] = await Promise.all([
-    prisma.follow.count({
-      where: { followingTag: gamerTag, createdAt: { gte: since } },
-    }),
-    prisma.reviewVote.count({
-      where: { review: { reviewerTag: gamerTag }, type: 'up', createdAt: { gte: since } },
-    }),
-    prisma.reviewVote.count({
-      where: { review: { reviewerTag: gamerTag }, type: 'down', createdAt: { gte: since } },
-    }),
-    prisma.review.count({
-      where: { reviewerTag: gamerTag },
-    }),
+  const [newFollowers, totalReviews, reviewIds] = await Promise.all([
+    prisma.follow.count({ where: { followingTag: gamerTag, createdAt: { gte: since } } }),
+    prisma.review.count({ where: { reviewerTag: gamerTag } }),
+    prisma.review.findMany({ where: { reviewerTag: gamerTag }, select: { id: true } })
+      .then((rs) => rs.map((r) => r.id as string)),
   ]);
+  const [upvotes, downvotes] = reviewIds.length > 0
+    ? await Promise.all([
+        prisma.reviewVote.count({ where: { reviewId: { in: reviewIds }, type: 'up', createdAt: { gte: since } } }),
+        prisma.reviewVote.count({ where: { reviewId: { in: reviewIds }, type: 'down', createdAt: { gte: since } } }),
+      ])
+    : [0, 0];
 
   return { newFollowers, upvotes, downvotes, totalReviews };
 }

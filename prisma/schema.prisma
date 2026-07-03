@@ -160,14 +160,16 @@ model UserReport {
 }
 
 model NotificationPreference {
-  id             String  @id @default(cuid())
-  gamerTag       String  @unique
-  newFollower    Boolean @default(true)
-  tipReceived    Boolean @default(true)
+  id              String  @id @default(cuid())
+  gamerTag        String  @unique
+  newFollower     Boolean @default(true)
+  tipReceived     Boolean @default(true)
   commentOnReview Boolean @default(true)
-  mention        Boolean @default(true)
-  newGameReview  Boolean @default(true)
-  replyToComment Boolean @default(true)
+  mention         Boolean @default(true)
+  newGameReview   Boolean @default(true)
+  replyToComment  Boolean @default(true)
+  voteOnReview    Boolean @default(true)
+  reclassify      Boolean @default(true)
 }
 
 model BanAppeal {

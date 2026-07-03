@@ -114,7 +114,7 @@ export async function getCommentsByTag(
 
   if (comments.length === 0) return [];
 
-  const reviewIds = [...new Set(comments.map((c) => c.reviewId))];
+  const reviewIds = Array.from(new Set(comments.map((c) => c.reviewId as string)));
   const reviews = await prisma.review.findMany({
     where:  { id: { in: reviewIds } },
     select: { id: true, gameTitle: true },

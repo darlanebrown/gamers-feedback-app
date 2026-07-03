@@ -56,8 +56,8 @@ export async function getFollowSuggestions(
   const users = await prisma.user.findMany({
     where:  { gamerTag: { in: tags }, banned: false },
     select: { gamerTag: true, displayName: true },
-  });
-  const userMap = new Map(users.map((u) => [u.gamerTag, u.displayName]));
+  }) as { gamerTag: string; displayName: string | null }[];
+  const userMap = new Map<string, string | null>(users.map((u) => [u.gamerTag, u.displayName]));
 
   return candidates
     .filter((c) => userMap.has(c.gamerTag))

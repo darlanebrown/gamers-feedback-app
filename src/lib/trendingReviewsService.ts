@@ -11,6 +11,7 @@ export interface TrendingReview {
   classification: string;
   recentVotes: number;
   createdAt: Date;
+  hasSpoilers?: boolean;
 }
 
 export async function getTrendingReviews(

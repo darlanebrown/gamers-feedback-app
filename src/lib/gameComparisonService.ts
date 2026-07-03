@@ -19,7 +19,7 @@ async function buildStats(title: string): Promise<GameComparison> {
       classification: 'helpful',
     },
     select: { rating: true, platform: true },
-  });
+  }) as Array<{ rating: number; platform: string }>;
 
   const reviewCount = reviews.length;
   const avgRating =

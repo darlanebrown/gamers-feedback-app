@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getFeaturedReview } from '@/lib/featuredReviewStore';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   const review = await getFeaturedReview();
   if (!review) return NextResponse.json({ error: 'No featured review' }, { status: 404 });
