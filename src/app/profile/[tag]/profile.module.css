@@ -348,9 +348,58 @@
   background: rgba(0, 255, 135, 0.06);
 }
 
+/* ── Tip Jar (profile) ── */
+.tipJarSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.tipJarLabel {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.tipJarBtns {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tipBtn {
+  padding: 5px 13px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font-display);
+  transition: all 0.15s;
+  min-width: 48px;
+}
+.tipBtn:hover:not(:disabled) {
+  border-color: #f9c74f;
+  color: #f9c74f;
+  background: rgba(249, 199, 79, 0.08);
+}
+.tipBtn:disabled { opacity: 0.4; cursor: default; }
+
+.tipError {
+  font-size: 12px;
+  color: var(--red);
+  margin: 0;
+}
+
 @media (max-width: 600px) {
   .statsBar { flex-wrap: wrap; }
   .stat { min-width: 33%; }
   .cardTop { flex-direction: column; }
   .header { flex-direction: column; text-align: center; }
 }
+

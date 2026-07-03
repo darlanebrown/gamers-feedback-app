@@ -8,6 +8,7 @@ import styles from './review-page.module.css';
 import ShareButton from './ShareButton';
 import ReviewActions from './ReviewActions';
 import VoteBar from './VoteBar';
+import TipJar from './TipJar';
 import NotificationBell from '@/app/components/NotificationBell';
 
 type Props = { params: { id: string } };
@@ -163,6 +164,10 @@ export default async function ReviewPage({ params }: Props) {
         </footer>
 
         <VoteBar reviewId={review.id} isLoggedIn={!!session} />
+
+        {session && !isOwner && (
+          <TipJar recipientTag={review.reviewerTag} isLoggedIn />
+        )}
 
         {(isOwner || isAdmin) && (
           <ReviewActions
