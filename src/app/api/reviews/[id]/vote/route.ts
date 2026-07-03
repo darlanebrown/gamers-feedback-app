@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { upsertVote, removeVote, getVoteCounts, getUserVote, VoteType } from '@/lib/voteStore';
 import { getReviewById } from '@/lib/reviewStore';
-import { createNotification } from '@/lib/notificationStore';
+import { notifyVoteOnReview } from '@/lib/voteNotificationService';
 import { findUserByTag } from '@/lib/userStore';
 import { sendVoteEmail } from '@/lib/emailService';
 
@@ -34,15 +34,8 @@ export async function POST(
 
   await upsertVote(params.id, session.gamerTag, type as VoteType);
   const votes = await getVoteCounts(params.id);
-  // notify the review author (skip if they voted on their own review)
   if (review.reviewerTag !== session.gamerTag) {
-    createNotification(
-      review.reviewerTag,
-      type === 'up' ? 'vote_up' : 'vote_down',
-      session.gamerTag,
-      params.id,
-      review.gameTitle,
-    ).catch(() => {});
+    notifyVoteOnReview(review.reviewerTag, session.gamerTag, params.id, review.gameTitle, type as 'up' | 'down').catch(() => {});
     findUserByTag(review.reviewerTag)
       .then((author) => {
         if (author) sendVoteEmail(author.email, session.gamerTag, review.gameTitle, type as 'up' | 'down').catch(() => {});

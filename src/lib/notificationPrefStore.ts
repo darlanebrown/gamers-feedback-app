@@ -8,6 +8,7 @@ export interface NotificationPreferences {
   mention:         boolean;
   newGameReview:   boolean;
   replyToComment:  boolean;
+  voteOnReview:    boolean;
 }
 
 const DEFAULTS: Omit<NotificationPreferences, 'gamerTag'> = {
@@ -17,6 +18,7 @@ const DEFAULTS: Omit<NotificationPreferences, 'gamerTag'> = {
   mention:         true,
   newGameReview:   true,
   replyToComment:  true,
+  voteOnReview:    true,
 };
 
 function toPrefs(r: any): NotificationPreferences {
@@ -28,6 +30,7 @@ function toPrefs(r: any): NotificationPreferences {
     mention:         r.mention,
     newGameReview:   r.newGameReview,
     replyToComment:  r.replyToComment,
+    voteOnReview:    r.voteOnReview  ?? true,
   };
 }
 

@@ -45,7 +45,7 @@ npx jest --no-coverage # skip coverage report (faster)
 | `api/admin-alerts` | `api/admin-alerts.test.ts` | 4 |
 | `api/admin-alerts-route` | `api/admin-alerts-route.test.ts` | 4 |
 | `api/game-route` | `api/game-route.test.ts` | 3 |
-| `api/vote-route` | `api/vote-route.test.ts` | 6 |
+| `api/vote-route` | `api/vote-route.test.ts` | 8 |
 | `api/follow-route` | `api/follow-route.test.ts` | 6 |
 | `api/feed-route` | `api/feed-route.test.ts` | 4 |
 | `api/search-route` | `api/search-route.test.ts` | 9 |
@@ -186,7 +186,8 @@ npx jest --no-coverage # skip coverage report (faster)
 | `api/tip-notification-service` | `api/tip-notification-service.test.ts` | 8 |
 | `api/follow-notification-service` | `api/follow-notification-service.test.ts` | 8 |
 | `api/comment-notification-service` | `api/comment-notification-service.test.ts` | 10 |
-| **Total** | **164 suites** | **1086** |
+| `api/vote-notification-service` | `api/vote-notification-service.test.ts` | 4 |
+| **Total** | **165 suites** | **1092** |
 
 ## Test File Structure
 
