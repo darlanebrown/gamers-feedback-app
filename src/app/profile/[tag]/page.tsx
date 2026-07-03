@@ -29,6 +29,28 @@ export default function ProfilePage({ params }: { params: { tag: string } }) {
   const [followLoading, setFollowLoading] = useState(false);
   const [filter, setFilter]         = useState<'all' | 'helpful' | 'spam' | 'toxic'>('all');
   const [currentUserTag, setCurrentUserTag] = useState<string | null>(null);
+  const [tipLoading, setTipLoading]         = useState<number | null>(null);
+  const [tipError,   setTipError]           = useState<string | null>(null);
+
+  const handleTip = async (cents: number) => {
+    if (tipLoading !== null) return;
+    setTipLoading(cents);
+    setTipError(null);
+    try {
+      const res  = await fetch('/api/payments/checkout', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ recipientTag: tag, amountCents: cents }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setTipError(data.error ?? 'Something went wrong'); return; }
+      window.location.href = data.url;
+    } catch {
+      setTipError('Network error — please try again');
+    } finally {
+      setTipLoading(null);
+    }
+  };
 
   useEffect(() => {
     fetch('/api/auth/me')
@@ -108,6 +130,25 @@ export default function ProfilePage({ params }: { params: { tag: string } }) {
                   </button>
                 )}
               </div>
+              {currentUserTag && currentUserTag !== tag && (
+                <div className={styles.tipJarSection}>
+                  <span className={styles.tipJarLabel}>🫙 Tip {tag}</span>
+                  <div className={styles.tipJarBtns}>
+                    {[{ label: '$3', cents: 300 }, { label: '$5', cents: 500 }, { label: '$10', cents: 1000 }, { label: '$25', cents: 2500 }].map(({ label, cents }) => (
+                      <button
+                        key={cents}
+                        className={styles.tipBtn}
+                        onClick={() => handleTip(cents)}
+                        disabled={tipLoading !== null}
+                      >
+                        {tipLoading === cents ? '…' : label}
+                      </button>
+                    ))}
+                  </div>
+                  {tipError && <p className={styles.tipError}>{tipError}</p>}
+                </div>
+              )}
+
               <div className={styles.socialCounts}>
                 <a href={`/profile/${encodeURIComponent(tag)}/followers`} className={styles.socialLink}>
                   <strong>{social.followers}</strong> followers
