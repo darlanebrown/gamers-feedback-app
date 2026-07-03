@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/adminMiddleware';
-import { getUserById, updateUserById } from '@/lib/userStore';
+import { findUserByTag, updateUserByTag } from '@/lib/userStore';
 import { logSecurityEvent } from '@/lib/securityLogger';
 import { createAuditEntry } from '@/lib/auditLogStore';
 import { getSession } from '@/lib/auth';
@@ -9,7 +9,7 @@ const VALID_ACTIONS = new Set(['ban', 'unban', 'promote']);
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: { tag: string } },
 ) {
   const guard = await requireAdmin(req);
   if (guard) return guard;
@@ -22,7 +22,7 @@ export async function PATCH(
       { status: 400 },
     );
 
-  const user = await getUserById(params.id);
+  const user = await findUserByTag(params.tag);
   if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
   const update =
@@ -30,14 +30,14 @@ export async function PATCH(
     action === 'unban'   ? { banned: false } :
                            { role: 'admin' };
 
-  const updated = await updateUserById(params.id, update);
+  const updated = await updateUserByTag(params.tag, update);
 
   const session   = await getSession(req);
   const actor     = session?.gamerTag ?? 'unknown';
   const eventType = action === 'ban' ? 'admin_ban' : action === 'unban' ? 'admin_unban' : 'admin_promote';
   const detail    = `target: ${user.gamerTag}`;
-  logSecurityEvent(eventType as any, actor, params.id, detail);
-  createAuditEntry(eventType, actor, params.id, detail).catch(() => {});
+  logSecurityEvent(eventType as any, actor, params.tag, detail);
+  createAuditEntry(eventType, actor, params.tag, detail).catch(() => {});
 
   return NextResponse.json({ ok: true, user: updated });
 }
