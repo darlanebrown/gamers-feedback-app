@@ -11,7 +11,7 @@ export type Notification = {
   createdAt: Date;
 };
 
-export type NotificationType = 'follow' | 'vote_up' | 'vote_down' | 'reclassify' | 'comment' | 'tip';
+export type NotificationType = 'follow' | 'vote_up' | 'vote_down' | 'reclassify' | 'comment' | 'tip' | 'reply';
 
 export async function createNotification(
   userTag: string,

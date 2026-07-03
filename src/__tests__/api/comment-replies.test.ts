@@ -1,6 +1,9 @@
 jest.mock('@/lib/auth',             () => ({ getSession: jest.fn() }));
 jest.mock('@/lib/reviewStore',      () => ({ getReviewById: jest.fn() }));
-jest.mock('@/lib/notificationStore',() => ({ createNotification: jest.fn().mockResolvedValue(undefined) }));
+jest.mock('@/lib/commentNotificationService', () => ({
+  notifyCommentOnReview: jest.fn().mockResolvedValue(undefined),
+  notifyReplyToComment:  jest.fn().mockResolvedValue(undefined),
+}));
 jest.mock('@/lib/emailService',     () => ({ sendCommentEmail: jest.fn().mockResolvedValue(undefined) }));
 jest.mock('@/lib/mentionService',   () => ({ notifyMentions: jest.fn().mockResolvedValue(undefined) }));
 jest.mock('@/lib/userStore',        () => ({ findUserByTag: jest.fn() }));
@@ -16,19 +19,19 @@ jest.mock('@/lib/commentStore', () => ({
 
 import { NextRequest } from 'next/server';
 import { POST } from '@/app/api/reviews/[id]/comments/route';
-import { getSession }          from '@/lib/auth';
-import { getReviewById }       from '@/lib/reviewStore';
-import { createNotification }  from '@/lib/notificationStore';
-import { getCommentById }      from '@/lib/commentStore';
+import { getSession }           from '@/lib/auth';
+import { getReviewById }        from '@/lib/reviewStore';
+import { notifyReplyToComment } from '@/lib/commentNotificationService';
+import { getCommentById }       from '@/lib/commentStore';
 
-const mockSession       = getSession          as jest.Mock;
-const mockGetReview     = getReviewById       as jest.Mock;
-const mockGetCommentById= getCommentById      as jest.Mock;
-const mockNotify        = createNotification  as jest.Mock;
+const mockSession         = getSession           as jest.Mock;
+const mockGetReview       = getReviewById        as jest.Mock;
+const mockGetCommentById  = getCommentById       as jest.Mock;
+const mockNotifyReply     = notifyReplyToComment as jest.Mock;
 
-const SESSION  = { gamerTag: 'Darla#1', role: 'user' };
-const REVIEW   = { id: 'r1', reviewerTag: 'Author#9', gameTitle: 'Hades' };
-const PARENT   = { id: 'c0', reviewId: 'r1', authorTag: 'Bob#2', body: 'First!', createdAt: new Date().toISOString() };
+const SESSION     = { gamerTag: 'Darla#1', role: 'user' };
+const REVIEW      = { id: 'r1', reviewerTag: 'Author#9', gameTitle: 'Hades' };
+const PARENT      = { id: 'c0', reviewId: 'r1', authorTag: 'Bob#2', body: 'First!', createdAt: new Date().toISOString() };
 const NEW_COMMENT = { id: 'c1', reviewId: 'r1', authorTag: 'Darla#1', body: 'Replying!', parentId: 'c0', createdAt: new Date().toISOString() };
 
 function makeReq(body: object) {
@@ -43,12 +46,14 @@ beforeEach(() => {
   mockSession.mockResolvedValue(SESSION);
   mockGetReview.mockResolvedValue(REVIEW);
   mockGetCommentById.mockResolvedValue(PARENT);
-  mockNotify.mockResolvedValue(undefined);
+  mockNotifyReply.mockResolvedValue(undefined);
   const cs = jest.requireMock('@/lib/commentStore') as Record<string, jest.Mock>;
   cs.createComment.mockResolvedValue(NEW_COMMENT);
   cs.countRecentCommentsByTag.mockResolvedValue(0);
-  (jest.requireMock('@/lib/notificationStore') as { createNotification: jest.Mock })
-    .createNotification.mockResolvedValue(undefined);
+  (jest.requireMock('@/lib/commentNotificationService') as { notifyCommentOnReview: jest.Mock; notifyReplyToComment: jest.Mock })
+    .notifyCommentOnReview.mockResolvedValue(undefined);
+  (jest.requireMock('@/lib/commentNotificationService') as { notifyCommentOnReview: jest.Mock; notifyReplyToComment: jest.Mock })
+    .notifyReplyToComment.mockResolvedValue(undefined);
   (jest.requireMock('@/lib/emailService') as { sendCommentEmail: jest.Mock })
     .sendCommentEmail.mockResolvedValue(undefined);
   (jest.requireMock('@/lib/mentionService') as { notifyMentions: jest.Mock })
@@ -71,16 +76,15 @@ describe('POST /api/reviews/[id]/comments — replies', () => {
     expect(res.status).toBe(404);
   });
 
-  it('notifies parent comment author when replier is different user', async () => {
+  it('fires preference-gated reply notification when replier is different user', async () => {
     await POST(makeReq({ body: 'Replying!', parentId: 'c0' }), { params: { id: 'r1' } });
-    expect(mockNotify).toHaveBeenCalledWith('Bob#2', 'reply', 'Darla#1', 'r1');
+    expect(mockNotifyReply).toHaveBeenCalledWith('Bob#2', 'Darla#1', 'r1');
   });
 
   it('does not notify parent author when replying to own comment', async () => {
     mockGetCommentById.mockResolvedValue({ ...PARENT, authorTag: 'Darla#1' });
     await POST(makeReq({ body: 'Replying!', parentId: 'c0' }), { params: { id: 'r1' } });
-    const replyCalls = mockNotify.mock.calls.filter(([, type]) => type === 'reply');
-    expect(replyCalls).toHaveLength(0);
+    expect(mockNotifyReply).not.toHaveBeenCalled();
   });
 
   it('creates a plain comment when no parentId is given', async () => {
