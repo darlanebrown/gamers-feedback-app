@@ -1,4 +1,5 @@
-import { prisma } from './prisma';
+import { prisma }      from './prisma';
+import { isBlocking } from './blockStore';
 
 export type Notification = {
   id: string;
@@ -19,7 +20,8 @@ export async function createNotification(
   actorTag?: string,
   reviewId?: string,
   gameTitle?: string,
-): Promise<Notification> {
+): Promise<Notification | null> {
+  if (actorTag && await isBlocking(userTag, actorTag)) return null;
   return prisma.notification.create({
     data: { userTag, type, actorTag, reviewId, gameTitle },
   }) as Promise<Notification>;

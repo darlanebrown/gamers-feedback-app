@@ -9,8 +9,12 @@ jest.mock('@/lib/prisma', () => ({
     },
   },
 }));
+jest.mock('@/lib/blockStore', () => ({
+  isBlocking: jest.fn(),
+}));
 
-import { prisma } from '@/lib/prisma';
+import { prisma }       from '@/lib/prisma';
+import { isBlocking }   from '@/lib/blockStore';
 import {
   createNotification,
   getNotifications,
@@ -25,7 +29,10 @@ const mockCount      = prisma.notification.count      as jest.Mock;
 const mockUpdateMany = prisma.notification.updateMany as jest.Mock;
 const mockUpdate     = prisma.notification.update     as jest.Mock;
 
-beforeEach(() => jest.resetAllMocks());
+beforeEach(() => {
+  jest.resetAllMocks();
+  (isBlocking as jest.Mock).mockResolvedValue(false);
+});
 
 const NOTIF = {
   id: 'n1', userTag: 'Darla#1', type: 'follow',
