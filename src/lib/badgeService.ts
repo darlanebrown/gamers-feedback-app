@@ -35,12 +35,16 @@ export const BADGES: Record<string, Badge> = {
 };
 
 export async function getUserBadges(gamerTag: string): Promise<Badge[]> {
-  const [totalReviews, helpfulReviews, upvotes, followers] = await Promise.all([
+  const [totalReviews, helpfulReviews, followers, reviewIds] = await Promise.all([
     prisma.review.count({ where: { reviewerTag: gamerTag } }),
     prisma.review.count({ where: { reviewerTag: gamerTag, classification: 'helpful' } }),
-    prisma.reviewVote.count({ where: { review: { reviewerTag: gamerTag }, type: 'up' } }),
     prisma.follow.count({ where: { followingTag: gamerTag } }),
+    prisma.review.findMany({ where: { reviewerTag: gamerTag }, select: { id: true } })
+      .then((rs) => rs.map((r) => r.id as string)),
   ]);
+  const upvotes = reviewIds.length > 0
+    ? await prisma.reviewVote.count({ where: { reviewId: { in: reviewIds }, type: 'up' } })
+    : 0;
 
   const earned: Badge[] = [];
 

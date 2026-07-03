@@ -48,7 +48,7 @@ export async function getVotesByTag(
   const reviews = await prisma.review.findMany({
     where:  { id: { in: reviewIds } },
     select: { id: true, gameTitle: true, reviewerTag: true },
-  });
+  }) as { id: string; gameTitle: string; reviewerTag: string }[];
   const reviewMap = new Map(reviews.map((r) => [r.id, r]));
 
   return votes.map((v) => ({

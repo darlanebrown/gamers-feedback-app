@@ -20,14 +20,16 @@ const WEIGHTS = {
 };
 
 export async function getUserReputation(gamerTag: string): Promise<Reputation> {
-  const [helpfulReviews, upvotesReceived, commentsPosted, followersCount] = await Promise.all([
+  const [helpfulReviews, commentsPosted, followersCount, reviewIds] = await Promise.all([
     prisma.review.count({ where: { reviewerTag: gamerTag, classification: 'helpful' } }),
-    prisma.reviewVote.count({
-      where: { type: 'up', review: { reviewerTag: gamerTag } },
-    }),
     prisma.reviewComment.count({ where: { authorTag: gamerTag } }),
     prisma.follow.count({ where: { followingTag: gamerTag } }),
+    prisma.review.findMany({ where: { reviewerTag: gamerTag }, select: { id: true } })
+      .then((rs) => rs.map((r) => r.id as string)),
   ]);
+  const upvotesReceived = reviewIds.length > 0
+    ? await prisma.reviewVote.count({ where: { reviewId: { in: reviewIds }, type: 'up' } })
+    : 0;
 
   const score =
     helpfulReviews  * WEIGHTS.helpfulReview  +

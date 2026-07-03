@@ -44,16 +44,25 @@ export async function getUserById(id: string): Promise<User | null> {
 
 export async function updateUserById(
   id: string,
-  data: Partial<Pick<User, 'role' | 'banned'>>,
+  data: Partial<Pick<User, 'role' | 'banned' | 'passwordHash'>>,
 ): Promise<PublicUser> {
   const updated = await prisma.user.update({ where: { id }, data });
   const { passwordHash: _, ...rest } = updated as unknown as User;
   return rest as PublicUser;
 }
 
+// Alias used by several routes
+export const getUserByTag = findUserByTag;
+
+export async function promoteUserByTag(gamerTag: string): Promise<PublicUser> {
+  const updated = await prisma.user.update({ where: { gamerTag }, data: { role: 'admin' } });
+  const { passwordHash: _, ...rest } = updated as unknown as User;
+  return rest as PublicUser;
+}
+
 export async function updateUserByTag(
   gamerTag: string,
-  data: Partial<Pick<User, 'displayName' | 'bio'>>,
+  data: Partial<Pick<User, 'displayName' | 'bio' | 'role' | 'banned'>>,
 ): Promise<PublicUser> {
   const updated = await (prisma.user as any).update({ where: { gamerTag }, data });
   const { passwordHash: _, ...rest } = updated as User;

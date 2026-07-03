@@ -23,7 +23,7 @@ export async function autoSelectFeaturedReview(): Promise<string | null> {
   if (!eligible) return null;
 
   // Preserve vote-rank order by selecting the highest-ranked eligible review
-  const countById = new Map(topVoted.map((r) => [r.reviewId, r._count.id]));
+  const countById = new Map<string, number>(topVoted.map((r) => [r.reviewId, Number(r._count.id)]));
   const sortedEligible = await prisma.review.findMany({
     where: { id: { in: ids }, classification: 'helpful' },
   });

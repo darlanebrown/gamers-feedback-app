@@ -312,7 +312,7 @@ export async function getGamesByReviewer(reviewerTag: string): Promise<string[]>
   const rows = await prisma.review.findMany({
     where: { reviewerTag, classification: 'helpful' },
     select: { gameTitle: true },
-  });
+  }) as Array<{ gameTitle: string }>;
   return Array.from(new Set(rows.map((r) => r.gameTitle))).sort();
 }
 

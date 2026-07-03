@@ -27,7 +27,7 @@ export async function getRecommendations(
   const similarTags = new Set<string>();
   for (const r of otherReviews) {
     const targetRating = targetRatingMap.get(r.gameTitle);
-    if (targetRating !== undefined && Math.abs(r.rating - targetRating) <= 2) {
+    if (targetRating != null && Math.abs(r.rating - (targetRating as number)) <= 2) {
       similarTags.add(r.reviewerTag);
     }
   }

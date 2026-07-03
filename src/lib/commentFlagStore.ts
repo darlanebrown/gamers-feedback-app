@@ -21,7 +21,7 @@ export async function getFlaggedComments() {
   const comments = await prisma.reviewComment.findMany({
     where:  { id: { in: commentIds } },
     select: { id: true, body: true, authorTag: true, reviewId: true },
-  });
+  }) as { id: string; body: string; authorTag: string; reviewId: string }[];
   const commentMap = new Map(comments.map((c) => [c.id, c]));
 
   return groups.map((g) => {

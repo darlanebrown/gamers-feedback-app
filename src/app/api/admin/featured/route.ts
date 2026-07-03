@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
   if (!review) return NextResponse.json({ error: 'Review not found' }, { status: 404 });
 
   await setFeaturedReview(reviewId, session.gamerTag);
-  logSecurityEvent('admin_feature_review', { reviewId, setBy: session.gamerTag });
+  logSecurityEvent('admin_feature_review', session.gamerTag, reviewId);
   createAuditEntry('admin_feature_review', session.gamerTag, reviewId, `featured by ${session.gamerTag}`).catch(() => {});
 
   return NextResponse.json({ ok: true, reviewId });

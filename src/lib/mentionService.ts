@@ -4,7 +4,7 @@ import { getPreferences }   from './notificationPrefStore';
 
 export function extractMentions(body: string): string[] {
   const matches = body.match(/@([^\s@,!?]+)/g) ?? [];
-  return [...new Set(matches.map((m) => m.slice(1)))];
+  return Array.from(new Set(matches.map((m) => m.slice(1))));
 }
 
 export async function notifyMentions(

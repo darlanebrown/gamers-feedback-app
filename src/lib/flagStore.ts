@@ -47,7 +47,7 @@ export async function getFlagsByReporter(
   const reviews = await prisma.review.findMany({
     where:  { id: { in: reviewIds } },
     select: { id: true, gameTitle: true, reviewerTag: true },
-  });
+  }) as { id: string; gameTitle: string; reviewerTag: string }[];
   const reviewMap = new Map(reviews.map((r) => [r.id, r]));
 
   return flags.map((f) => ({
@@ -72,7 +72,7 @@ export async function getFlaggedReviews(): Promise<FlaggedReview[]> {
   const reviewIds = groups.map((g) => g.reviewId);
   const reviews = await prisma.review.findMany({
     where: { id: { in: reviewIds } },
-  });
+  }) as { id: string; gameTitle: string; reviewerTag: string; classification: string }[];
 
   const reviewMap = new Map(reviews.map((r) => [r.id, r]));
 
