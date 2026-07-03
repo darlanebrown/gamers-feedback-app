@@ -128,7 +128,8 @@ describe('POST /api/admin/featured', () => {
     );
     expect(mockLogSecurity).toHaveBeenCalledWith(
       'admin_feature_review',
-      expect.objectContaining({ reviewId: 'rev1', setBy: 'Admin#1' }),
+      'Admin#1',
+      'rev1',
     );
   });
 });

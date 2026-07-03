@@ -1,6 +1,6 @@
 jest.mock('@/lib/prisma', () => ({
   prisma: {
-    review:      { count: jest.fn() },
+    review:      { count: jest.fn(), findMany: jest.fn() },
     reviewVote:  { count: jest.fn() },
     follow:      { count: jest.fn() },
   },
@@ -9,9 +9,10 @@ jest.mock('@/lib/prisma', () => ({
 import { getUserBadges, BADGES } from '@/lib/badgeService';
 import { prisma } from '@/lib/prisma';
 
-const mockReviewCount = (prisma.review     as any).count as jest.Mock;
-const mockVoteCount   = (prisma.reviewVote as any).count as jest.Mock;
-const mockFollowCount = (prisma.follow     as any).count as jest.Mock;
+const mockReviewCount    = (prisma.review     as any).count    as jest.Mock;
+const mockReviewFindMany = (prisma.review     as any).findMany as jest.Mock;
+const mockVoteCount      = (prisma.reviewVote as any).count    as jest.Mock;
+const mockFollowCount    = (prisma.follow     as any).count    as jest.Mock;
 
 function setStats({
   totalReviews   = 0,
@@ -23,6 +24,9 @@ function setStats({
     if (where?.classification === 'helpful') return Promise.resolve(helpfulReviews);
     return Promise.resolve(totalReviews);
   });
+  mockReviewFindMany.mockResolvedValue(
+    (totalReviews > 0 || upvotes > 0) ? [{ id: 'r1' }] : [],
+  );
   mockVoteCount.mockResolvedValue(upvotes);
   mockFollowCount.mockResolvedValue(followers);
 }
