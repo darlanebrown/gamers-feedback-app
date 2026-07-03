@@ -11,6 +11,7 @@ import {
 import { checkForBombing } from '@/lib/alertService';
 import { embedAndStore } from '@/lib/embeddingService';
 import { notifyGameFollowers } from '@/lib/gameFollowNotificationService';
+import { notifyMentions }     from '@/lib/mentionService';
 
 const RATE_LIMIT = 3;
 const RATE_WINDOW_MS = 60 * 60 * 1000; // 1 hour
@@ -85,6 +86,7 @@ export async function POST(req: NextRequest) {
     const review = await addReview(body);
     checkForBombing(review.gameTitle).catch(() => {});
     notifyGameFollowers(review.gameTitle, review.id, review.reviewerTag).catch(() => {});
+    notifyMentions(review.body, review.id, review.reviewerTag).catch(() => {});
     if (process.env.OPENAI_API_KEY) embedAndStore(review).catch(() => {});
     return NextResponse.json({ review }, { status: 201 });
   } catch {

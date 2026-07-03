@@ -189,7 +189,8 @@ npx jest --no-coverage # skip coverage report (faster)
 | `api/vote-notification-service` | `api/vote-notification-service.test.ts` | 4 |
 | `api/reclassify-notification-service` | `api/reclassify-notification-service.test.ts` | 3 |
 | `lib/notification-block` | `lib/notification-block.test.ts` | 9 |
-| **Total** | **167 suites** | **1107** |
+| `api/review-mention-notification` | `api/review-mention-notification.test.ts` | 6 |
+| **Total** | **168 suites** | **1113** |
 
 ## Test File Structure
 
